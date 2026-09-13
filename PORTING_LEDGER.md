@@ -43,3 +43,10 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - #1 App bootstrap: PASS. #17 MCP server: PASS (transport). #7 Preview: IMPLEMENTING (source file preview + clipAt highlight + seek; multi-layer/effects pending).
 - Electron binary note: npm postinstall extraction yields only locales/ on this host; workaround is Expand-Archive of the cached zip + path.txt (see README troubleshooting).
 
+
+## 2026-09-13 turn 3 evidence
+
+- D TIMELINE: interactions now mutate the canonical store through the same ops as MCP: drag=moveClip, edge handles=trimStart/trimEnd, click=select, Del=deleteClip, header split/undo/redo. Smoke proves renderer IPC op path (SMOKE-UI-OP true:2). Timeline geometry (pxToFrame/frameToPx) lives in core/model.ts with unit test; renderer calls it via sync IPC (SMOKE-GEOM function), no duplicated math.
+- E PREVIEW: timeline->source mapping in renderer (clipAt + sourceInFrame offset), so cuts/seeks show the edit; multi-track compositing in preview still pending.
+- K MCP WRITE: now FULL for the covered paths — store mutations broadcast store-changed, renderer auto-refreshes, so MCP edits appear in the open UI. Evidence: RUN-MCP-E2E-PASS + refresh subscription in renderer.
+- Suite: 8/8 unit green; vertical slice SLICE PASS (h264+aac 3.000s); smoke BOOT-OK.

@@ -1,42 +1,82 @@
-﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{--bg:#14161a;--fg:#e8eaed;--mut:#9aa0a6;--acc:#4c8dff;--clip:#2f6fed}body{background:var(--bg);color:var(--fg);font:14px system-ui;margin:0}header{padding:10px 16px;border-bottom:1px solid #2a2e35;display:flex;gap:8px;align-items:center}main{display:grid;grid-template-columns:250px 1fr 300px;height:calc(100vh - 47px)}section{padding:12px;border-right:1px solid #2a2e35;overflow:auto}button{background:#23262c;color:var(--fg);border:1px solid #333842;border-radius:6px;padding:6px 10px;margin:2px;cursor:pointer}button:hover{border-color:var(--acc)}#tl{position:relative;height:120px;background:#0e1013;border:1px solid #2a2e35;border-radius:6px;margin-top:8px}.clip{position:absolute;height:26px;background:var(--clip);border-radius:4px;font-size:11px;line-height:26px;padding:0 6px;overflow:hidden;white-space:nowrap}.clip.active{outline:2px solid #ffd60a}.ph{position:absolute;top:0;bottom:0;width:2px;background:#ff453a}#log{white-space:pre-wrap;color:var(--mut);font-size:12px}</style></head><body>
+﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{--bg:#14161a;--fg:#e8eaed;--mut:#9aa0a6;--acc:#4c8dff;--clip:#2f6fed}body{background:var(--bg);color:var(--fg);font:14px system-ui;margin:0}header{padding:10px 16px;border-bottom:1px solid #2a2e35;display:flex;gap:8px;align-items:center}main{display:grid;grid-template-columns:250px 1fr 300px;height:calc(100vh - 47px)}section{padding:12px;border-right:1px solid #2a2e35;overflow:auto}button{background:#23262c;color:var(--fg);border:1px solid #333842;border-radius:6px;padding:6px 10px;margin:2px;cursor:pointer}button:hover{border-color:var(--acc)}#tl{position:relative;height:150px;background:#0e1013;border:1px solid #2a2e35;border-radius:6px;margin-top:8px;user-select:none}.clip{position:absolute;height:26px;background:var(--clip);border-radius:4px;font-size:11px;line-height:26px;padding:0 6px;overflow:hidden;white-space:nowrap;cursor:grab}.clip.sel{outline:2px solid var(--acc)}.clip.active{box-shadow:0 0 0 2px #ffd60a inset}.clip .h{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize}.clip .hl{left:0}.clip .hr{right:0}.ph{position:absolute;top:0;bottom:0;width:2px;background:#ff453a;pointer-events:none}#log{white-space:pre-wrap;color:var(--mut);font-size:12px}</style></head><body>
 <header><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button></header>
 <main><section><h3>Media</h3><div id="media"></div></section>
-<section><h3>Preview</h3><video id="pv" controls style="width:100%;background:#000"></video><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tl"></div></section>
+<section><h3>Preview</h3><video id="pv" controls style="width:100%;background:#000"></video><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tl"></div><div style="color:var(--mut);font-size:12px">drag clip = move · edge handles = trim · click = select · Del = delete</div></section>
 <section><h3>State</h3><div id="log"></div></section></main>
 <script>
 const $ = (id) => document.getElementById(id);
 const log = (m) => { $("log").textContent = m + "\n" + $("log").textContent.slice(0, 2000); };
-let S = null, SEQ = null, FRAME = 0;
-const FPS = 30;
+const G = window.palmier.geom();
+const f2x = G ? G.frameToPx : ((f, w, d) => d <= 0 ? 0 : (f / d) * w);
+let S = null, SEQ = null, FRAME = 0, SEL = null, FPS = 30;
+const DUR = () => SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
+const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 34;
 async function refresh() {
   S = await window.palmier.state();
   SEQ = S.sequences.find(s => s.id === S.activeSequenceId) || S.sequences[0];
-  $("proj").textContent = S ? S.name + " / " + (SEQ ? SEQ.name : "no sequence") : "empty";
-  if (!SEQ) { $("media").textContent = "no sequence (set PALM_DEMO=1)"; return; }
+  if (!SEQ) return;
+  FPS = SEQ.fps.num / SEQ.fps.den;
+  $("proj").textContent = S.name + " / " + SEQ.name;
   $("media").innerHTML = S.media.map(m => "<div>" + m.name + " <small>(" + m.kind + ")</small></div>").join("");
-  const dur = SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
+  const dur = DUR();
   $("seek").max = dur;
-  const px = (f) => (f / dur * 100);
-  $("tl").innerHTML = SEQ.clips.map(c => "<div class=clip data-id=" + c.id + " style=left:" + px(c.startFrame) + "%;width:" + px(c.durationFrames) + "%;top:" + (c.trackId === (SEQ.tracks[1] && SEQ.tracks[1].id) ? 60 : 20) + "px>" + c.name + "</div>").join("") + "<div class=ph id=ph></div>";
+  const tl = $("tl");
+  tl.innerHTML = SEQ.clips.map(c => {
+    const l = c.startFrame / dur * 100, w = c.durationFrames / dur * 100;
+    return "<div class=clip data-id=" + c.id + " style=left:" + l + "%;width:" + w + "%;top:" + trackTop(SEQ.tracks.find(t => t.id === c.trackId) || SEQ.tracks[0]) + "px>" + "<span class=h hl data-e=l></span>" + c.name + "<span class=h hr data-e=r></span></div>";
+  }).join("") + "<div class=ph id=ph></div>";
+  bindClips();
   const vclip = SEQ.clips.find(c => c.kind === "video" && c.assetId);
-  if (vclip) {
-    const m = S.media.find(x => x.id === vclip.assetId);
-    if (m && !$("pv").src) $("pv").src = "file:///" + m.path.replace(/\\/g, "/");
-  }
-  log("clips=" + SEQ.clips.length + " dur=" + dur + "f undo/redo via header");
+  if (vclip) { const m = S.media.find(x => x.id === vclip.assetId); if (m && !$("pv").src) $("pv").src = "file:///" + m.path.replace(/\\/g, "/"); }
+  await markActive();
 }
 async function markActive() {
   if (!SEQ) return;
   const hit = await window.palmier.clipAt(SEQ.id, FRAME);
-  document.querySelectorAll(".clip").forEach(el => el.classList.toggle("active", !!hit && el.dataset.id === hit.id));
+  document.querySelectorAll(".clip").forEach(el => {
+    el.classList.toggle("active", !!hit && el.dataset.id === hit.id);
+    el.classList.toggle("sel", el.dataset.id === SEL);
+  });
   const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
+  // Timeline->source mapping: preview shows the edit, not the raw file position.
+  const v = $("pv");
+  if (v && hit && hit.assetId) {
+    const srcSec = (hit.sourceInFrame + (FRAME - hit.startFrame)) / FPS;
+    if (Math.abs(v.currentTime - srcSec) > 0.18) { try { v.currentTime = Math.max(srcSec, 0); } catch (e) {} }
+  }
 }
-$("seek").addEventListener("input", async (e) => {
-  FRAME = Number(e.target.value);
-  const v = $("pv"); if (v && v.duration) { try { v.currentTime = FRAME / FPS; } catch {} }
-  await markActive();
+function bindClips() {
+  document.querySelectorAll(".clip").forEach(el => {
+    el.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      SEL = el.dataset.id; markActive();
+      const tl = $("tl").getBoundingClientRect();
+      const x0 = e.clientX;
+      const edge = e.target.dataset && e.target.dataset.e;
+      const move = (ev) => {};
+      const up = async (ev) => {
+        document.removeEventListener("mouseup", up);
+        const dx = ev.clientX - x0;
+        const df = Math.round(dx / tl.width * DUR());
+        if (df === 0) return;
+        const c = SEQ.clips.find(x => x.id === SEL);
+        let r;
+        if (edge === "l") r = await window.palmier.op("trimStart", [SEQ.id, SEL, df]);
+        else if (edge === "r") r = await window.palmier.op("trimEnd", [SEQ.id, SEL, c.durationFrames + df]);
+        else r = await window.palmier.op("moveClip", [SEQ.id, SEL, c.trackId, Math.max(c.startFrame + df, 0)]);
+        log(((edge === "l") ? "trimStart" : (edge === "r") ? "trimEnd" : "move") + ": " + JSON.stringify(r));
+        await refresh();
+      };
+      document.addEventListener("mouseup", up);
+    });
+  });
+}
+$("seek").addEventListener("input", async (e) => { FRAME = Number(e.target.value); await markActive(); });
+$("pv").addEventListener("timeupdate", async (e) => {
+  if (document.activeElement === $("seek")) return;
+  FRAME = Math.min(Math.round(e.target.currentTime * FPS), Number($("seek").max));
+  $("seek").value = FRAME; await markActive();
 });
-$("pv").addEventListener("timeupdate", async (e) => { FRAME = Math.round(e.target.currentTime * FPS); $("seek").value = FRAME; await markActive(); });
 $("bSplit").addEventListener("click", async () => {
   const hit = await window.palmier.clipAt(SEQ.id, FRAME);
   if (!hit) return log("split: no clip at " + FRAME);
@@ -45,5 +85,12 @@ $("bSplit").addEventListener("click", async () => {
 });
 $("bUndo").addEventListener("click", async () => { const r = await window.palmier.op("undo", []); log("undo: " + JSON.stringify(r)); await refresh(); });
 $("bRedo").addEventListener("click", async () => { const r = await window.palmier.op("redo", []); log("redo: " + JSON.stringify(r)); await refresh(); });
-refresh().then(markActive);
+document.addEventListener("keydown", async (e) => {
+  if ((e.key === "Delete" || e.key === "Backspace") && SEL && document.activeElement.tagName !== "INPUT") {
+    const r = await window.palmier.op("deleteClip", [SEQ.id, SEL]);
+    log("delete: " + JSON.stringify(r)); SEL = null; await refresh();
+  }
+});
+window.palmier.onStoreChanged(() => refresh());
+refresh();
 </script></body></html>

@@ -61,3 +61,16 @@ export function videoClipAt(s: Sequence, frame: number): Clip | undefined {
   const order = new Map(s.tracks.map((t, i) => [t.id, i]));
   return vids.sort((a, b) => (order.get(b.trackId) ?? 0) - (order.get(a.trackId) ?? 0))[0];
 }
+
+// Timeline geometry (single source of truth; renderer and tests share this, no duplicates).
+export function pxToFrame(xPx: number, widthPx: number, durationFrames: number): number {
+  if (!(widthPx > 0) || !Number.isFinite(xPx)) throw new Error('bad geometry');
+  const f = Math.round((xPx / widthPx) * durationFrames);
+  return Math.min(Math.max(f, 0), Math.max(durationFrames, 0));
+}
+export function frameToPx(frame: number, widthPx: number, durationFrames: number): number {
+  if (!(widthPx > 0) || !Number.isInteger(frame) || frame < 0) throw new Error('bad geometry');
+  if (durationFrames <= 0) return 0;
+  return (frame / durationFrames) * widthPx;
+}
+

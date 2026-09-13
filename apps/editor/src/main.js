@@ -31,6 +31,7 @@ function registerIpc() {
     if (!s) throw new Error("sequence not found");
     return core.videoClipAt(s, frame) || null;
   });
+  ipcMain.on("geomSync", (e, kind, args) => { e.returnValue = (kind === "pxToFrame" || kind === "frameToPx") ? core[kind](...args) : null; });
   ipcMain.handle("op", (_e, name, args) => {
     if (name === "undo") return { undone: store.undo() };
     if (name === "redo") return { redone: store.redo() };
@@ -42,6 +43,9 @@ function registerIpc() {
 async function boot() {
   core = await import("@palmier/core");
   store = new core.EditorStore(core.createProject("Untitled"));
+  let rev = 0;
+  const rawExec = store.exec.bind(store);
+  store.exec = (label, fn) => { const r = rawExec(label, fn); if (r.ok && !r.noop && win) { rev++; try { win.webContents.send('store-changed', rev); } catch (e) {} } return r; };
   if (process.env.PALM_DEMO) await loadDemo();
   const port = Number(process.env.PALM_MCP_PORT || 19789);
   try {
@@ -62,6 +66,9 @@ async function boot() {
   if (process.env.PALM_SMOKE) {
     const n = await win.webContents.executeJavaScript("window.palmier.state().then(s => s.sequences.length)");
     console.log("SMOKE-STATE-SEQ", n);
+    const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; if (!c) return 'no-clip'; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
+    console.log("SMOKE-UI-OP", ui);
+    console.log("SMOKE-GEOM", await win.webContents.executeJavaScript("typeof (window.palmier.geom() || {}).pxToFrame"));
     console.log("BOOT-OK");
     app.quit();
   }
@@ -69,3 +76,7 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
+
+
