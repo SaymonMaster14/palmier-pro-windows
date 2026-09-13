@@ -1,0 +1,35 @@
+﻿import test from "node:test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createProject, createSequence, addTrack } from "../model.js";
+import { EditorStore } from "../store.js";
+import { exportSequence, validateExport } from "../export.js";
+const run = (args: string[]): Promise<void> => new Promise((res, rej) => { const ch = spawn("ffmpeg", args, { windowsHide: true }); let e = ""; ch.stderr.on("data", (d) => e += d); ch.on("error", rej); ch.on("close", (c) => (c === 0 ? res() : rej(new Error("ffmpeg exit " + c + ": " + e.slice(0,200))))); });
+function redness(file: string, ss: number): Promise<number> { return new Promise((res, rej) => { const ch = spawn("ffmpeg", ["-v", "error", "-ss", String(ss), "-i", file, "-frames:v", "1", "-vf", "scale=32:32", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"], { windowsHide: true }); const bufs: Buffer[] = []; ch.stdout.on("data", (d) => bufs.push(d)); ch.on("error", rej); ch.on("close", (c) => { if (c !== 0) { rej(new Error("dec")); return; } const b = Buffer.concat(bufs); let r = 0; for (let i = 0; i < b.length; i += 3) r += b[i] - (b[i+1] + b[i+2]) / 2; res(r / 1024); }); }); }
+test("overlay opacity hold keys step in export", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "palm-ok-"));
+  const blue = join(dir, "blue.mp4"), red = join(dir, "red.png");
+  await run(["-v", "error", "-f", "lavfi", "-i", "color=c=blue:size=320x240:rate=30:duration=2", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-y", blue]);
+  await run(["-v", "error", "-f", "lavfi", "-i", "color=c=red:size=320x240:duration=1", "-frames:v", "1", "-y", red]);
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject("ok"));
+  const seq = createSequence(st.project, "s", fps, 320, 240);
+  const v1 = addTrack(seq, "video", "V1");
+  const v2 = addTrack(seq, "video", "V2");
+  st.addMedia({ path: blue, kind: "video", name: "b", durationFrames: 60, fps });
+  st.addMedia({ path: red, kind: "image", name: "r", durationFrames: 60, fps, width: 320, height: 240 });
+  const [bId, rId] = st.project.media.map((m) => m.id);
+  st.placeClip(seq.id, v1.id, { kind: "video", assetId: bId, startFrame: 0, durationFrames: 60, name: "b" });
+  const ov = st.placeClip(seq.id, v2.id, { kind: "image", assetId: rId, startFrame: 0, durationFrames: 60, name: "o" }).ids[0];
+  st.setKeyframe(seq.id, ov, "opacity", { frame: 0, value: 0, interpolation: "hold" });
+  st.setKeyframe(seq.id, ov, "opacity", { frame: 30, value: 1, interpolation: "hold" });
+  const out = join(dir, "o.mp4");
+  const ex = await exportSequence(st.project, seq.id, out);
+  const v = await validateExport(out, ex.durationSec, false);
+  assert.ok(v.ok, v.details);
+  const early = await redness(out, 0.5), late = await redness(out, 1.5);
+  assert.ok(late > early + 20, "red steps in: " + early + " vs " + late);
+});

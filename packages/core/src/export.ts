@@ -3,6 +3,7 @@ import { stat } from 'node:fs/promises';
 import { framesToSeconds } from './time.js';
 import { sequenceDurationFrames, type Clip, type Project, type Sequence } from './model.js';
 import { volumeExpr } from './keyexpr.js';
+import { evaluateKeyframes } from './model.js';
 import { probeMedia } from './media.js';
 
 export interface ExportResult { outPath: string; durationSec: number; bytes: number; warnings: string[] }
@@ -95,14 +96,18 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   let vlabel = '[vbase]';
   let k = 0;
   for (const c of overlays) {
+    const keys = (c.opacityKeys ?? []).filter((kf) => kf.frame >= c.startFrame && kf.frame <= c.startFrame + c.durationFrames);
+    const spans: Array<{ from: number; to: number; aa: number }> = keys.length ? (() => { const cuts = [c.startFrame, ...keys.map((kf) => kf.frame), c.startFrame + c.durationFrames].filter((v, ix, a) => a.indexOf(v) === ix).sort((a, b) => a - b); const r: Array<{ from: number; to: number; aa: number }> = []; for (let si = 0; si < cuts.length - 1; si++) { if (cuts[si + 1] <= cuts[si]) continue; r.push({ from: cuts[si], to: cuts[si + 1], aa: evaluateKeyframes(c.opacityKeys ?? [], cuts[si], c.opacity) }); } return r; })() : [{ from: c.startFrame, to: c.startFrame + c.durationFrames, aa: c.opacity }];
     const inp = await forAsset(c.assetId, true);
     const sc = `scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}`;
-    const op = c.opacity < 1 ? `,format=rgba,colorchannelmixer=aa=${c.opacity}` : '';
-    filters.push(`[${inp.idx}:v]${sc}${op}${vf(c)},setsar=1[ov${k}]`);
     const x = `${W}/2-w/2+(${c.transform.x})`, y = `${H}/2-h/2+(${c.transform.y})`;
-    const out = `[vtmp${k}]`;
-    filters.push(`${vlabel}[ov${k}]overlay=x='${x}':y='${y}':enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'${out}`);
-    vlabel = out; k++;
+    for (const sp of spans) {
+      const oo = sp.aa < 1 ? `,format=rgba,colorchannelmixer=aa=${sp.aa}` : '';
+      filters.push(`[${inp.idx}:v]${sc}${oo}${vf(c)},setsar=1[ov${k}]`);
+      const out = `[vtmp${k}]`;
+      filters.push(vlabel + '[ov' + k + ']overlay=x=' + String.fromCharCode(39) + x + String.fromCharCode(39) + ':y=' + String.fromCharCode(39) + y + String.fromCharCode(39) + ':enable=' + String.fromCharCode(39) + 'between(t,' + t(sp.from) + ',' + t(sp.to) + ')' + String.fromCharCode(39) + out);
+      vlabel = out; k++;
+    }
   }
   // Text burn-in.
   for (const c of s.clips.filter(c => c.kind === 'text' && (c.text ?? '').length)) {
@@ -207,6 +212,7 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
 
 
 

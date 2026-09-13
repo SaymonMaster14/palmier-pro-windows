@@ -179,3 +179,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 30 evidence
 
 - Volume keyframes in export: per-frame volume expressions (eval=frame required on this FFmpeg build), verified by volumedetect ramp. Overlapping audio now mixes (adelay+amix clusters) instead of concatenating; overlap stays 3s with audio. Suite 26/26 + slice green.
+
+## 2026-09-13 turn 31 evidence
+
+- Overlay opacity keys in export: colorchannelmixer proven init-only (no t/n per-frame eval), so HOLD steps via per-span sub-overlays; linear/smooth documented as hold-approximated in export. Step proven by redness (late > early + 20). Suite 27/27 + slice green.
