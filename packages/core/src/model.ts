@@ -131,3 +131,22 @@ export function snapClipStart(seqClips: Array<{ id: string; trackId: string; sta
 
 
 
+export type OverwriteAction =
+  | { type: 'remove'; clipId: string }
+  | { type: 'trimEnd'; clipId: string; newDuration: number }
+  | { type: 'trimStart'; clipId: string; newStartFrame: number; newSourceIn: number; newDuration: number }
+  | { type: 'split'; clipId: string; leftDuration: number; rightStartFrame: number; rightSourceIn: number; rightDuration: number };
+// Overwrite (mirrors upstream OverwriteEngine): pure plan to clear [regionStart, regionEnd).
+export function computeOverwrite(clips: Array<{ id: string; startFrame: number; durationFrames: number; sourceInFrame: number }>, regionStart: number, regionEnd: number): OverwriteAction[] {
+  if (regionEnd <= regionStart) return [];
+  const out: OverwriteAction[] = [];
+  for (const c of clips) {
+    const cs = c.startFrame, ce = cs + c.durationFrames;
+    if (ce <= regionStart || cs >= regionEnd) continue;
+    if (cs >= regionStart && ce <= regionEnd) out.push({ type: 'remove', clipId: c.id });
+    else if (cs < regionStart && ce > regionEnd) out.push({ type: 'split', clipId: c.id, leftDuration: regionStart - cs, rightStartFrame: regionEnd, rightSourceIn: c.sourceInFrame + (regionEnd - cs), rightDuration: ce - regionEnd });
+    else if (cs < regionStart) out.push({ type: 'trimEnd', clipId: c.id, newDuration: regionStart - cs });
+    else out.push({ type: 'trimStart', clipId: c.id, newStartFrame: regionEnd, newSourceIn: c.sourceInFrame + (regionEnd - cs), newDuration: ce - regionEnd });
+  }
+  return out;
+}

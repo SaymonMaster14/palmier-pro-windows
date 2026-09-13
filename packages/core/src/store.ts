@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, computeRippleShifts, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, computeOverwrite, computeRippleShifts, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -60,6 +60,23 @@ export class EditorStore {
       const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'placeClip' };
+    });
+  }
+  overwritePlace(seqId: string, trackId: string, o: { kind: ClipKind; assetId?: string; startFrame: number; durationFrames: number; sourceInFrame?: number; name: string; text?: string }): Receipt {
+    return this.exec("overwritePlace", (p) => {
+      const s = req_seq(p, seqId);
+      if (!s.tracks.some((x) => x.id === trackId)) throw new Error("track not found");
+      const regionEnd = o.startFrame + o.durationFrames;
+      for (const a of computeOverwrite(trackClips(s, trackId), o.startFrame, regionEnd)) {
+        const c = req_clip(s, a.clipId);
+        if (a.type === "remove") s.clips = s.clips.filter((x) => x.id !== a.clipId);
+        else if (a.type === "trimEnd") c.durationFrames = a.newDuration;
+        else if (a.type === "trimStart") { c.startFrame = a.newStartFrame; c.sourceInFrame = a.newSourceIn; c.durationFrames = a.newDuration; }
+        else { const right: Clip = { ...structuredClone(c), id: uid(), startFrame: a.rightStartFrame, durationFrames: a.rightDuration, sourceInFrame: a.rightSourceIn }; c.durationFrames = a.leftDuration; s.clips.push(right); }
+      }
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transform: defaultTransform(), text: o.text };
+      s.clips.push(c);
+      return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: "overwritePlace" };
     });
   }
   moveClip(seqId: string, clipId: string, toTrackId: string, toStart: number): Receipt {
@@ -196,6 +213,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 

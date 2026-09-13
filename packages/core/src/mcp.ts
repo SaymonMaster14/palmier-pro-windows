@@ -49,6 +49,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     case 'search': return searchProject(store.project, q['query'] as string);
     case 'import': return importAndPlace(store, q['paths'] as string[]);
     case 'addTrack': return store.addTrack(seqId as string, q['kind'] as 'video' | 'audio', q['name'] as string);
+    case 'overwritePlace': return store.overwritePlace(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
     case 'trimEnd': return store.trimEnd(seqId as string, q['clipId'] as string, q['durationFrames'] as number);
@@ -75,6 +76,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     default: throw new Error(`unknown method ${method}`);
   }
 }
+
 
 
 

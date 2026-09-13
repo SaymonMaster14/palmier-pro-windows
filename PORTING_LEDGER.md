@@ -123,3 +123,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 15 evidence
 
 - Fades: Clip fadeInFrames/fadeOutFrames (validated, sum<=duration, backfilled ?? 0 for old projects), store.setFade, export video fade(alpha) + afade, MCP + main OPS + inspector seconds inputs. Filter-graph unit + real FADE-EXPORT ok dur=3.000s. Suite 16/16.
+
+## 2026-09-13 turn 16 evidence
+
+- Overwrite (upstream OverwriteEngine parity): pure computeOverwrite (remove/trimEnd/trimStart/split), store.overwritePlace as one undo unit, MCP + main OPS + Alt+drag in renderer. Unit covers all four actions + region math + undo. Suite 18/18.
