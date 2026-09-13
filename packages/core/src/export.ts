@@ -17,6 +17,8 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   const W = s.width, H = s.height;
   const fpsStr = `${s.fps.num}/${s.fps.den}`;
   const t = (f: number) => framesToSeconds(f, s.fps).toFixed(6);
+  const vf = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,fade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}:alpha=1` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,fade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}:alpha=1` : ""; return fi + fo; };
+  const af = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,afade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,afade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}` : ""; return fi + fo; };
 
   // Distinct file inputs (probed once). Images loop; AV files plain.
   const inputs: InputInfo[] = [];
@@ -65,10 +67,10 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const l = `[vs${n++}]`;
     if (c.kind === 'image') {
       const sc = c.transform.scaleX !== 1 || c.transform.scaleY !== 1 ? `,scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}` : '';
-      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${vf(c)}${l}`);
     } else {
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
-      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${vf(c)}${l}`);
     }
     vsegs.push(l);
     cursor = c.startFrame + c.durationFrames;
@@ -84,7 +86,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const inp = await forAsset(c.assetId, true);
     const sc = `scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}`;
     const op = c.opacity < 1 ? `,format=rgba,colorchannelmixer=aa=${c.opacity}` : '';
-    filters.push(`[${inp.idx}:v]${sc}${op},setsar=1[ov${k}]`);
+    filters.push(`[${inp.idx}:v]${sc}${op}${vf(c)},setsar=1[ov${k}]`);
     const x = `${W}/2-w/2+(${c.transform.x})`, y = `${H}/2-h/2+(${c.transform.y})`;
     const out = `[vtmp${k}]`;
     filters.push(`${vlabel}[ov${k}]overlay=x='${x}':y='${y}':enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'${out}`);
@@ -116,7 +118,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
       const vol = c.muted ? 0 : c.volume;
       const l = `[as${an++}]`;
-      filters.push(`[${inp.idx}:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol},aresample=48000,aformat=channel_layouts=stereo${l}`);
+      filters.push(`[${inp.idx}:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol},aresample=48000,aformat=channel_layouts=stereo${af(c)}${l}`);
       asegs.push(l);
       ac = Math.max(ac, c.startFrame + c.durationFrames);
     }
@@ -170,4 +172,5 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
 

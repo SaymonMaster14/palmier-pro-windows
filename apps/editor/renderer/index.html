@@ -38,7 +38,7 @@ async function renderInspector() {
   if (SEL === renderInspector.sel) return; renderInspector.sel = SEL;
   const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === SEL);
   if (!c) { box.textContent = "select a clip"; return; }
-  box.innerHTML = "clip " + c.name + "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> <button id=iApply>Apply</button>";
+  box.innerHTML = "clip " + c.name + "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> <button id=iApply>Apply</button>";
   const set = (id, v) => { document.querySelector(id).value = v; };
   set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iO", c.opacity); set("#iV", c.volume);
   document.querySelector("#iApply").addEventListener("click", async () => {
@@ -46,7 +46,8 @@ async function renderInspector() {
     const r1 = await window.palmier.op("setTransform", [SEQ.id, c.id, { x: num("#iX"), y: num("#iY"), scaleX: num("#iS"), scaleY: num("#iS") }]);
     const r2 = await window.palmier.op("setOpacity", [SEQ.id, c.id, num("#iO")]);
     const r3 = await window.palmier.op("setVolume", [SEQ.id, c.id, num("#iV")]);
-    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
+    const r4 = await window.palmier.op("setFade", [SEQ.id, c.id, Math.round(num("#iFi") * FPS), Math.round(num("#iFo") * FPS)]);
+    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
   });
 }
 async function markActive() {
@@ -131,6 +132,7 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
 
 
 

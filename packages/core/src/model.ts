@@ -13,7 +13,7 @@ export interface Transform { x: number; y: number; scaleX: number; scaleY: numbe
 export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
-  speed: number; opacity: number; volume: number; muted: boolean;
+  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number;
   transform: Transform; text?: string; fontSize?: number; color?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
@@ -128,5 +128,6 @@ export function snapClipStart(seqClips: Array<{ id: string; trackId: string; sta
   if (!hit) return Math.max(rawStart, 0);
   return Math.max(hit.probeOffset === 0 ? hit.frame : hit.frame - clip.durationFrames, 0);
 }
+
 
 

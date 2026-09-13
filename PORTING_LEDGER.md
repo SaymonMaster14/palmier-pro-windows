@@ -119,3 +119,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 14 evidence
 
 - Search (first slice): core searchProject/searchSequence (media names+kinds, clip names+text, marker names+comments, ranked, capped), MCP search case, renderer media filter box. Unit + SMOKE-SEARCH 4|4 of 4 + live SEARCH-MCP-PASS n=2. Visual/transcript indexes stay deferred.
+
+## 2026-09-13 turn 15 evidence
+
+- Fades: Clip fadeInFrames/fadeOutFrames (validated, sum<=duration, backfilled ?? 0 for old projects), store.setFade, export video fade(alpha) + afade, MCP + main OPS + inspector seconds inputs. Filter-graph unit + real FADE-EXPORT ok dur=3.000s. Suite 16/16.

@@ -57,7 +57,7 @@ export class EditorStore {
       for (const c of trackClips(s, trackId))
         if (rangeOverlaps(o.startFrame, o.startFrame + o.durationFrames, c.startFrame, c.startFrame + c.durationFrames))
           throw new Error(`overlap with clip ${c.id}`);
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'placeClip' };
     });
@@ -159,6 +159,16 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setTransform" };
     });
   }
+  setFade(seqId: string, clipId: string, fadeInFrames: number, fadeOutFrames: number): Receipt {
+    return this.exec("setFade", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      for (const v of [fadeInFrames, fadeOutFrames]) if (!Number.isInteger(v) || v < 0) throw new Error("bad fade");
+      if (fadeInFrames + fadeOutFrames > c.durationFrames) throw new Error("fades exceed clip duration");
+      if ((c.fadeInFrames ?? 0) === fadeInFrames && (c.fadeOutFrames ?? 0) === fadeOutFrames) return { noop: true };
+      c.fadeInFrames = fadeInFrames; c.fadeOutFrames = fadeOutFrames;
+      return { ok: true, ids: [c.id], warnings: [], label: "setFade" };
+    });
+  }
   setOpacity(seqId: string, clipId: string, opacity: number): Receipt {
     return this.exec("setOpacity", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -186,6 +196,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 
