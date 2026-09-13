@@ -441,3 +441,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - ROOT CAUSE fix with a two-turn history: keyList compared clip id to the SEL Set object (x.id === SEL), so it always threw, silently unbinding Apply and both key buttons (async rejection invisible to the old error hook). That single line explains KEYUI stuck at 0 and FONT c1=none across many turns. Fixed to sel0(). Added a permanent unhandledrejection hook to __errs so this bug class can never hide again (it immediately surfaced a second instance: direct .value assignments on kind-hidden inputs, also fixed null-safe).
 - Honest probe correction: my first INSP assertion searched serialized HTML for fsec-t>Transform while browsers serialize fsec-t">Transform (quote) — the app was right, the probe wrong; fixed the assertion, not the app. Also fixed a PowerShell && slip and a quote-in-quote main.js breakage during the turn, both caught by node --check before any run.
 - Proof: SMOKE-KEYUI 0->1, SMOKE-FONT c1 none->sans, SMOKE-INSP transform=true text=false errs=0, SMOKE-ERRS [] across the full run; everything else at baseline with BOOT-OK.
+
+## 2026-09-13 turn 70 packaging
+
+- Repackaged contextual-inspector tree: portable exe fresh 85,298,526b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
