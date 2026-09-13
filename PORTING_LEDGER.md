@@ -167,3 +167,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 27 evidence
 
 - Local command agent: core parseAgentCommand (split/marker/text/volume/delete/ripple/undo/redo with context validation + honest errors), agentRun IPC on canonical ops, chat panel with receipts. Unit + SMOKE-AGENT marker: |error. LLM provider explicitly deferred.
+
+## 2026-09-13 turn 28 evidence
+
+- Preview rate: 0.5/1/1.5/2x selector driving video.playbackRate (browser keeps AV sync; timeline mapping already time-based). Live SMOKE-RATE 2.
