@@ -254,3 +254,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 48 evidence
 
 - Queue cancel in-app: long export started via queue, cancelled mid-flight, status cancelled. Live SMOKE-QCANCEL cancelled.
+
+## 2026-09-13 turn 49 evidence
+
+- Repackaged current tree (portable fresh); FINAL-E2E-PASS bytes=97690 on packaged app.
