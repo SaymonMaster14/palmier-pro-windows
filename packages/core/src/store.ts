@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, FONT_FAMILIES, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, FONT_FAMILIES, TEXT_ANIMS, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -259,6 +259,16 @@ export class EditorStore {
       if (JSON.stringify({ fontSize: c.fontSize, color: c.color, textAlign: c.textAlign, textBg: c.textBg, fontFamily: c.fontFamily, fontBold: c.fontBold, fontItalic: c.fontItalic }) === JSON.stringify({ fontSize: nx.fontSize, color: nx.color, textAlign: nx.textAlign, textBg: nx.textBg, fontFamily: nx.fontFamily, fontBold: nx.fontBold, fontItalic: nx.fontItalic })) return { noop: true };
       Object.assign(c, nx);
       return { ok: true, ids: [c.id], warnings: [], label: 'setTextStyle' };
+    });
+  }
+  setTextAnim(seqId: string, clipId: string, anim: string): Receipt {
+    return this.exec('setTextAnim', (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (c.kind !== 'text') throw new Error('not a text clip');
+      if (TEXT_ANIMS.indexOf(anim) < 0) throw new Error('bad text anim');
+      if ((c.textAnim ?? 'none') === anim) return { noop: true };
+      c.textAnim = anim;
+      return { ok: true, ids: [c.id], warnings: [], label: 'setTextAnim' };
     });
   }
   setCrop(seqId: string, clipId: string, crop: { l: number; t: number; r: number; b: number }): Receipt {

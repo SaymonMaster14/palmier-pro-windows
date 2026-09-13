@@ -14,7 +14,7 @@ let notify = () => {};
   const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
   const readSettings = () => { let s = {}; try { s = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) {} return { mcpPort: 19789, exportDir: "", ...s }; };
 
-const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags", "deleteClips", "moveClips", "setTextStyle", "linkClips", "unlinkClips"];
+const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags", "deleteClips", "moveClips", "setTextStyle", "setTextAnim", "linkClips", "unlinkClips"];
 
 async function loadDemo() {
   try {

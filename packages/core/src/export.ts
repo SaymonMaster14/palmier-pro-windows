@@ -132,7 +132,12 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const fc = (c.color ?? 'white').replace(/^#/, '0x');
     const ff = resolveFontFile(c.fontFamily, c.fontBold, c.fontItalic);
     const ffOpt = ff ? ":fontfile='" + fontFilterPath(ff) + "'" : '';
-    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}${ffOpt}:x=${c.textAlign === 'left' ? 20 : c.textAlign === 'right' ? '(w-text_w-20)' : '(w-text_w)/2'}:y=(h-text_h)/2${c.textBg ? ':box=1:boxcolor=black@0.6:boxborderw=8' : ''}:enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'[vtxt${k}]`);
+    const t0 = t(c.startFrame), t1 = t(c.startFrame + c.durationFrames);
+    const aD = Math.min(0.4, Math.max(framesToSeconds(c.durationFrames, s.fps) / 2, 0.05)).toFixed(6);
+    const tAnim = c.textAnim ?? 'none';
+    const animA = tAnim === 'popIn' ? ":alpha='if(lt(t," + t0 + "),0,if(lt(t," + t0 + "+" + aD + "),(t-" + t0 + ")/" + aD + ",1))'" : '';
+    const animY = tAnim === 'slideUp' ? "'(h-text_h)/2+40*max(0,1-(t-" + t0 + ")/" + aD + ")'" : '(h-text_h)/2';
+    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}${ffOpt}${animA}:x=${c.textAlign === 'left' ? 20 : c.textAlign === 'right' ? '(w-text_w-20)' : '(w-text_w)/2'}:y=${animY}${c.textBg ? ':box=1:boxcolor=black@0.6:boxborderw=8' : ''}:enable='between(t,${t0},${t1})'[vtxt${k}]`);
     vlabel = `[vtxt${k}]`; k++;
   }
   // Audio walk with silence gap fill (uniform 48kHz stereo for concat).
