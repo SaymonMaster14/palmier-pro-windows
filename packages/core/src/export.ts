@@ -1,117 +1,167 @@
 ﻿import { spawn, type ChildProcess } from 'node:child_process';
 import { stat } from 'node:fs/promises';
 import { framesToSeconds } from './time.js';
-import { sequenceDurationFrames, type Project, type Sequence } from './model.js';
+import { sequenceDurationFrames, type Clip, type Project, type Sequence } from './model.js';
 import { probeMedia } from './media.js';
 
-export interface ExportResult { outPath: string; durationSec: number; bytes: number }
-// Shared rendering semantics: export resolves the same start/duration/sourceIn math as preview (videoClipAt).
-export function buildFfmpegArgs(p: Project, s: Sequence, outPath: string): { args: string[]; expectSec: number; expectAudio: boolean } {
+export interface ExportResult { outPath: string; durationSec: number; bytes: number; warnings: string[] }
+interface InputInfo { idx: number; path: string; loop: boolean; hasVideo: boolean; hasAudio: boolean }
+// Export resolves the same start/duration/sourceIn math as preview (videoClipAt).
+// Timeline gaps are rendered as black/silence so export duration matches the model.
+export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string): Promise<{ args: string[]; expectSec: number; expectAudio: boolean; warnings: string[] }> {
   const durFrames = sequenceDurationFrames(s);
   if (durFrames <= 0) throw new Error('empty timeline: nothing to export');
+  const warnings: string[] = [];
   const expectSec = framesToSeconds(durFrames, s.fps);
-  const byAsset = new Map<string, string>();
-  for (const m of p.media) byAsset.set(m.id, m.path);
-  const vclips = s.clips.filter(c => c.kind === 'video' || c.kind === 'image').sort((a, b) => a.startFrame - b.startFrame);
-  const aclips = s.clips.filter(c => c.kind === 'video' || c.kind === 'audio').sort((a, b) => a.startFrame - b.startFrame);
-  if (!vclips.length) throw new Error('no video/image clips');
-  const base = vclips[0];
-  const basePath = base.assetId ? byAsset.get(base.assetId) : undefined;
-  if (!basePath) throw new Error('base clip has no media file');
-  // v1 scope: single video-track cuts from one source file + image overlays + text + audio mix.
-  const multiSource = vclips.some(c => c.kind === 'video' && byAsset.get(c.assetId ?? '') !== basePath);
-  if (multiSource) throw new Error('multi-source video export not yet supported in slice (ledger #13)');
+  const byAsset = new Map(p.media.map(m => [m.id, m.path]));
   const W = s.width, H = s.height;
+  const fpsStr = `${s.fps.num}/${s.fps.den}`;
+  const t = (f: number) => framesToSeconds(f, s.fps).toFixed(6);
+
+  // Distinct file inputs (probed once). Images loop; AV files plain.
+  const inputs: InputInfo[] = [];
+  const forAsset = async (assetId: string | undefined, loop: boolean): Promise<InputInfo> => {
+    const path = assetId ? byAsset.get(assetId) : undefined;
+    if (!path) throw new Error('clip references missing media');
+    const hit = inputs.find(i => i.path === path && i.loop === loop);
+    if (hit) return hit;
+    const pr = await probeMedia(path);
+    const info: InputInfo = { idx: inputs.length, path, loop, hasVideo: pr.hasVideo, hasAudio: pr.hasAudio };
+    inputs.push(info);
+    return info;
+  };
+
+  const order = new Map(s.tracks.map((x, i) => [x.id, i]));
+  const lowestVideo = Math.min(...s.tracks.filter(x => x.kind === 'video').map(x => order.get(x.id) ?? 0));
+  const videoClips = s.clips.filter(c => c.kind === 'video').sort((a, b) => a.startFrame - b.startFrame);
+  const imageClips = s.clips.filter(c => c.kind === 'image').sort((a, b) => a.startFrame - b.startFrame);
+  // Base layer: video clips + lowest-track images that do not overlap video. Others overlay.
+  const base: Clip[] = [...videoClips];
+  const overlays: Clip[] = [];
+  for (const c of imageClips) {
+    const onLowest = (order.get(c.trackId) ?? 99) === lowestVideo;
+    const overlapsVideo = videoClips.some(v => v.startFrame < c.startFrame + c.durationFrames && c.startFrame < v.startFrame + v.durationFrames);
+    if (onLowest && !overlapsVideo) base.push(c); else overlays.push(c);
+  }
+  base.sort((a, b) => a.startFrame - b.startFrame);
+  for (let i = 1; i < base.length; i++)
+    if (base[i].startFrame < base[i - 1].startFrame + base[i - 1].durationFrames)
+      throw new Error('overlapping base-layer clips: put PiP content on a higher track');
+  if (!base.length) throw new Error('no video/image clips');
+
   const filters: string[] = [];
-  const t0 = (f: number) => framesToSeconds(f, s.fps).toFixed(6);
-  // Base: trim each video segment from the single input, concat.
-  const vsegs = vclips.filter(c => c.kind === 'video').map((c, i) => {
-    const ss = framesToSeconds(c.sourceInFrame, s.fps);
-    const to = framesToSeconds(c.sourceInFrame + c.durationFrames, s.fps);
-    filters.push(`[0:v]trim=start=${ss.toFixed(6)}:end=${to.toFixed(6)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}[vs${i}]`);
-    return `[vs${i}]`;
-  });
-  let vchain = '';
-  if (vsegs.length === 1) vchain = `${vsegs[0]}setsar=1[vbase]`;
-  else if (vsegs.length > 1) vchain = `${vsegs.join('')}concat=n=${vsegs.length}:v=1:a=0,setsar=1[vbase]`;
-  else vchain = `color=c=black:s=${W}x${H}:d=${expectSec.toFixed(3)}:r=${(s.fps.num / s.fps.den).toFixed(3)}[vbase]`;
-  filters.push(vchain);
-  const inputs = ['-i', basePath];
-  let vlabel = '[vbase]'; let inputIdx = 1;
-  // Image overlays (higher tracks): loop single image, scale, opacity, overlay with timeline enable.
-  for (const c of vclips.filter(c => c.kind === 'image')) {
-    const mp = byAsset.get(c.assetId ?? '');
-    if (!mp) throw new Error(`overlay clip ${c.id} missing media`);
-    inputs.push('-loop', '1', '-i', mp);
+  // Base video walk with black gap fill.
+  const vsegs: string[] = [];
+  let cursor = 0, n = 0;
+  const black = (frames: number): string => {
+    const l = `[blk${n++}]`;
+    filters.push(`color=c=black:s=${W}x${H}:r=${fpsStr}:d=${t(frames)}${l}`);
+    return l;
+  };
+  for (const c of base) {
+    if (c.startFrame > cursor) vsegs.push(black(c.startFrame - cursor));
+    const inp = await forAsset(c.assetId, c.kind === 'image');
+    if (!inp.hasVideo) throw new Error(`asset has no video stream: ${inp.path}`);
+    const l = `[vs${n++}]`;
+    if (c.kind === 'image') {
+      const sc = c.transform.scaleX !== 1 || c.transform.scaleY !== 1 ? `,scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}` : '';
+      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${l}`);
+    } else {
+      const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
+      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${l}`);
+    }
+    vsegs.push(l);
+    cursor = c.startFrame + c.durationFrames;
+  }
+  if (cursor < durFrames) vsegs.push(black(durFrames - cursor));
+  filters.push(`${vsegs.join('')}concat=n=${vsegs.length}:v=1:a=0,setsar=1[vbase]`);
+
+  // Higher-track image overlays.
+
+  let vlabel = '[vbase]';
+  let k = 0;
+  for (const c of overlays) {
+    const inp = await forAsset(c.assetId, true);
     const sc = `scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}`;
     const op = c.opacity < 1 ? `,format=rgba,colorchannelmixer=aa=${c.opacity}` : '';
-    filters.push(`[${inputIdx}:v]${sc}${op},setsar=1[ov${inputIdx}]`);
-    const st = t0(c.startFrame), en = t0(c.startFrame + c.durationFrames);
+    filters.push(`[${inp.idx}:v]${sc}${op},setsar=1[ov${k}]`);
     const x = `${W}/2-w/2+(${c.transform.x})`, y = `${H}/2-h/2+(${c.transform.y})`;
-    const out = `[vtmp${inputIdx}]`;
-    filters.push(`${vlabel}[ov${inputIdx}]overlay=x='${x}':y='${y}':enable='between(t,${st},${en})'${out}`);
-    vlabel = out; inputIdx++;
+    const out = `[vtmp${k}]`;
+    filters.push(`${vlabel}[ov${k}]overlay=x='${x}':y='${y}':enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'${out}`);
+    vlabel = out; k++;
   }
-  // Text burn-in (drawtext; fontfile omitted -> FFmpeg default).
+  // Text burn-in.
   for (const c of s.clips.filter(c => c.kind === 'text' && (c.text ?? '').length)) {
-    const st = t0(c.startFrame), en = t0(c.startFrame + c.durationFrames);
     const txt = (c.text ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
     const fs = c.fontSize ?? 48;
     const fc = (c.color ?? 'white').replace(/^#/, '0x');
-    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,${st},${en})'[vtxt${inputIdx}]`);
-    vlabel = `[vtxt${inputIdx}]`; inputIdx++;
+    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'[vtxt${k}]`);
+    vlabel = `[vtxt${k}]`; k++;
   }
-  // Audio: per-clip atrim from input 0, volume, concat, apad to timeline length.
+  // Audio walk with silence gap fill (uniform 48kHz stereo for concat).
+  const aclips = s.clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.assetId).sort((a, b) => a.startFrame - b.startFrame);
   let alabel = '';
-  const asegs = aclips.filter(c => { const m = p.media.find(mm => mm.id === c.assetId); return m && m.path === basePath; });
-  if (asegs.length) {
-    asegs.forEach((c, i) => {
-      const ss = framesToSeconds(c.sourceInFrame, s.fps).toFixed(6);
-      const to = framesToSeconds(c.sourceInFrame + c.durationFrames, s.fps).toFixed(6);
+  if (aclips.length) {
+    const asegs: string[] = [];
+    let ac = 0, an = 0;
+    const silence = (frames: number): string => {
+      const l = `[as${an++}]`;
+      filters.push(`anullsrc=r=48000:cl=stereo:d=${t(frames)}${l}`);
+      return l;
+    };
+    for (const c of aclips) {
+      const inp = await forAsset(c.assetId, false);
+      if (!inp.hasAudio) { warnings.push(`clip ${c.id} skipped in audio mix (no audio stream)`); continue; }
+      if (c.startFrame > ac) asegs.push(silence(c.startFrame - ac));
+      const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
       const vol = c.muted ? 0 : c.volume;
-      filters.push(`[0:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol}[as${i}]`);
-    });
-    if (asegs.length === 1) alabel = '[as0]';
-    else { filters.push(`${asegs.map((_, i) => `[as${i}]`).join('')}concat=n=${asegs.length}:v=0:a=1[amix]`); alabel = '[amix]'; }
-    filters.push(`${alabel}apad,atrim=0:${expectSec.toFixed(6)}[aout]`);
-    alabel = '[aout]';
+      const l = `[as${an++}]`;
+      filters.push(`[${inp.idx}:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol},aresample=48000,aformat=channel_layouts=stereo${l}`);
+      asegs.push(l);
+      ac = Math.max(ac, c.startFrame + c.durationFrames);
+    }
+    const tailTarget = Math.max(durFrames, ac);
+    if (ac < tailTarget) asegs.push(silence(tailTarget - ac));
+    if (asegs.length === 1) alabel = asegs[0];
+    else if (asegs.length > 1) { filters.push(`${asegs.join('')}concat=n=${asegs.length}:v=0:a=1[amix]`); alabel = '[amix]'; }
+    if (alabel) { filters.push(`${alabel}atrim=0:${expectSec.toFixed(6)},asetpts=PTS-STARTPTS[aout]`); alabel = '[aout]'; }
   }
   const expectAudio = !!alabel;
-  const args = [...inputs, '-filter_complex', filters.join(';'), '-map', vlabel, ...(expectAudio ? ['-map', alabel] : []),
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', `${s.fps.num}/${s.fps.den}`,
+  const inArgs: string[] = []; for (const i of inputs) inArgs.push(...(i.loop ? ["-loop", "1", "-t", expectSec.toFixed(3)] : []), "-i", i.path); const finalArgs = [...inArgs, "-filter_complex", filters.join(";"), "-map", vlabel, ...(expectAudio ? ["-map", alabel] : []),
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', fpsStr,
     ...(expectAudio ? ['-c:a', 'aac', '-b:a', '128k'] : []),
-    '-shortest', '-movflags', '+faststart', '-y', outPath];
-  return { args, expectSec, expectAudio };
+    '-movflags', '+faststart', '-y', outPath];
+  return { args: finalArgs, expectSec, expectAudio, warnings };
 }
 
-export function exportSequence(p: Project, seqId: string, outPath: string, signal?: AbortSignal): Promise<ExportResult> {
+export async function exportSequence(p: Project, seqId: string, outPath: string, signal?: AbortSignal): Promise<ExportResult> {
   const s = p.sequences.find(x => x.id === seqId);
-  if (!s) return Promise.reject(new Error('sequence not found'));
-  const { args, expectSec } = buildFfmpegArgs(p, s, outPath);
-  return new Promise((res, rej) => {
+  if (!s) throw new Error('sequence not found');
+  const { args, expectSec, warnings } = await buildFfmpegArgs(p, s, outPath);
+  for (const w of warnings) console.warn('export-warn', w);
+  await new Promise<void>((res, rej) => {
     let child: ChildProcess;
     try { child = spawn('ffmpeg', ['-v', 'error', ...args], { windowsHide: true }); }
     catch (e) { rej(e); return; }
     const onAbort = () => { try { child.kill(); } catch { /* noop */ } rej(new Error('export cancelled')); };
     signal?.addEventListener('abort', onAbort, { once: true });
     let err = '';
-    child.stderr?.on('data', d => err += d);
-    child.on('error', e => { signal?.removeEventListener('abort', onAbort); rej(e); });
-    child.on('close', async code => {
+    child.stderr?.on('data', (d: Buffer) => err += d);
+    child.on('error', (e: Error) => { signal?.removeEventListener('abort', onAbort); rej(e); });
+    child.on('close', (code: number) => {
       signal?.removeEventListener('abort', onAbort);
       if (code !== 0) { rej(new Error(`ffmpeg exit ${code}: ${err.slice(0, 800)}`)); return; }
-      try {
-        const st = await stat(outPath);
-        res({ outPath, durationSec: expectSec, bytes: st.size });
-      } catch (e) { rej(e); }
+      res();
     });
   });
+  const st = await stat(outPath);
+  return { outPath, durationSec: expectSec, bytes: st.size, warnings };
 }
-// ffprobe validation: file exists, nonzero, duration tolerance, streams present, decode check via read of first frames.
+// ffprobe validation: file exists, nonzero, duration tolerance, streams present.
 export async function validateExport(outPath: string, expectSec: number, expectAudio: boolean): Promise<{ ok: boolean; details: string }> {
   const st = await stat(outPath).catch(() => undefined);
   if (!st || st.size <= 0) return { ok: false, details: 'missing or empty output' };
-  const pr = await probeMedia(outPath).catch((e) => ({ error: String(e) }) as unknown as { error: string });
+  const pr = await probeMedia(outPath).catch((e: unknown) => ({ error: String(e) }) as unknown as { error: string });
   if ('error' in (pr as object)) return { ok: false, details: `ffprobe failed: ${(pr as { error: string }).error}` };
   const got = (pr as { durationSec: number }).durationSec;
   if (Math.abs(got - expectSec) > 0.35) return { ok: false, details: `duration mismatch: got ${got.toFixed(3)}s want ${expectSec.toFixed(3)}s` };
@@ -120,3 +170,4 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+

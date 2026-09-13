@@ -50,3 +50,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - E PREVIEW: timeline->source mapping in renderer (clipAt + sourceInFrame offset), so cuts/seeks show the edit; multi-track compositing in preview still pending.
 - K MCP WRITE: now FULL for the covered paths — store mutations broadcast store-changed, renderer auto-refreshes, so MCP edits appear in the open UI. Evidence: RUN-MCP-E2E-PASS + refresh subscription in renderer.
 - Suite: 8/8 unit green; vertical slice SLICE PASS (h264+aac 3.000s); smoke BOOT-OK.
+
+## 2026-09-13 turn 4 evidence
+
+- I EXPORT: multi-source base layer (red/blue proven by frame luma: gap near-black, content +20), timeline gaps filled with black/silence so export duration matches the model, audio mix per-clip volume/mute with truthful warnings for video-only assets, still-image probe (durationSec 0 + still flag).
+- Export hang root-caused: infinite -loop image input + audio map = never-ending transcode (bisected to overlay+audio combo). Fix: bound every looped input with -t expectSec. Verified: repro exit 0, 9/9 unit green, SLICE PASS (h264+aac 3.000s).
+- Note: ffmpeg 9 emits no signalstats YAVG lines; export test computes mean luma from rawvideo in JS instead.
