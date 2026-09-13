@@ -367,3 +367,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Repackaged shortcuts+anim tree: portable exe fresh 85,292,860b, postpackage cleanup done.
 - Builder flake hit again mid-turn: first attempt died silent (0-byte nsis.7z, idle parents, no DONE, no error). Recovered per precedent: removed the 0-byte artifact, re-ran, watched 7za CPU climb to completion (DONE-0). Health signal for future packaging turns: 7za CPU must keep climbing; idle parents + 0-byte artifact = dead, rebuild.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 63 evidence (text shadow + outline)
+
+- Upstream TextStyle Shadow/Outline slice at port granularity (flags like textBg): Clip.textShadow/textOutline, setTextStyle validates/backfills/noop-aware/undoable, export adds drawtext shadow + borderw, inspector checkboxes wired through Apply, MCP pass-through.
+- Proof: unit suite 44/44 (new test: validation/noop/readback/graph tokens/real export+validate); full dev-app smoke green with the renderer change (Apply path + ERRS [] guard the new checkboxes).

@@ -49,7 +49,7 @@ export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
   speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; blend: BlendMode; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
-  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean; textAnim?: string;
+  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean; textAnim?: string; textShadow?: boolean; textOutline?: boolean;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
 export interface Sequence {

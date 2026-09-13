@@ -246,7 +246,7 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setBlend" };
     });
   }
-  setTextStyle(seqId: string, clipId: string, patch: { fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean }): Receipt {
+  setTextStyle(seqId: string, clipId: string, patch: { fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean; textShadow?: boolean; textOutline?: boolean }): Receipt {
     return this.exec('setTextStyle', (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
       if (c.kind !== 'text') throw new Error('not a text clip');
@@ -255,8 +255,10 @@ export class EditorStore {
       if (patch.fontFamily !== undefined && FONT_FAMILIES.indexOf(patch.fontFamily) < 0) throw new Error('bad font family');
       if (patch.fontBold !== undefined && typeof patch.fontBold !== 'boolean') throw new Error('bad font bold');
       if (patch.fontItalic !== undefined && typeof patch.fontItalic !== 'boolean') throw new Error('bad font italic');
-      const nx = { fontSize: patch.fontSize ?? c.fontSize ?? 48, color: patch.color ?? c.color ?? 'white', textAlign: patch.textAlign ?? c.textAlign ?? 'center', textBg: patch.textBg ?? c.textBg ?? false, fontFamily: patch.fontFamily ?? c.fontFamily ?? 'sans', fontBold: patch.fontBold ?? c.fontBold ?? false, fontItalic: patch.fontItalic ?? c.fontItalic ?? false };
-      if (JSON.stringify({ fontSize: c.fontSize, color: c.color, textAlign: c.textAlign, textBg: c.textBg, fontFamily: c.fontFamily, fontBold: c.fontBold, fontItalic: c.fontItalic }) === JSON.stringify({ fontSize: nx.fontSize, color: nx.color, textAlign: nx.textAlign, textBg: nx.textBg, fontFamily: nx.fontFamily, fontBold: nx.fontBold, fontItalic: nx.fontItalic })) return { noop: true };
+      if (patch.textShadow !== undefined && typeof patch.textShadow !== 'boolean') throw new Error('bad text shadow');
+      if (patch.textOutline !== undefined && typeof patch.textOutline !== 'boolean') throw new Error('bad text outline');
+      const nx = { fontSize: patch.fontSize ?? c.fontSize ?? 48, color: patch.color ?? c.color ?? 'white', textAlign: patch.textAlign ?? c.textAlign ?? 'center', textBg: patch.textBg ?? c.textBg ?? false, fontFamily: patch.fontFamily ?? c.fontFamily ?? 'sans', fontBold: patch.fontBold ?? c.fontBold ?? false, fontItalic: patch.fontItalic ?? c.fontItalic ?? false, textShadow: patch.textShadow ?? c.textShadow ?? false, textOutline: patch.textOutline ?? c.textOutline ?? false };
+      if (JSON.stringify({ fontSize: c.fontSize, color: c.color, textAlign: c.textAlign, textBg: c.textBg, fontFamily: c.fontFamily, fontBold: c.fontBold, fontItalic: c.fontItalic, textShadow: c.textShadow, textOutline: c.textOutline }) === JSON.stringify({ fontSize: nx.fontSize, color: nx.color, textAlign: nx.textAlign, textBg: nx.textBg, fontFamily: nx.fontFamily, fontBold: nx.fontBold, fontItalic: nx.fontItalic, textShadow: nx.textShadow, textOutline: nx.textOutline })) return { noop: true };
       Object.assign(c, nx);
       return { ok: true, ids: [c.id], warnings: [], label: 'setTextStyle' };
     });

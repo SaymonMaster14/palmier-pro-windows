@@ -92,3 +92,29 @@ test('text bold italic resolve to variant files, validated, exported', async () 
   const v = await validateExport(out, ex.durationSec, true);
   assert.ok(v.ok, v.details);
 });
+
+test('text shadow and outline validated and burned into export', async () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject('so'));
+  const seq = createSequence(st.project, 's', fps, 320, 240);
+  const v1 = addTrack(seq, 'video', 'V1');
+  const v2 = addTrack(seq, 'video', 'V2');
+  st.addMedia({ path: fix('sample-av.mp4'), kind: 'video', name: 'v', durationFrames: 90, fps });
+  st.placeClip(seq.id, v1.id, { kind: 'video', assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, name: 'v' });
+  const id = st.placeClip(seq.id, v2.id, { kind: 'text', startFrame: 0, durationFrames: 90, name: 't', text: 'Edge' }).ids[0];
+  assert.ok(!st.setTextStyle(seq.id, id, { textShadow: 'x' as never }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { textShadow: true, textOutline: true }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { textShadow: true, textOutline: true }).noop);
+  const c = st.project.sequences[0].clips.find((x) => x.id === id)!;
+  assert.equal(c.textShadow, true);
+  assert.equal(c.textOutline, true);
+  const dir = mkdtempSync(join(tmpdir(), 'palm-so-'));
+  const plan = await buildFfmpegArgs(st.project, seq, join(dir, 'o.mp4'));
+  const fc: string = plan.args[plan.args.indexOf('-filter_complex') + 1];
+  assert.ok(fc.indexOf('shadowcolor=black') >= 0, 'shadow in graph');
+  assert.ok(fc.indexOf('borderw=2') >= 0, 'outline in graph');
+  const out = join(dir, 's.mp4');
+  const ex = await exportSequence(st.project, seq.id, out);
+  const v = await validateExport(out, ex.durationSec, true);
+  assert.ok(v.ok, v.details);
+});
