@@ -1,6 +1,6 @@
 ﻿"use strict";
 // Main owns the single EditorStore. UI (renderer) and MCP operate on this same store.
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const path = require("node:path");
 
 let win = null;
@@ -35,6 +35,36 @@ function registerIpc() {
   ipcMain.on("geomSync", (e, kind, args) => { e.returnValue = (kind === "pxToFrame" || kind === "frameToPx") ? core[kind](...args) : null; });
   ipcMain.handle("saveProject", async (_e, p) => { const fp = p || projectPath || path.join(app.getPath("userData"), "untitled.palmier.json"); await core.saveProject(store.project, fp); projectPath = fp; return { saved: fp }; });
   ipcMain.handle("openProject", async (_e, p) => { const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; changed(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
+  ipcMain.handle("importMedia", async (_e, paths) => {
+    if (!paths || !paths.length) { const sel = await dialog.showOpenDialog(win, { properties: ["openFile", "multiSelections"] }); if (sel.canceled) return []; paths = sel.filePaths; }
+    const out = [];
+    for (const fp of paths) {
+      const pr = await core.probeMedia(fp);
+      const kind = pr.still ? "image" : pr.hasVideo ? "video" : "audio";
+      let seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
+      if (!seq) seq = core.createSequence(store.project, "Sequence 1", { num: 30, den: 1 }, 1280, 720);
+      const fps = seq.fps;
+      const durF = kind === "image" ? 90 : core.secondsToFrames(pr.durationSec, fps);
+      const r = store.addMedia({ path: fp, kind, name: path.basename(fp), durationFrames: durF, fps, width: pr.width, height: pr.height, audioChannels: pr.audioChannels, sampleRate: pr.sampleRate });
+      const assetId = r.ids[0] || store.project.media.find((m) => m.path === fp).id;
+      const tk = kind === "audio" ? "audio" : "video";
+      let track = seq.tracks.find((x) => x.kind === tk && !x.locked) || core.addTrack(seq, tk, (tk === "audio" ? "A" : "V") + (seq.tracks.filter((x) => x.kind === tk).length + 1));
+      const start = seq.clips.filter((c) => c.trackId === track.id).reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0);
+      const clipKind = kind === "image" ? "image" : kind === "audio" ? "audio" : "video";
+      const placed = store.placeClip(seq.id, track.id, { kind: clipKind, assetId, startFrame: start, durationFrames: durF, name: path.basename(fp) });
+      out.push({ path: fp, kind, assetId, placed });
+    }
+    return out;
+  });
+  ipcMain.handle("exportActive", async (_e, outPath) => {
+    const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
+    if (!seq) throw new Error("no sequence");
+    const fp = outPath || path.join(app.getPath("userData"), "export.mp4");
+    const r = await core.exportSequence(store.project, seq.id, fp);
+    let v = await core.validateExport(fp, r.durationSec, true).catch((e) => ({ ok: false, details: String((e && e.message) || e) }));
+    if (!v.ok && /no audio stream/.test(v.details)) v = { ...(await core.validateExport(fp, r.durationSec, false)), audioNote: "timeline sources carry no audio" };
+    return { ...r, validation: v };
+  });
   ipcMain.handle("op", (_e, name, args) => {
     if (name === "undo") return { undone: store.undo() };
     if (name === "redo") return { redone: store.redo() };
@@ -75,6 +105,13 @@ async function boot() {
     const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; if (!c) return 'no-clip'; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
     console.log("SMOKE-UI-OP", ui);
     console.log("SMOKE-GEOM", await win.webContents.executeJavaScript("typeof (window.palmier.geom() || {}).pxToFrame"));
+    if (process.env.PALM_SMOKE_IO) {
+      const fix = (n) => path.resolve(__dirname, "..", "..", "..", "tests", "fixtures", n);
+      const im = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.importMedia(${JSON.stringify([fix("sample-av.mp4"), fix("sample-img.png"), fix("sample-audio.wav")]).replace(/\\\\/g, "\\\\\\\\")}); const s = await window.palmier.state(); return r.length + ":" + s.media.length + ":" + s.sequences[0].clips.length; })()`);
+      console.log("SMOKE-IO-IMPORT", im);
+      const ex = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.exportActive(${JSON.stringify(process.env.PALM_SMOKE_OUT || (process.env.TEMP + "/smoke-export.mp4"))}); return r.bytes + ":" + r.validation.ok; })()`);
+      console.log("SMOKE-IO-EXPORT", ex);
+    }
     console.log("BOOT-OK");
     app.quit();
   }
@@ -82,6 +119,10 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
+
+
 
 
 

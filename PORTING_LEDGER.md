@@ -61,3 +61,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - B PROJECT + H PERSISTENCE: PASS at app level. saveProject/openProject IPC, PALM_PROJECT boot load, store.loadFrom (clears undo history across projects), Save button in renderer. run-persist-e2e.js: edit in running app -> save -> quit -> reboot from file -> identical clip IDs/ranges (PERSIST-E2E-PASS clips=2).
 - Regressions green: smoke BOOT-OK + UI-OP true:2 + GEOM function; MCP-E2E-PASS; 9/9 unit.
+
+## 2026-09-13 turn 6 evidence
+
+- C IMPORT in app: importMedia IPC (native dialog when no paths) + probe/kind/duration + auto-place on first unlocked matching track, tracks created if missing. SMOKE-IO-IMPORT 3:4:5 against the running app.
+- I EXPORT in app: exportActive IPC + ffprobe validation with honest audio fallback note. SMOKE-IO-EXPORT 271527:true.
+- Regressions: PERSIST-E2E-PASS, MCP-E2E-PASS, 9/9 unit.
