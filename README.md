@@ -40,3 +40,9 @@ Do not advertise beyond the checklist above.
 ## Troubleshooting
 
 If Electron dist contains only locales/ after install, the postinstall extractor stalled on this host. Re-extract the cached zip into node_modules/electron/dist, write electron.exe into node_modules/electron/path.txt, then re-run npx electron --version.
+
+## Packaging (Windows)
+
+- Requires system FFmpeg: `ffmpeg`/`ffprobe` on PATH (verified at boot, versions logged; app warns otherwise).
+- Build: `npm run prepackage -w apps/editor && npm run package:win -w apps/editor` -> `apps/editor/dist/PalmierProWindows-*-portable.exe` (~85 MB, no installer needed).
+- Notes: electron version must be pinned exact; keep package.json files BOM-free (PowerShell UTF8 BOM breaks the packager); declare workspace deps in dependencies or they are silently omitted from asar.

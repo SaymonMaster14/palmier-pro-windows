@@ -1,6 +1,7 @@
 ﻿"use strict";
 // Main owns the single EditorStore. UI (renderer) and MCP operate on this same store.
 const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 let win = null;
@@ -73,7 +74,22 @@ function registerIpc() {
   });
 }
 
+function checkDeps() {
+  const out = {};
+  for (const bin of ["ffmpeg", "ffprobe"]) {
+    try { const r = spawnSync(bin, ["-version"], { encoding: "utf8", windowsHide: true }); out[bin] = r.status === 0 ? r.stdout.split("\n")[0] : "MISSING(exit " + r.status + ")"; }
+    catch (e) { out[bin] = "MISSING(" + e.message + ")"; }
+  }
+  console.log("DEPS", JSON.stringify(out));
+  if (/MISSING/.test(out.ffmpeg + out.ffprobe)) {
+    const msg = "ffmpeg/ffprobe not found on PATH. Install FFmpeg and reopen. Import and export are disabled until then.";
+    console.error("DEPS-FAIL", msg);
+    try { dialog.showErrorBox("Missing dependency", msg); } catch (e) {}
+  }
+  return out;
+}
 async function boot() {
+  checkDeps();
   core = await import("@palmier/core");
   store = new core.EditorStore(core.createProject("Untitled"));
   let rev = 0;
@@ -102,7 +118,7 @@ async function boot() {
   if (process.env.PALM_SMOKE) {
     const n = await win.webContents.executeJavaScript("window.palmier.state().then(s => s.sequences.length)");
     console.log("SMOKE-STATE-SEQ", n);
-    const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; if (!c) return 'no-clip'; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
+    const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; if (!q || !q.clips[0]) return 'no-clip'; const c = q.clips[0]; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
     console.log("SMOKE-UI-OP", ui);
     console.log("SMOKE-GEOM", await win.webContents.executeJavaScript("typeof (window.palmier.geom() || {}).pxToFrame"));
     if (process.env.PALM_SMOKE_IO) {
@@ -119,6 +135,8 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
 
 
 

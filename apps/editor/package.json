@@ -1,9 +1,41 @@
-﻿{
+{
   "name": "@palmier/editor",
   "version": "0.0.1",
   "private": true,
+  "description": "Palmier Pro Windows community port (unofficial)",
   "license": "GPL-3.0-only",
+  "author": "Palmier Pro Windows community port (unofficial)",
   "main": "src/main.js",
-  "scripts": { "dev": "electron .", "start": "electron ." },
-  "devDependencies": { "electron": "^38.0.0" }
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "prepackage": "node scripts/prepackage.cjs",
+    "package:win": "electron-builder --win portable --publish never",
+    "postpackage": "node scripts/postpackage.cjs"
+  },
+  "build": {
+    "appId": "io.github.saymonmaster14.palmier-pro-windows",
+    "productName": "PalmierProWindows",
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "package.json",
+      "node_modules/@palmier/core/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "PalmierProWindows-${version}-portable.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "38.8.6",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@palmier/core": "0.0.1"
+  }
 }

@@ -73,3 +73,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - F/G INSPECTOR: setTransform/setOpacity store ops (validated, no-op aware) + setVolume path exposed; addTrack op added to store+main+MCP after the agent task exposed the gap. Renderer inspector edits selected clip (x/y/scale/opacity/volume).
 - L AGENTIC (scripted): agent-task.js via real MCP transport: inspect -> setTransform/Opacity/Volume -> addTrack V2 -> text -> save -> export -> validate -> undo. AGENT-TASK-PASS export=78120b dur=3.000s.
 - Regressions: 10/10 unit, smoke BOOT-OK + IO 3:4:5/271527:true, MCP-E2E-PASS, PERSIST-E2E-PASS.
+
+## 2026-09-13 turn 8 evidence
+
+- M PACKAGED: PASS (portable). PalmierProWindows-0.0.1-portable.exe (~85 MB) + win-unpacked verified: DEPS ffmpeg/ffprobe logged, PROJECT-LOAD real project, SMOKE-STATE-SEQ 1, SMOKE-UI-OP true:2, SMOKE-GEOM function, BOOT-OK, MCP getProject over HTTP against packaged app (PKG-MCP-PROJECT, PORTABLE-HEALTH true).
+- Boot dependency check: ffmpeg/ffprobe versions logged at startup, error dialog when missing (FFmpeg stays a system requirement, documented).
