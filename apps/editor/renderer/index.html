@@ -154,14 +154,43 @@ function hookMeter() {
   };
   draw();
 }
+function bindKeyDrag(el, c, d, k, rng) {
+  d.addEventListener('mousedown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const rect = el.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) return;
+    SEL = new Set([c.id]); markActive();
+    const tr = k.k === 'v' ? 'volume' : 'opacity';
+    let curF = k.f, curV = k.v;
+    const move = (ev) => {
+      curF = Math.min(Math.max(Math.round(c.startFrame + (ev.clientX - rect.left) / rect.width * c.durationFrames), c.startFrame), c.startFrame + c.durationFrames);
+      curV = Math.min(Math.max(Math.round((1 - (ev.clientY - rect.top) / rect.height) * rng * 1000) / 1000, 0), rng);
+      d.style.left = ((curF - c.startFrame) / c.durationFrames * 100) + '%';
+      d.style.top = 'calc(' + ((1 - curV / rng) * 100) + '% - 3px)';
+    };
+    const up = async () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      if (curF === k.f && curV === k.v) return;
+      const r = await window.palmier.op('moveKeyframe', [SEQ.id, c.id, tr, k.f, { frame: curF, value: curV, interpolation: k.i }]);
+      log('keymove: ' + JSON.stringify(r)); renderInspector.sel = ''; await refresh();
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+}
 function paintKeys() {
   document.querySelectorAll(".clip").forEach(el => {
     const c = SEQ.clips.find(x => x.id === el.dataset.id); if (!c) return;
-    const keys = [...(c.opacityKeys || []).map(k => ({ f: k.frame, k: "o" })), ...(c.volumeKeys || []).map(k => ({ f: k.frame, k: "v" }))];
+    const keys = [...(c.opacityKeys || []).map(k => ({ f: k.frame, v: k.value, i: k.interpolation, k: "o" })), ...(c.volumeKeys || []).map(k => ({ f: k.frame, v: k.value, i: k.interpolation, k: "v" }))];
     el.querySelectorAll(".kd").forEach(d => d.remove());
     for (const k of keys) {
       const d = document.createElement("div"); d.className = "kd"; d.title = k.k + "@" + k.f;
       d.style.left = ((k.f - c.startFrame) / c.durationFrames * 100) + "%";
+      const rng = k.k === "v" ? 4 : 1;
+      d.style.top = "calc(" + ((1 - Math.min(Math.max(k.v, 0), rng) / rng) * 100) + "% - 3px)";
+      d.dataset.tr = k.k; d.dataset.f = k.f;
+      bindKeyDrag(el, c, d, k, rng);
       el.appendChild(d);
     }
   });

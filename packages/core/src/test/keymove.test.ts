@@ -1,0 +1,28 @@
+﻿import test from "node:test";
+import assert from "node:assert/strict";
+import { createProject, createSequence, addTrack } from "../model.js";
+import { EditorStore } from "../store.js";
+test("moveKeyframe relocates and retunes atomically", () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject("km"));
+  const seq = createSequence(st.project, "s", fps, 320, 240);
+  const v1 = addTrack(seq, "video", "V1");
+  const id = st.placeClip(seq.id, v1.id, { kind: "video", startFrame: 0, durationFrames: 60, name: "v" }).ids[0];
+  assert.ok(!st.moveKeyframe(seq.id, id, "opacity", 10, { frame: 20, value: 0.5 }).ok);
+  assert.ok(st.setKeyframe(seq.id, id, "opacity", { frame: 10, value: 0.8 }).ok);
+  assert.ok(!st.moveKeyframe(seq.id, id, "opacity", 10, { frame: 20, value: 9 }).ok);
+  const r = st.moveKeyframe(seq.id, id, "opacity", 10, { frame: 20, value: 0.5 });
+  assert.ok(r.ok);
+  const keys = st.project.sequences[0].clips[0].opacityKeys;
+  assert.deepEqual(keys.map((k) => [k.frame, k.value]), [[20, 0.5]]);
+  assert.equal(keys[0].interpolation, "linear");
+  assert.ok(st.moveKeyframe(seq.id, id, "opacity", 20, { frame: 20, value: 0.5 }).noop);
+  assert.ok(st.undo());
+  assert.deepEqual(st.project.sequences[0].clips[0].opacityKeys.map((k) => [k.frame, k.value]), [[10, 0.8]]);
+  assert.ok(st.redo());
+  assert.ok(st.setKeyframe(seq.id, id, "volume", { frame: 5, value: 3, interpolation: "hold" }).ok);
+  assert.ok(st.moveKeyframe(seq.id, id, "volume", 5, { frame: 8, value: 2 }).ok);
+  const vk = st.project.sequences[0].clips[0].volumeKeys[0];
+  assert.equal(vk.frame, 8);
+  assert.equal(vk.interpolation, "hold");
+});

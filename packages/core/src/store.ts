@@ -289,6 +289,22 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setTransition" };
     });
   }
+  moveKeyframe(seqId: string, clipId: string, track: "opacity" | "volume", fromFrame: number, kf: { frame: number; value: number; interpolation?: "linear" | "hold" | "smooth" }): Receipt {
+    return this.exec("moveKeyframe", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!Number.isInteger(fromFrame) || fromFrame < 0) throw new Error("bad keyframe");
+      const arr = track === "opacity" ? (c.opacityKeys ?? []) : (c.volumeKeys ?? []);
+      const old = arr.find((k) => k.frame === fromFrame);
+      if (!old) throw new Error("key not found");
+      if (track === "opacity" && (kf.value < 0 || kf.value > 1)) throw new Error("bad opacity key");
+      if (track === "volume" && (!(kf.value >= 0 && kf.value <= 4) || !Number.isFinite(kf.value))) throw new Error("bad volume key");
+      const full = { frame: kf.frame, value: kf.value, interpolation: kf.interpolation ?? old.interpolation ?? "linear" as const };
+      const nx = upsertKeyframe(arr.filter((k) => k.frame !== fromFrame), full);
+      if (JSON.stringify(nx) === JSON.stringify(arr)) return { noop: true };
+      if (track === "opacity") c.opacityKeys = nx; else c.volumeKeys = nx;
+      return { ok: true, ids: [c.id], warnings: [], label: "moveKeyframe" };
+    });
+  }
   setFade(seqId: string, clipId: string, fadeInFrames: number, fadeOutFrames: number): Receipt {
     return this.exec("setFade", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
