@@ -70,6 +70,7 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'setTrackFlags': return store.setTrackFlags(seqId as string, q['trackId'] as string, q['patch'] as never);
     case 'linkClips': return store.linkClips(seqId as string, q['clipIds'] as string[]);
     case 'unlinkClips': return store.unlinkClips(seqId as string, q['clipIds'] as string[]);
+    case 'setTextStyle': return store.setTextStyle(seqId as string, q['clipId'] as string, q['patch'] as never);
     case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
     case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
     case 'setTransform': return store.setTransform(seqId as string, q['clipId'] as string, q['patch'] as never);

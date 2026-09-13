@@ -230,3 +230,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 42 evidence
 
 - Subtitle import path: .srt/.vtt routed in importAndPlace (UI dialog + MCP import), subtitle media kind, clips placed. Live SUBIMP subtitle/1. Suite 37/37.
+
+## 2026-09-13 turn 43 evidence
+
+- Text style (upstream TextStyle/Layout slice): align left/center/right + background box on text clips, setTextStyle op, drawtext x/box in export, MCP + inspector. Graph + real export proof. Suite 38/38.

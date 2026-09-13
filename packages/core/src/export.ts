@@ -130,7 +130,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const txt = (c.text ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
     const fs = c.fontSize ?? 48;
     const fc = (c.color ?? 'white').replace(/^#/, '0x');
-    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'[vtxt${k}]`);
+    filters.push(`${vlabel}drawtext=text='${txt}':fontsize=${fs}:fontcolor=${fc}:x=${c.textAlign === 'left' ? 20 : c.textAlign === 'right' ? '(w-text_w-20)' : '(w-text_w)/2'}:y=(h-text_h)/2${c.textBg ? ':box=1:boxcolor=black@0.6:boxborderw=8' : ''}:enable='between(t,${t(c.startFrame)},${t(c.startFrame + c.durationFrames)})'[vtxt${k}]`);
     vlabel = `[vtxt${k}]`; k++;
   }
   // Audio walk with silence gap fill (uniform 48kHz stereo for concat).
