@@ -264,6 +264,22 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: 'setTextStyle' };
     });
   }
+  duplicateClips(seqId: string, clipIds: string[]): Receipt {
+    return this.exec("duplicateClips", (p) => {
+      const s = req_seq(p, seqId);
+      if (!clipIds.length) throw new Error("nothing to duplicate");
+      const src = clipIds.map((id) => req_clip(s, id));
+      const gmap = new Map<string, string>();
+      const gid = (old?: string): string | undefined => { if (!old) return undefined; let n = gmap.get(old); if (!n) { n = uid(); gmap.set(old, n); } return n; };
+      const copies = src.map((c) => {
+        const end = trackClips(s, c.trackId).reduce((m, x) => Math.max(m, x.startFrame + x.durationFrames), 0);
+        const cp = { ...structuredClone(c), id: uid(), startFrame: end, linkGroup: gid(c.linkGroup) };
+        s.clips.push(cp);
+        return cp;
+      });
+      return { ok: true, ids: copies.map((c) => c.id), warnings: [], label: "duplicateClips" };
+    });
+  }
   setTextAnim(seqId: string, clipId: string, anim: string): Receipt {
     return this.exec('setTextAnim', (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);

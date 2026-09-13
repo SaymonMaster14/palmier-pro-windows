@@ -418,6 +418,7 @@ function bindClips() {
       const cc = SEQ.clips.find(x => x.id === el.dataset.id); if (!cc) return;
       showCtx([
         { label: 'Split here', act: 'split', run: async () => { const r = await window.palmier.op('splitClip', [SEQ.id, cc.id, Math.min(Math.max(f0, cc.startFrame + 1), cc.startFrame + cc.durationFrames - 1)]); log('split: ' + JSON.stringify(r)); await refresh(); } },
+        { label: 'Duplicate', act: 'dup', run: async () => { const r = await window.palmier.op('duplicateClips', [SEQ.id, [cc.id]]); log('duplicate: ' + JSON.stringify(r)); await refresh(); } },
         { label: 'Delete', act: 'delete', run: async () => { const r = await window.palmier.op('deleteClip', [SEQ.id, cc.id]); log('delete: ' + JSON.stringify(r)); SEL = new Set(); await refresh(); } },
         { label: 'Ripple delete', act: 'ripple', run: async () => { const r = await window.palmier.op('rippleDelete', [SEQ.id, cc.id]); log('ripple: ' + JSON.stringify(r)); SEL = new Set(); await refresh(); } },
         { label: 'Add marker here', act: 'marker', run: async () => { const r = await window.palmier.op('addMarker', [SEQ.id, { name: 'M' + f0, startFrame: Math.max(f0, 0) }]); log('marker: ' + JSON.stringify(r)); await refresh(); } },
@@ -495,6 +496,7 @@ document.addEventListener('keydown', async (e) => {
 });
 document.addEventListener("keydown", async (e) => {
   if ((e.key === "m" || e.key === "M") && SEQ && document.activeElement.tagName !== "INPUT") { const r = await window.palmier.op("addMarker", [SEQ.id, { name: "M" + FRAME, startFrame: FRAME }]); log("marker: " + JSON.stringify(r)); await refresh(); return; }
+  if (((e.key === "d" || e.key === "D") && (e.ctrlKey || e.metaKey)) && SEL.size && SEQ && (function(){ const aa = document.activeElement; return !aa || (aa.tagName !== "INPUT" && aa.tagName !== "TEXTAREA" && aa.tagName !== "SELECT"); })()) { e.preventDefault(); const ids = [...SEL]; const r = await window.palmier.op("duplicateClips", [SEQ.id, ids]); log("duplicate: " + JSON.stringify(r)); SEL = new Set(r.ids || []); await refresh(); return; }
   if ((e.key === "Delete" || e.key === "Backspace") && SEL.size && document.activeElement.tagName !== "INPUT") {
     const ids = [...SEL];
     const r = ids.length === 1 && e.shiftKey ? await window.palmier.op("rippleDelete", [SEQ.id, ids[0]]) : await window.palmier.op("deleteClips", [SEQ.id, ids]);

@@ -424,3 +424,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - First real measurements on this host (dev app, MCP transport, 215-clip timeline, 42s 640x360 H.264 export): startup-to-healthy 1247ms; import 3 files 349ms; 10 placements 94ms (~9ms/op); export 3809ms = 11x realtime; 200 placements 2723ms (13.6ms/op incl. notify+refresh each); single moveClip 19ms; listClips 15ms / 96KB; app peak RSS UNMEASURED (tasklist parse failed, recorded honestly instead of inventing a number).
 - Verdict per §5/§29: nothing pathological — sub-20ms interactions, 11x export, 1.2s startup. No optimization warranted; no code changed. Next profiling only if a workload complains.
+
+## 2026-09-13 turn 69 evidence (duplicate clips)
+
+- New duplicateClips domain op (one undo unit): deep-copies clips to their track ends with fresh ids, carries keyframes/fades/style, regroups internal links under a new group id (never links copies back to originals), validates existence/locks, rejects empty sets. Wired to Ctrl+D (field-guarded, no interference with typing), timeline context menu, main OPS and MCP.
+- Proof: unit suite 46/46 (new dup test: placement, keyframe carry, link regrouping vs originals, undo/redo); live SMOKE-DUP n0=3 n1=1 uniq=true errs=0 through the real keydown path; downstream CTX/VISUAL lines shifted consistently (n0=4, total 00:05), full smoke otherwise at baseline.
