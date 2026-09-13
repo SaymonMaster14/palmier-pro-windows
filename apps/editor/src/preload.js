@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld("palmier", {
   waveform: (assetId, buckets) => ipcRenderer.invoke("waveform", assetId, buckets),
   evalKeys: (seqId, clipId, frame) => ipcRenderer.invoke("evalKeys", seqId, clipId, frame),
   agentRun: (text, ctx) => ipcRenderer.invoke("agentRun", text, ctx),
+  getSettings: () => ipcRenderer.invoke("getSettings"),
+  setSettings: (patch) => ipcRenderer.invoke("setSettings", patch),
   snapMove: (seqId, clipId, rawStart, ph) => ipcRenderer.invoke("snapMove", seqId, clipId, rawStart, ph),
   saveProject: (p) => ipcRenderer.invoke("saveProject", p),
   openProject: (p) => ipcRenderer.invoke("openProject", p),
@@ -22,6 +24,7 @@ contextBridge.exposeInMainWorld("palmier", {
   }),
   onStoreChanged: (cb) => ipcRenderer.on("store-changed", (_e, rev) => cb(rev)),
 });
+
 
 
 

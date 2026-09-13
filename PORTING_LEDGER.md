@@ -171,3 +171,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 28 evidence
 
 - Preview rate: 0.5/1/1.5/2x selector driving video.playbackRate (browser keeps AV sync; timeline mapping already time-based). Live SMOKE-RATE 2.
+
+## 2026-09-13 turn 29 evidence
+
+- Settings: persisted settings.json (mcpPort validated, restart note), getSettings exposes FFmpeg versions, renderer panel with save. SMOKE-SETS true:threw:true.

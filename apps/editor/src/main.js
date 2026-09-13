@@ -76,6 +76,10 @@ function registerIpc() {
       }
     } catch (e) { return "error: " + String((e && e.message) || e); }
   });
+  const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
+  const readSettings = () => { let s = {}; try { s = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) {} return { mcpPort: 19789, exportDir: "", ...s }; };
+  ipcMain.handle("getSettings", async () => ({ ...readSettings(), deps: checkDeps() }));
+  ipcMain.handle("setSettings", async (_e, patch) => { const s = { ...readSettings(), ...patch }; if (s.mcpPort !== undefined && (!Number.isInteger(s.mcpPort) || s.mcpPort < 1024 || s.mcpPort > 65535)) throw new Error("bad port"); fs.writeFileSync(settingsFile(), JSON.stringify(s, null, 2)); return { ...s, note: "mcpPort applies on restart" }; });
   ipcMain.handle("op", (_e, name, args) => {
     if (name === "undo") return { undone: store.undo() };
     if (name === "redo") return { redone: store.redo() };
@@ -109,7 +113,7 @@ async function boot() {
   projectPath = process.env.PALM_PROJECT || null;
   if (projectPath) { try { store.loadFrom(await core.loadProject(projectPath)); console.log("PROJECT-LOAD", projectPath); } catch (e) { console.warn("PROJECT-LOAD-FAIL", String((e && e.message) || e)); } }
   if (process.env.PALM_DEMO) await loadDemo();
-  const port = Number(process.env.PALM_MCP_PORT || 19789);
+  const port = Number(process.env.PALM_MCP_PORT || readSettings().mcpPort || 19789);
   try {
     const started = await core.startMcpServer(store, { port });
     mcpServer = started.server;
@@ -142,6 +146,7 @@ async function boot() {
     console.log("SMOKE-TH", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 1500)); const ims = [...document.querySelectorAll('#media img')]; return ims.map(i => (i.alt || '?') + '=' + (i.src ? 'y' : 'n') + (i.naturalWidth || 0)).join(','); })()"));
     console.log("SMOKE-SEARCH", await win.webContents.executeJavaScript("(async () => { const q = document.querySelector('#q'); q.value = 'sample'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 50)); const n = document.querySelectorAll('#media div').length; const h = document.querySelector('#hits').textContent; return n + '|' + h; })()"));
     console.log("SMOKE-PROJ", await win.webContents.executeJavaScript("(async () => { const sv = await window.palmier.saveProject(); const rs = await window.palmier.listRecents(); const hasRec = rs.includes(sv.saved); await window.palmier.newProject('fresh'); const empty = (await window.palmier.state()).sequences.length; await window.palmier.openProject(sv.saved); const back = (await window.palmier.state()).sequences[0].clips.length; return hasRec + ':' + empty + ':' + back; })()"));
+    console.log("SMOKE-SETS", await win.webContents.executeJavaScript("(async () => { const a = await window.palmier.getSettings(); const bad = await window.palmier.setSettings({ mcpPort: 80 }).then(() => 'nothrow').catch(e => 'threw'); const ok = await window.palmier.setSettings({ mcpPort: a.mcpPort }); return (!!a.deps.ffmpeg) + ':' + bad + ':' + (ok.mcpPort === a.mcpPort); })()"));
     console.log("SMOKE-RATE", await win.webContents.executeJavaScript("(async () => { const r = document.querySelector('#rate'); r.value = '2'; r.dispatchEvent(new Event('change')); return document.querySelector('#pv').playbackRate; })()"));
     console.log("SMOKE-AGENT", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); const q = (await window.palmier.state()).sequences[0]; const a = await window.palmier.agentRun('marker smoke-m', { sequenceId: q.id, playheadFrame: 20, selectedClipId: null }); const b = await window.palmier.agentRun('dance', { sequenceId: q.id, playheadFrame: 20, selectedClipId: null }); return a.slice(0, 8) + '|' + b.slice(0, 5); })()"));
     console.log("SMOKE-KEYLANE", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); await new Promise(r => setTimeout(r, 500)); const s = await window.palmier.state(); const keys = s.sequences[0].clips[0].opacityKeys.length; const dots = document.querySelectorAll('.kd').length; return keys + ':' + dots; })()"));
@@ -156,6 +161,8 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
 
 
 

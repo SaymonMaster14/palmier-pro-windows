@@ -2,7 +2,7 @@
 <header><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button></header>
 <main><section><h3>Media</h3><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
 <section><h3>Preview</h3><video id="pv" controls style="width:100%;background:var(--video)"></video><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select><canvas id="meter" width="220" height="10" style="width:100%;height:10px;background:var(--panel)"></canvas><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tl"></div><div style="color:var(--mut);font-size:12px">drag clip = move · edge handles = trim · click = select · Del = delete</div></section>
-<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>State</h3><div id="log"></div></section></main>
+<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main>
 <script>
 const $ = (id) => document.getElementById(id);
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -179,6 +179,14 @@ document.querySelector("#bNew").addEventListener("click", async () => { await wi
 document.querySelector("#bOpen").addEventListener("click", async () => { try { const r = await window.palmier.openProject(); if (r.opened) await refresh(); log("opened: " + JSON.stringify(r)); } catch (e) { log("open: " + e.message); } });
 async function paintRecents() { try { const rs = await window.palmier.listRecents(); const box = document.querySelector("#rec"); box.innerHTML = ""; rs.forEach((rp) => { const d = document.createElement("div"); const a = document.createElement("a"); a.href = "#"; a.textContent = rp; a.addEventListener("click", async (ev) => { ev.preventDefault(); await window.palmier.openProject(rp); await refresh(); }); d.appendChild(a); box.appendChild(d); }); if (!rs.length) box.innerHTML = "<small>none</small>"; } catch (e) {} }
 paintRecents();
+async function paintSettings() { try { const s = await window.palmier.getSettings(); const box = document.querySelector("#sets"); box.innerHTML = "";
+  const row = (k, v) => { const d = document.createElement("div"); d.textContent = k + ": " + v; box.appendChild(d); };
+  row("ffmpeg", s.deps.ffmpeg); row("ffprobe", s.deps.ffprobe);
+  const lb = document.createElement("label"); lb.textContent = "mcp port "; const inp = document.createElement("input"); inp.size = 6; inp.value = s.mcpPort; const btn = document.createElement("button"); btn.textContent = "save";
+  btn.addEventListener("click", async () => { try { const r = await window.palmier.setSettings({ mcpPort: Number(inp.value) }); log("settings: " + JSON.stringify(r)); } catch (e) { log("settings FAIL: " + e.message); } });
+  lb.appendChild(inp); box.appendChild(lb); box.appendChild(btn);
+} catch (e) {} }
+paintSettings();
 hookMeter();
 document.querySelector("#q").addEventListener("input", () => refresh());
 document.querySelector("#bImport").addEventListener("click", async () => { try { const r = await window.palmier.importMedia(); log("import: " + JSON.stringify(r)); await refresh(); } catch (e) { log("import FAIL (use IPC): " + e.message); } });
@@ -186,6 +194,8 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
 
 
 
