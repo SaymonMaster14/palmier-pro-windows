@@ -127,3 +127,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 16 evidence
 
 - Overwrite (upstream OverwriteEngine parity): pure computeOverwrite (remove/trimEnd/trimStart/split), store.overwritePlace as one undo unit, MCP + main OPS + Alt+drag in renderer. Unit covers all four actions + region math + undo. Suite 18/18.
+
+## 2026-09-13 turn 17 evidence
+
+- Audio meter: WebAudio analyser tapped on preview element, peak bar canvas with clip indicator, autoplay-safe resume. Live SMOKE-METER true:220 (analyser on during real playback). No calibrated dB claims.

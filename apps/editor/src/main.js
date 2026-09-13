@@ -115,6 +115,7 @@ async function boot() {
       console.log("SMOKE-IO-EXPORT", ex);
     }
     console.log("SMOKE-SEARCH", await win.webContents.executeJavaScript("(async () => { const q = document.querySelector('#q'); q.value = 'sample'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 50)); const n = document.querySelectorAll('#media div').length; const h = document.querySelector('#hits').textContent; return n + '|' + h; })()"));
+    console.log("SMOKE-METER", await win.webContents.executeJavaScript("(async () => { const cv = document.querySelector('#meter'); if (!cv) return 'no-canvas'; const v = document.querySelector('#pv'); try { await v.play(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); v.pause(); return (!!window.__meterOn) + ':' + cv.width; })()"));
     console.log("SMOKE-WV", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const a = s.media.find(m => m.kind === 'audio'); if (!a) return 'no-audio'; const p = await window.palmier.waveform(a.id, 50); return p.length + ':' + (p.reduce((x,y) => x+y, 0) / p.length).toFixed(3); })()"));
     console.log("BOOT-OK");
     app.quit();
@@ -123,6 +124,7 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
 
 
 
