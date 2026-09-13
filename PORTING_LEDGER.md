@@ -316,3 +316,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Behavior added by the pass: time ruler ticks in refresh, timecode readout in markActive, track-header rows restructured into aligned .trk rows (same buttons/ops), keyframe dots now value-positioned AND visible (see below).
 - Bugs caught by the pass with live proof: (1) keyframe dots lost center-anchoring when the redesign added a 1px border (KEYDRAG value drifted 0.8->0.75); fixed with box-sizing + 3.5px centering, back to 0.786 (half-subpixel round-trip). (2) PS Set-Content BOM spliced mid-<style> silently killed the :root token block (page rendered unstyled: transparent bg, empty accent, no gradients); diagnosed via live cssRules/computed-style probe, fixed by stripping BOM. SMOKE-VISUAL stays as a permanent design guard (accent, kinds, band, ruler ticks, tc format, rail rows, primary Apply).
 - Proof: full dev-app smoke green (all lines match pre-redesign baselines incl. MULTI stalePre=0, KEYLANE 1:1, KEYUI 1, ERRS [], BOOT-OK) + SMOKE-VISUAL acc=#10b981 kinds=k-video,k-text band=true ruler=5 tc=00:00:10 rail=2 applyCls=primary.
+
+## 2026-09-13 turn 58 packaging
+
+- Repackaged the redesigned tree: portable exe fresh 85,291,102b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 on win-unpacked (N chain unaffected by presentation-only changes, identical output expected and correct).
