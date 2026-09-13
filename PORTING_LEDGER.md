@@ -205,3 +205,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Multi-select: Set-based selection, Ctrl+toggle, drag-all via moveClips, Delete-all one undo, inspector first-selected. Caught real validation gap (mover-vs-mover overlap) fixed with post-move layout check. SMOKE-MULTI 3:1,2,3:0.
 - Fixed missing Agent panel HTML that threw at boot and silently killed later bindings; added renderer console-error capture (SMOKE-ERRS []) to prevent recurrence.
+
+## 2026-09-13 turn 37 evidence
+
+- Clip linking (upstream ManageClipLinks parity): linkGroup model, link/unlink ops, move/delete/ripple propagate to group in one undo unit, shared applyMoves layout check (caught mover-vs-mover overlap gap), Link/Unlink buttons + MCP. Unit links.test green. Suite 33/33.

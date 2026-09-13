@@ -80,16 +80,17 @@ export class EditorStore {
     });
   }
   moveClip(seqId: string, clipId: string, toTrackId: string, toStart: number): Receipt {
-    return this.exec('moveClip', (p) => {
+﻿    return this.exec('moveClip', (p) => {
       const s = req_seq(p, seqId); const c = req_clip(s, clipId);
       const t = s.tracks.find(x => x.id === toTrackId); if (!t) throw new Error('target track not found');
       if (t.locked) throw new Error('target track locked');
       if (!Number.isInteger(toStart) || toStart < 0) throw new Error('bad startFrame');
-      if (toTrackId === c.trackId && toStart === c.startFrame) return { noop: true };
-      for (const o of trackClips(s, toTrackId).filter(x => x.id !== c.id))
-        if (rangeOverlaps(toStart, toStart + c.durationFrames, o.startFrame, o.startFrame + o.durationFrames)) throw new Error(`overlap with clip ${o.id}`);
-      c.trackId = toTrackId; c.startFrame = toStart;
-      return { ok: true, ids: [c.id], ranges: [{ startFrame: toStart, durationFrames: c.durationFrames }], warnings: [], label: 'moveClip' };
+      const members = linkedIds(s, [clipId]).filter((id) => id !== clipId);
+      const delta = toStart - c.startFrame;
+      const moves = [{ clipId, toTrackId, toStart }, ...members.map((id) => { const m = s.clips.find((x) => x.id === id)!; return { clipId: id, toTrackId: m.trackId, toStart: m.startFrame + delta }; })];
+      const rr = applyMoves(s, moves, 'moveClip');
+      rr.ranges = [{ startFrame: toStart, durationFrames: c.durationFrames }];
+      return rr;
     });
   }
   trimEnd(seqId: string, clipId: string, newDuration: number): Receipt {
@@ -139,45 +140,62 @@ export class EditorStore {
     });
   }
   rippleDelete(seqId: string, clipId: string): Receipt {
-    return this.exec("rippleDelete", (p) => {
+﻿    return this.exec('rippleDelete', (p) => {
       const s = req_seq(p, seqId); const c = req_clip(s, clipId);
-      const shifts = computeRippleShifts(trackClips(s, c.trackId), new Set([clipId]));
-      s.clips = s.clips.filter((x) => x.id !== clipId);
+      const gone = linkedIds(s, [clipId]);
+      for (const id of gone) req_clip(s, id);
+      const sameTrack = new Set(gone.filter((id) => s.clips.find((x) => x.id === id)?.trackId === c.trackId));
+      const shifts = computeRippleShifts(trackClips(s, c.trackId), sameTrack);
+      s.clips = s.clips.filter((x) => gone.indexOf(x.id) < 0);
       for (const sh of shifts) req_clip(s, sh.clipId).startFrame = sh.newStartFrame;
-      return { ok: true, ids: [clipId, ...shifts.map((x) => x.clipId)], warnings: [], label: "rippleDelete" };
+      return { ok: true, ids: [...gone, ...shifts.map((x) => x.clipId)], warnings: [], label: 'rippleDelete' };
+    });
+  }
+﻿  linkClips(seqId: string, clipIds: string[]): Receipt {
+    return this.exec('linkClips', (p) => {
+      const s = req_seq(p, seqId);
+      if (new Set(clipIds).size < 2) throw new Error('link needs 2+ clips');
+      for (const id of clipIds) req_clip(s, id);
+      const g = uid();
+      for (const id of clipIds) s.clips.find((x) => x.id === id)!.linkGroup = g;
+      return { ok: true, ids: [...clipIds], warnings: [], label: 'linkClips' };
+    });
+  }
+  unlinkClips(seqId: string, clipIds: string[]): Receipt {
+    return this.exec('unlinkClips', (p) => {
+      const s = req_seq(p, seqId);
+      let n = 0;
+      for (const id of clipIds) { const c = req_clip(s, id); if (c.linkGroup) { delete c.linkGroup; n++; } }
+      if (!n) return { noop: true };
+      return { ok: true, ids: [...clipIds], warnings: [], label: 'unlinkClips' };
     });
   }
   deleteClips(seqId: string, clipIds: string[]): Receipt {
     return this.exec("deleteClips", (p) => {
       const s = req_seq(p, seqId);
       const set = new Set(clipIds);
+      for (const id of linkedIds(s, clipIds)) set.add(id);
       for (const id of set) req_clip(s, id);
       s.clips = s.clips.filter((x) => !set.has(x.id));
       return { ok: true, ids: [...set], warnings: [], label: "deleteClips" };
     });
   }
   moveClips(seqId: string, moves: Array<{ clipId: string; toTrackId: string; toStart: number }>): Receipt {
-    return this.exec("moveClips", (p) => {
+﻿    return this.exec('moveClips', (p) => {
       const s = req_seq(p, seqId);
-      const moving = new Map(moves.map((m) => [m.clipId, m]));
-      for (const m of moves) {
-        const c = req_clip(s, m.clipId);
-        if (!s.tracks.some((x) => x.id === m.toTrackId)) throw new Error("target track not found");
-        if (!Number.isInteger(m.toStart) || m.toStart < 0) throw new Error("bad startFrame");
-        void c;
-      const laid: Array<{ id: string; trackId: string; start: number; end: number }> = s.clips.map((x) => { const m = moving.get(x.id); return m ? { id: x.id, trackId: m.toTrackId, start: m.toStart, end: m.toStart + x.durationFrames } : { id: x.id, trackId: x.trackId, start: x.startFrame, end: x.startFrame + x.durationFrames }; });
-      for (let ai = 0; ai < laid.length; ai++) for (let bi = ai + 1; bi < laid.length; bi++) { const A = laid[ai], B = laid[bi]; if (A.trackId === B.trackId && rangeOverlaps(A.start, A.end, B.start, B.end)) throw new Error(`overlap after move: ${A.id} vs ${B.id}`); }
-      }
-      for (const m of moves) { const c = s.clips.find((x) => x.id === m.clipId)!; c.trackId = m.toTrackId; c.startFrame = m.toStart; }
-      return { ok: true, ids: moves.map((m) => m.clipId), warnings: [], label: "moveClips" };
+      for (const m of moves) { req_clip(s, m.clipId);
+        if (!s.tracks.some((x) => x.id === m.toTrackId)) throw new Error('target track not found');
+        if (!Number.isInteger(m.toStart) || m.toStart < 0) throw new Error('bad startFrame'); }
+      return applyMoves(s, moves, 'moveClips');
     });
   }
   deleteClip(seqId: string, clipId: string): Receipt {
-    return this.exec('deleteClip', (p) => {
-      const s = req_seq(p, seqId); const i = s.clips.findIndex(x => x.id === clipId);
-      if (i < 0) throw new Error('clip not found');
-      const [c] = s.clips.splice(i, 1);
-      return { ok: true, ids: [c.id], warnings: [], label: 'deleteClip' };
+﻿    return this.exec('deleteClip', (p) => {
+      const s = req_seq(p, seqId);
+      const ids = linkedIds(s, [clipId]);
+      for (const id of ids) req_clip(s, id);
+      s.clips = s.clips.filter((x) => ids.indexOf(x.id) < 0);
+      return { ok: true, ids, warnings: [], label: 'deleteClip' };
     });
   }
   setText(seqId: string, clipId: string, text: string): Receipt {
@@ -297,6 +315,20 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: 'setVolume' };
     });
   }
+}
+﻿function linkedIds(s: Sequence, ids: string[]): string[] {
+  const g: string[] = [];
+  for (const id of ids) { const c = s.clips.find((x) => x.id === id); if (c && c.linkGroup && g.indexOf(c.linkGroup) < 0) g.push(c.linkGroup); }
+  const out = [...ids];
+  for (const c of s.clips) { if (c.linkGroup && g.indexOf(c.linkGroup) >= 0 && out.indexOf(c.id) < 0) out.push(c.id); }
+  return out;
+}
+function applyMoves(s: Sequence, moves: Array<{ clipId: string; toTrackId: string; toStart: number }>, label: string): Receipt {
+  const moving = new Map(moves.map((m) => [m.clipId, m]));
+  const laid = s.clips.map((x) => { const m = moving.get(x.id); return m ? { id: x.id, trackId: m.toTrackId, start: m.toStart, end: m.toStart + x.durationFrames } : { id: x.id, trackId: x.trackId, start: x.startFrame, end: x.startFrame + x.durationFrames }; });
+  for (let ai = 0; ai < laid.length; ai++) for (let bi = ai + 1; bi < laid.length; bi++) { const A = laid[ai], B = laid[bi]; if (A.trackId === B.trackId && rangeOverlaps(A.start, A.end, B.start, B.end)) throw new Error('overlap after move: ' + A.id + ' vs ' + B.id); }
+  for (const m of moves) { const c = s.clips.find((x) => x.id === m.clipId)!; c.trackId = m.toTrackId; c.startFrame = m.toStart; }
+  return { ok: true, ids: moves.map((m) => m.clipId), warnings: [], label };
 }
 function req_seq(p: Project, id: string): Sequence {
   const s = p.sequences.find(x => x.id === id); if (!s) throw new Error('sequence not found'); return s;
