@@ -242,3 +242,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 45 evidence
 
 - Scrub audio: audioAt IPC (timeline->source mapping, muted-aware), 150ms grains on seek while paused. Live SMOKE-SCRUB 1|atSec:0.333|true.
+
+## 2026-09-13 turn 46 evidence
+
+- Timeline filmstrip: per-clip thumbs at 25/50/75% source time via cached thumbAt IPC. Live SMOKE-STRIP 3:3.

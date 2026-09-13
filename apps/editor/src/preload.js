@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("palmier", {
   audioAt: (seqId, frame) => ipcRenderer.invoke('audioAt', seqId, frame),
   audioAt: (seqId, frame) => ipcRenderer.invoke("audioAt", seqId, frame),
   clipAt: (seqId, frame) => ipcRenderer.invoke("clipAt", seqId, frame),
+  thumbAt: (assetId, atSec) => ipcRenderer.invoke("thumbAt", assetId, atSec),
   thumb: (assetId) => ipcRenderer.invoke("thumb", assetId),
   waveform: (assetId, buckets) => ipcRenderer.invoke("waveform", assetId, buckets),
   evalKeys: (seqId, clipId, frame) => ipcRenderer.invoke("evalKeys", seqId, clipId, frame),
