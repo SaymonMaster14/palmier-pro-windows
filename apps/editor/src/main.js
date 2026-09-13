@@ -7,6 +7,7 @@ let win = null;
 let store = null;
 let core = null;
 let mcpServer = null;
+let projectPath = null;
 
 const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume"];
 
@@ -32,6 +33,8 @@ function registerIpc() {
     return core.videoClipAt(s, frame) || null;
   });
   ipcMain.on("geomSync", (e, kind, args) => { e.returnValue = (kind === "pxToFrame" || kind === "frameToPx") ? core[kind](...args) : null; });
+  ipcMain.handle("saveProject", async (_e, p) => { const fp = p || projectPath || path.join(app.getPath("userData"), "untitled.palmier.json"); await core.saveProject(store.project, fp); projectPath = fp; return { saved: fp }; });
+  ipcMain.handle("openProject", async (_e, p) => { const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; changed(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
   ipcMain.handle("op", (_e, name, args) => {
     if (name === "undo") return { undone: store.undo() };
     if (name === "redo") return { redone: store.redo() };
@@ -45,7 +48,10 @@ async function boot() {
   store = new core.EditorStore(core.createProject("Untitled"));
   let rev = 0;
   const rawExec = store.exec.bind(store);
-  store.exec = (label, fn) => { const r = rawExec(label, fn); if (r.ok && !r.noop && win) { rev++; try { win.webContents.send('store-changed', rev); } catch (e) {} } return r; };
+  const changed = () => { if (win) { rev++; try { win.webContents.send("store-changed", rev); } catch (e) {} } };
+  store.exec = (label, fn) => { const r = rawExec(label, fn); if (r.ok && !r.noop) changed(); return r; };
+  projectPath = process.env.PALM_PROJECT || null;
+  if (projectPath) { try { store.loadFrom(await core.loadProject(projectPath)); console.log("PROJECT-LOAD", projectPath); } catch (e) { console.warn("PROJECT-LOAD-FAIL", String((e && e.message) || e)); } }
   if (process.env.PALM_DEMO) await loadDemo();
   const port = Number(process.env.PALM_MCP_PORT || 19789);
   try {

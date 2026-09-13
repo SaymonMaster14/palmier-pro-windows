@@ -26,6 +26,7 @@ export class EditorStore {
     return this.exec(label, (p) => { fns.forEach(f => f(p)); return { ok: true, ids: [], warnings: [], label }; });
   }
   get canUndo() { return this.past.length > 0; }
+  loadFrom(p: Project): void { this.project = p; this.past = []; this.future = []; }
   get canRedo() { return this.future.length > 0; }
   undo(): boolean { if (!this.past.length) return false; this.future.push(this.snap()); this.project = this.past.pop()!; return true; }
   redo(): boolean { if (!this.future.length) return false; this.past.push(this.snap()); this.project = this.future.pop()!; return true; }

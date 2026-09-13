@@ -56,3 +56,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - I EXPORT: multi-source base layer (red/blue proven by frame luma: gap near-black, content +20), timeline gaps filled with black/silence so export duration matches the model, audio mix per-clip volume/mute with truthful warnings for video-only assets, still-image probe (durationSec 0 + still flag).
 - Export hang root-caused: infinite -loop image input + audio map = never-ending transcode (bisected to overlay+audio combo). Fix: bound every looped input with -t expectSec. Verified: repro exit 0, 9/9 unit green, SLICE PASS (h264+aac 3.000s).
 - Note: ffmpeg 9 emits no signalstats YAVG lines; export test computes mean luma from rawvideo in JS instead.
+
+## 2026-09-13 turn 5 evidence
+
+- B PROJECT + H PERSISTENCE: PASS at app level. saveProject/openProject IPC, PALM_PROJECT boot load, store.loadFrom (clears undo history across projects), Save button in renderer. run-persist-e2e.js: edit in running app -> save -> quit -> reboot from file -> identical clip IDs/ranges (PERSIST-E2E-PASS clips=2).
+- Regressions green: smoke BOOT-OK + UI-OP true:2 + GEOM function; MCP-E2E-PASS; 9/9 unit.
