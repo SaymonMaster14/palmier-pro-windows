@@ -397,3 +397,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged preview-fx tree: portable exe fresh 85,294,047b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 66 evidence (Home project entry)
+
+- Home overlay (product entry surface, §18): brand card with project-name New, Open, Import delegations (Open/Import reuse the existing header handlers via click, zero duplicated logic) and a live recents list; shown iff the project has no sequences, as a fixed overlay so all editor DOM stays queryable; hides automatically on any refresh that yields a sequence.
+- Self-caught placement bug: first wired syncHome() after the if (!SEQ) return in refresh, so Home never appeared exactly when needed (smoke proved home=none); moved before the early return, now home=flex recents=2/2 back=14:none.
+- Proof: SMOKE-HOME (newProject empty -> overlay + rows -> reopen restores 14 clips and hides) through real IPC; full smoke otherwise at baseline with ERRS [] and BOOT-OK.
