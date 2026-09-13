@@ -59,6 +59,8 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     case 'removeMarker': return store.removeMarker(seqId as string, q['markerId'] as string);
     case 'listMarkers': { if (!seq) throw new Error('sequence not found'); return seq.markers ?? []; }
     case 'setFade': return store.setFade(seqId as string, q['clipId'] as string, q['fadeInFrames'] as number, q['fadeOutFrames'] as number);
+    case 'setKeyframe': return store.setKeyframe(seqId as string, q['clipId'] as string, q['track'] as 'opacity' | 'volume', q['kf'] as never);
+    case 'removeKeyframe': return store.removeKeyframe(seqId as string, q['clipId'] as string, q['track'] as 'opacity' | 'volume', q['frame'] as number);
     case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
     case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
     case 'setTransform': return store.setTransform(seqId as string, q['clipId'] as string, q['patch'] as never);
@@ -76,6 +78,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     default: throw new Error(`unknown method ${method}`);
   }
 }
+
 
 
 

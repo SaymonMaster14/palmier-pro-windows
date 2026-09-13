@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, computeOverwrite, computeRippleShifts, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type ClipKind, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, computeOverwrite, computeRippleShifts, upsertKeyframe, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -57,7 +57,7 @@ export class EditorStore {
       for (const c of trackClips(s, trackId))
         if (rangeOverlaps(o.startFrame, o.startFrame + o.durationFrames, c.startFrame, c.startFrame + c.durationFrames))
           throw new Error(`overlap with clip ${c.id}`);
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'placeClip' };
     });
@@ -74,7 +74,7 @@ export class EditorStore {
         else if (a.type === "trimStart") { c.startFrame = a.newStartFrame; c.sourceInFrame = a.newSourceIn; c.durationFrames = a.newDuration; }
         else { const right: Clip = { ...structuredClone(c), id: uid(), startFrame: a.rightStartFrame, durationFrames: a.rightDuration, sourceInFrame: a.rightSourceIn }; c.durationFrames = a.leftDuration; s.clips.push(right); }
       }
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: "overwritePlace" };
     });
@@ -186,6 +186,29 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setFade" };
     });
   }
+  setKeyframe(seqId: string, clipId: string, track: "opacity" | "volume", kf: { frame: number; value: number; interpolation?: "linear" | "hold" | "smooth" }): Receipt {
+    return this.exec("setKeyframe", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      const full = { frame: kf.frame, value: kf.value, interpolation: kf.interpolation ?? "linear" as const };
+      if (track === "opacity" && (full.value < 0 || full.value > 1)) throw new Error("bad opacity key");
+      if (track === "volume" && (!(full.value >= 0 && full.value <= 4) || !Number.isFinite(full.value))) throw new Error("bad volume key");
+      const arr = track === "opacity" ? (c.opacityKeys ??= []) : (c.volumeKeys ??= []);
+      const nx = upsertKeyframe(arr, full);
+      if (JSON.stringify(nx) === JSON.stringify(arr)) return { noop: true };
+      if (track === "opacity") c.opacityKeys = nx; else c.volumeKeys = nx;
+      return { ok: true, ids: [c.id], warnings: [], label: "setKeyframe" };
+    });
+  }
+  removeKeyframe(seqId: string, clipId: string, track: "opacity" | "volume", frame: number): Receipt {
+    return this.exec("removeKeyframe", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      const arr = (track === "opacity" ? c.opacityKeys : c.volumeKeys) ?? [];
+      if (!arr.some((k) => k.frame === frame)) return { noop: true };
+      const nx = arr.filter((k) => k.frame !== frame);
+      if (track === "opacity") c.opacityKeys = nx; else c.volumeKeys = nx;
+      return { ok: true, ids: [c.id], warnings: [], label: "removeKeyframe" };
+    });
+  }
   setOpacity(seqId: string, clipId: string, opacity: number): Receipt {
     return this.exec("setOpacity", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -213,6 +236,8 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
+
 
 
 

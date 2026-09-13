@@ -13,7 +13,7 @@ export interface Transform { x: number; y: number; scaleX: number; scaleY: numbe
 export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
-  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number;
+  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
   transform: Transform; text?: string; fontSize?: number; color?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
@@ -149,4 +149,30 @@ export function computeOverwrite(clips: Array<{ id: string; startFrame: number; 
     else out.push({ type: 'trimStart', clipId: c.id, newStartFrame: regionEnd, newSourceIn: c.sourceInFrame + (regionEnd - cs), newDuration: ce - regionEnd });
   }
   return out;
+}
+
+// Keyframes (mirrors upstream KeyframeTrack, numeric scope): sorted upsert, linear/hold/smooth eval.
+export type KeyInterp = "linear" | "hold" | "smooth";
+export interface Keyframe { frame: number; value: number; interpolation: KeyInterp }
+export function upsertKeyframe(kfs: Keyframe[], kf: Keyframe): Keyframe[] {
+  if (!Number.isInteger(kf.frame) || kf.frame < 0 || !Number.isFinite(kf.value)) throw new Error("bad keyframe");
+  const nx = kfs.filter((k) => k.frame !== kf.frame);
+  const at = nx.findIndex((k) => k.frame > kf.frame);
+  if (at < 0) nx.push(kf); else nx.splice(at, 0, kf);
+  return nx;
+}
+export function evaluateKeyframes(kfs: Keyframe[], frame: number, base: number): number {
+  if (!kfs.length) return base;
+  const s = [...kfs].sort((a, b) => a.frame - b.frame);
+  if (frame <= s[0].frame) return s[0].value;
+  for (let i = 0; i < s.length - 1; i++) {
+    const a = s[i], b = s[i + 1];
+    if (frame < b.frame) {
+      if (a.interpolation === "hold") return a.value;
+      const u = (frame - a.frame) / (b.frame - a.frame);
+      const w = a.interpolation === "smooth" ? u * u * (3 - 2 * u) : u;
+      return a.value + (b.value - a.value) * w;
+    }
+  }
+  return s[s.length - 1].value;
 }

@@ -135,3 +135,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 18 evidence
 
 - Design tokens: all hardcoded UI color literals centralized in :root (AppTheme discipline); canvas paint reads tokens via cssVar. No literals outside tokens. Smoke suite still BOOT-OK.
+
+## 2026-09-13 turn 19 evidence
+
+- Keyframes (upstream KeyframeTrack parity, numeric scope): sorted upsert, linear/hold/smooth eval, store set/remove with validation+undo, MCP, evalKeys IPC, inspector live op/vol at playhead. Unit + SMOKE-KEYS 0.2. Export honoring keyframes explicitly deferred.

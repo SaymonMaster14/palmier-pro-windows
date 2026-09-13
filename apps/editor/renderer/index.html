@@ -39,7 +39,9 @@ async function renderInspector() {
   if (SEL === renderInspector.sel) return; renderInspector.sel = SEL;
   const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === SEL);
   if (!c) { box.textContent = "select a clip"; return; }
-  box.innerHTML = "clip " + c.name + "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> <button id=iApply>Apply</button>";
+  box.innerHTML = "clip " + c.name + " <small>at playhead op/vol: <span id=iLive></span></small>";
+  window.palmier.evalKeys(SEQ.id, c.id, FRAME).then(r => { const el = document.querySelector("#iLive"); if (el) el.textContent = Number(r.op).toFixed(2) + "/" + Number(r.vol).toFixed(2); }).catch(() => {});
+  box.innerHTML += "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> <button id=iApply>Apply</button>";
   const set = (id, v) => { document.querySelector(id).value = v; };
   set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iO", c.opacity); set("#iV", c.volume);
   document.querySelector("#iApply").addEventListener("click", async () => {
@@ -156,6 +158,8 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
 
 
 
