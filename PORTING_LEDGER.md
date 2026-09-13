@@ -355,3 +355,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged zoom tree: portable exe fresh 85,292,232b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (renderer-only delta, identical output expected and correct).
+
+## 2026-09-13 turn 62 evidence (keyboard shortcuts + preview text animation)
+
+- Keyboard shortcuts (second document keydown listener, no interference with existing M/Delete): Space play/pause (skipped on focused buttons/fields to avoid double activation), arrows frame-step (native slider behavior preserved when it has focus), S split, +/- zoom, 0/F fit, Home/End bounds. All edit actions reuse the existing button handlers (zero duplicated logic).
+- Preview text entrance animation: overlay span animates on clip change only (popIn fade / slideUp rise, CSS keyframes), so continuous playback and seeks within one clip never re-trigger it.
+- Proof: SMOKE-PLAY play:true pause:true fwd:true back:true and SMOKE-TEXTOV vis|text-ok|anim=ppslide through real event paths; full smoke otherwise at baseline. Honest iteration: first PLAY run raced live playback (arrows vs timeupdate rewriting FRAME); fixed the probe to pause first instead of touching the app.

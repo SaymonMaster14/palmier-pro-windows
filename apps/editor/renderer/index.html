@@ -112,6 +112,8 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 ::-webkit-scrollbar-thumb:hover{background:var(--fg3);background-clip:padding-box;border:3px solid transparent}
 button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outline-offset:0}
 .empty{margin:8px 12px;padding:18px 12px;text-align:center;color:var(--fg3);font-size:12px;border:1px dashed var(--linestrong);border-radius:var(--r);background:var(--bg2)}
+@keyframes ppopin{from{opacity:0}to{opacity:1}}
+@keyframes ppslide{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 </style></head><body>
 <header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit" title="Split @ playhead">✂ Split</button><button id="bUndo" title="Undo">↺ Undo</button><button id="bRedo" title="Redo">↻ Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
 <main><section class="panel"><div class="ptitle">Media</div><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
@@ -126,6 +128,7 @@ const G = window.palmier.geom();
 const f2x = G ? G.frameToPx : ((f, w, d) => d <= 0 ? 0 : (f / d) * w);
 let S = null, SEQ = null, FRAME = 0, SEL = new Set(), FPS = 30;
 let VIEW = null;
+let lastTx = null;
 function viewDur() { return (VIEW && VIEW.dur > 0 ? VIEW.dur : DUR()); }
 function viewStart() { return (VIEW && VIEW.start >= 0 ? VIEW.start : 0); }
 window.__setZoom = async (s, d) => { VIEW = (d > 0 ? { start: Math.max(s, 0), dur: d } : null); await refresh(); zoomLabel(); };
@@ -238,11 +241,11 @@ async function markActive() {
     const ph0 = document.getElementById('ph'); if (ph0) { const pp = (FRAME - viewStart()) / viewDur() * 100; ph0.style.left = pp + '%'; ph0.style.display = (pp >= 0 && pp <= 100) ? 'block' : 'none'; } const tov = document.getElementById('textov'), tovt = document.getElementById('textovt');
     const tx = (hit && hit.kind === 'text' && hit.text) ? hit : null;
     if (tov && tovt) {
-      if (!tx) { tov.style.display = 'none'; }
+      if (!tx) { tov.style.display = 'none'; lastTx = null; }
       else {
         const vv = document.getElementById('pv');
         const sc = ((vv && vv.clientHeight) || SEQ.height) / SEQ.height;
-        tov.style.display = 'flex';
+        if (tx.id !== lastTx) { lastTx = tx.id; tovt.style.animation = 'none'; void tovt.offsetWidth; tovt.style.animation = (tx.textAnim === 'slideUp' ? 'ppslide .45s ease-out' : tx.textAnim === 'popIn' ? 'ppopin .4s ease-out' : 'none'); } tov.style.display = 'flex';
         tovt.textContent = tx.text;
         tovt.style.fontSize = ((tx.fontSize || 48) * sc) + 'px';
         tovt.style.color = tx.color || 'white';
@@ -394,6 +397,26 @@ $("bRedo").addEventListener("click", async () => { const r = await window.palmie
 document.querySelector("#zIn").addEventListener("click", async () => { const vd = viewDur(); const nd = Math.max(Math.round(vd / 1.5), 30); if (nd >= DUR()) { VIEW = null; } else { VIEW = { start: Math.min(Math.max(Math.round(FRAME - nd / 2), 0), Math.max(DUR() - nd, 0)), dur: Math.min(nd, DUR()) }; } await refresh(); zoomLabel(); });
 document.querySelector("#zOut").addEventListener("click", async () => { const vd = viewDur(); const nd = Math.round(vd * 1.5); if (nd >= DUR()) { VIEW = null; } else { const cc = VIEW ? VIEW.start + VIEW.dur / 2 : DUR() / 2; VIEW = { start: Math.min(Math.max(Math.round(cc - nd / 2), 0), Math.max(DUR() - nd, 0)), dur: nd }; } await refresh(); zoomLabel(); });
 document.querySelector("#zFit").addEventListener("click", async () => { VIEW = null; await refresh(); zoomLabel(); });
+document.addEventListener('keydown', async (e) => {
+  const aa = document.activeElement;
+  const fld = !!aa && (aa.tagName === 'INPUT' || aa.tagName === 'TEXTAREA' || aa.tagName === 'SELECT');
+  if (e.key === ' ' && !fld && (!aa || aa.tagName !== 'BUTTON')) {
+    e.preventDefault();
+    const pvv = document.querySelector('#pv');
+    if (pvv) { if (pvv.paused) { try { await pvv.play(); } catch {} } else pvv.pause(); }
+    return;
+  }
+  if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !fld && SEQ) {
+    e.preventDefault();
+    FRAME = Math.min(Math.max(FRAME + (e.key === 'ArrowRight' ? 1 : -1), 0), DUR());
+    $('seek').value = FRAME; await markActive(); return;
+  }
+  if ((e.key === 's' || e.key === 'S') && !fld && SEQ) { document.querySelector('#bSplit').click(); return; }
+  if ((e.key === '+' || e.key === '=') && !fld) { const zi = document.querySelector('#zIn'); if (zi) zi.click(); return; }
+  if ((e.key === '-' || e.key === '_') && !fld) { const zo = document.querySelector('#zOut'); if (zo) zo.click(); return; }
+  if ((e.key === '0' || e.key === 'f' || e.key === 'F') && !fld) { const zf = document.querySelector('#zFit'); if (zf) zf.click(); return; }
+  if ((e.key === 'Home' || e.key === 'End') && !fld && SEQ) { FRAME = e.key === 'Home' ? 0 : DUR(); $('seek').value = FRAME; await markActive(); return; }
+});
 document.addEventListener("keydown", async (e) => {
   if ((e.key === "m" || e.key === "M") && SEQ && document.activeElement.tagName !== "INPUT") { const r = await window.palmier.op("addMarker", [SEQ.id, { name: "M" + FRAME, startFrame: FRAME }]); log("marker: " + JSON.stringify(r)); await refresh(); return; }
   if ((e.key === "Delete" || e.key === "Backspace") && SEL.size && document.activeElement.tagName !== "INPUT") {
