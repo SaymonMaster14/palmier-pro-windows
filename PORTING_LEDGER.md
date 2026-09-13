@@ -107,3 +107,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Markers (upstream TimelineMarker parity): id/name/start/duration/color/comment/status, name<=120 + comment<=4000 validation, store add/remove with undo, MCP add/remove/list, renderer ruler ticks + M-to-add. Unit + live MARKER-MCP-PASS (add/readback/undo).
 - Suite 12/12 green.
+
+## 2026-09-13 turn 12 evidence
+
+- Snapping (upstream SnapEngine parity, clip/marker/playhead scope): pure collectSnapTargets/snapProbe/snapClipStart in core, snapMove IPC (threshold 6f, playhead + markers as targets), drag-move commits through it. Unit + live SMOKE-SNAP 90.

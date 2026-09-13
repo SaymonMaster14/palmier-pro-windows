@@ -94,3 +94,39 @@ export function validateMarker(m: { name: string; startFrame: number; durationFr
   if ((m.comment ?? '').length > MARKER_COMMENT_MAX) throw new Error('marker comment too long');
 }
 
+export type SnapKind = 'playhead' | 'clipEdge' | 'marker';
+export interface SnapTarget { frame: number; kind: SnapKind }
+// Snapping (mirrors upstream SnapEngine, clip/marker/playhead scope): pure target
+// collection + nearest-probe resolution. Beats/nesting excluded for now.
+export function collectSnapTargets(clips: Array<{ id: string; startFrame: number; durationFrames: number }>, opts: { excludeIds?: Set<string>; playheadFrame?: number; includePlayhead?: boolean; markerFrames?: number[] } = {}): SnapTarget[] {
+  const out: SnapTarget[] = [];
+  if (opts.includePlayhead && opts.playheadFrame !== undefined) out.push({ frame: opts.playheadFrame, kind: 'playhead' });
+  for (const m of opts.markerFrames ?? []) out.push({ frame: m, kind: 'marker' });
+  for (const c of clips) {
+    if (opts.excludeIds?.has(c.id)) continue;
+    out.push({ frame: c.startFrame, kind: 'clipEdge' });
+    out.push({ frame: c.startFrame + c.durationFrames, kind: 'clipEdge' });
+  }
+  return out;
+}
+export function snapProbe(probeFrames: number[], targets: SnapTarget[], thresholdFrames: number): { frame: number; probeOffset: number } | null {
+  let bf = -1; let bo = -1; let bd = Infinity;
+  for (let i = 0; i < probeFrames.length; i++) {
+    for (const t of targets) {
+      const d = Math.abs(probeFrames[i] - t.frame);
+      if (d <= thresholdFrames && d < bd) { bd = d; bf = t.frame; bo = i; }
+    }
+  }
+  if (bf < 0) return null;
+  return { frame: bf, probeOffset: bo };
+}
+export function snapClipStart(seqClips: Array<{ id: string; trackId: string; startFrame: number; durationFrames: number }>, clipId: string, rawStart: number, thresholdFrames: number, extra: { playheadFrame?: number; markerFrames?: number[] } = {}): number {
+  const clip = seqClips.find((c) => c.id === clipId);
+  if (!clip) throw new Error('clip not found');
+  const targets = collectSnapTargets(seqClips, { excludeIds: new Set([clipId]), playheadFrame: extra.playheadFrame, includePlayhead: extra.playheadFrame !== undefined, markerFrames: extra.markerFrames });
+  const hit = snapProbe([rawStart, rawStart + clip.durationFrames], targets, thresholdFrames);
+  if (!hit) return Math.max(rawStart, 0);
+  return Math.max(hit.probeOffset === 0 ? hit.frame : hit.frame - clip.durationFrames, 0);
+}
+
+

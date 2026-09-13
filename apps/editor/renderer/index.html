@@ -79,7 +79,7 @@ function bindClips() {
         let r;
         if (edge === "l") r = await window.palmier.op("trimStart", [SEQ.id, SEL, df]);
         else if (edge === "r") r = await window.palmier.op("trimEnd", [SEQ.id, SEL, c.durationFrames + df]);
-        else r = await window.palmier.op("moveClip", [SEQ.id, SEL, c.trackId, Math.max(c.startFrame + df, 0)]);
+        else { const snapped = await window.palmier.snapMove(SEQ.id, SEL, Math.max(c.startFrame + df, 0), FRAME); r = await window.palmier.op("moveClip", [SEQ.id, SEL, c.trackId, snapped]); }
         log(((edge === "l") ? "trimStart" : (edge === "r") ? "trimEnd" : "move") + ": " + JSON.stringify(r));
         await refresh();
       };
@@ -114,6 +114,7 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
 
 
 

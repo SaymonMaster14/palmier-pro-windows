@@ -34,6 +34,7 @@ function registerIpc() {
     return core.videoClipAt(s, frame) || null;
   });
   ipcMain.on("geomSync", (e, kind, args) => { e.returnValue = (kind === "pxToFrame" || kind === "frameToPx") ? core[kind](...args) : null; });
+  ipcMain.handle("snapMove", (_e, seqId, clipId, rawStart, ph) => { const s = store.project.sequences.find((x) => x.id === seqId); if (!s) throw new Error("sequence not found"); return core.snapClipStart(s.clips, clipId, rawStart, 6, { playheadFrame: ph, markerFrames: (s.markers || []).map((m) => m.startFrame) }); });
   ipcMain.handle("saveProject", async (_e, p) => { const fp = p || projectPath || path.join(app.getPath("userData"), "untitled.palmier.json"); await core.saveProject(store.project, fp); projectPath = fp; return { saved: fp }; });
   ipcMain.handle("openProject", async (_e, p) => { const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; changed(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
   ipcMain.handle("importMedia", async (_e, paths) => {
@@ -104,6 +105,7 @@ async function boot() {
     const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; if (!q || !q.clips[0]) return 'no-clip'; const c = q.clips[0]; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
     console.log("SMOKE-UI-OP", ui);
     console.log("SMOKE-GEOM", await win.webContents.executeJavaScript("typeof (window.palmier.geom() || {}).pxToFrame"));
+    console.log("SMOKE-SNAP", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const t = q.tracks.find(x => x.kind === 'video'); const m = s.media[0]; await window.palmier.op('placeClip', [q.id, t.id, { kind: 'video', assetId: m.id, startFrame: 120, durationFrames: 30, name: 'snap-b' }]); const b = (await window.palmier.state()).sequences[0].clips.find(c => c.startFrame === 120); return window.palmier.snapMove(q.id, b.id, 93, 0); })()"));
     if (process.env.PALM_SMOKE_IO) {
       const fix = (n) => path.resolve(__dirname, "..", "..", "..", "tests", "fixtures", n);
       const im = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.importMedia(${JSON.stringify([fix("sample-av.mp4"), fix("sample-img.png"), fix("sample-audio.wav")]).replace(/\\\\/g, "\\\\\\\\")}); const s = await window.palmier.state(); return r.length + ":" + s.media.length + ":" + s.sequences[0].clips.length; })()`);
@@ -118,6 +120,9 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
+
 
 
 
