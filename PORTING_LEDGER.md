@@ -200,3 +200,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Track mute/hide/lock: setTrackFlags op, lock enforced in shared req_clip (all mutating ops), export skips hidden video + muted audio, clipAt skips hidden, header M/H/L toggles. Unit + export proof. SMOKE-DOM 3:3.
 - Caught latent renderer syntax break (unquoted attr since crop turn) via new SMOKE-DOM guard; fixed.
+
+## 2026-09-13 turn 36 evidence
+
+- Multi-select: Set-based selection, Ctrl+toggle, drag-all via moveClips, Delete-all one undo, inspector first-selected. Caught real validation gap (mover-vs-mover overlap) fixed with post-move layout check. SMOKE-MULTI 3:1,2,3:0.
+- Fixed missing Agent panel HTML that threw at boot and silently killed later bindings; added renderer console-error capture (SMOKE-ERRS []) to prevent recurrence.

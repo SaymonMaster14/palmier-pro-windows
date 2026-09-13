@@ -2,14 +2,17 @@
 <header><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button></header>
 <main><section><h3>Media</h3><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
 <section><h3>Preview</h3><video id="pv" controls style="width:100%;background:var(--video)"></video><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select><canvas id="meter" width="220" height="10" style="width:100%;height:10px;background:var(--panel)"></canvas><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tracks" style="font-size:12px"></div><div id="tl"></div><div style="color:var(--mut);font-size:12px">drag clip = move · edge handles = trim · click = select · Del = delete</div></section>
-<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main>
+<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>Agent (local commands)</h3><input id="ag" placeholder="split here | marker x | ..." style="width:100%"><div id="aglog" style="font-size:12px"></div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main>
 <script>
+window.__errs = []; window.addEventListener("error", (e) => window.__errs.push(String((e.error && e.error.stack) || e.message)));
 const $ = (id) => document.getElementById(id);
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const log = (m) => { $("log").textContent = m + "\n" + $("log").textContent.slice(0, 2000); };
 const G = window.palmier.geom();
 const f2x = G ? G.frameToPx : ((f, w, d) => d <= 0 ? 0 : (f / d) * w);
-let S = null, SEQ = null, FRAME = 0, SEL = null, FPS = 30;
+let S = null, SEQ = null, FRAME = 0, SEL = new Set(), FPS = 30;
+const sel0 = () => [...SEL][0] || null;
+const selKey = () => [...SEL].sort().join(",");
 const DUR = () => SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
 const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 34;
 async function refresh() {
@@ -39,17 +42,17 @@ async function refresh() {
   await markActive();
 }
 async function renderInspector() {
-  if (SEL === renderInspector.sel) return; renderInspector.sel = SEL;
-  const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === SEL);
+  if (selKey() === renderInspector.sel) return; renderInspector.sel = selKey();
+  const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === sel0());
   if (!c) { box.textContent = "select a clip"; return; }
   box.innerHTML = "clip " + c.name + " <small>at playhead op/vol: <span id=iLive></span></small>";
   window.palmier.evalKeys(SEQ.id, c.id, FRAME).then(r => { const el = document.querySelector("#iLive"); if (el) el.textContent = Number(r.op).toFixed(2) + "/" + Number(r.vol).toFixed(2); }).catch(() => {});
   box.innerHTML += "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> rot <input id=iR size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> tr <input id=iTr size=4> sp <input id=iSp size=4> cr <input id=iCr size=9 placeholder='l,t,r,b'> bl <select id=iBl><option>normal</option><option>screen</option><option>multiply</option><option>overlay</option></select> <button id=iApply>Apply</button><br><button id=iKeyOp>key op @playhead</button><button id=iKeyVol>key vol @playhead</button><div id=iKeys style=font-size:11px></div>";
   const set = (id, v) => { document.querySelector(id).value = v; };
   set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iR", c.transform.rotationDeg || 0); set("#iO", c.opacity); set("#iV", c.volume); set("#iSp", c.speed || 1); document.querySelector("#iBl").value = c.blend || "normal";
-  const keyList = () => { const el = document.querySelector("#iKeys"); if (!el) return; const c2 = SEQ.clips.find(x => x.id === SEL); el.innerHTML = "op:" + (c2.opacityKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=op:" + k.frame + ">x</a></span>").join(" ") + " vol:" + (c2.volumeKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=vol:" + k.frame + ">x</a></span>").join(" "); el.querySelectorAll("a[data-k]").forEach(a => a.addEventListener("click", async (e) => { e.preventDefault(); const [tr, fr] = a.dataset.k.split(":"); await window.palmier.op("removeKeyframe", [SEQ.id, SEL, tr, Number(fr)]); renderInspector.sel = null; await refresh(); await renderInspector(); })); };
+  const keyList = () => { const el = document.querySelector("#iKeys"); if (!el) return; const c2 = SEQ.clips.find(x => x.id === SEL); el.innerHTML = "op:" + (c2.opacityKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=op:" + k.frame + ">x</a></span>").join(" ") + " vol:" + (c2.volumeKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=vol:" + k.frame + ">x</a></span>").join(" "); el.querySelectorAll("a[data-k]").forEach(a => a.addEventListener("click", async (e) => { e.preventDefault(); const [tr, fr] = a.dataset.k.split(":"); await window.palmier.op("removeKeyframe", [SEQ.id, sel0(), tr, Number(fr)]); renderInspector.sel = ""; await refresh(); await renderInspector(); })); };
   keyList();
-  const keyAt = async (tr) => { const num = (id) => Number(document.querySelector(id).value); await window.palmier.op("setKeyframe", [SEQ.id, SEL, tr, { frame: FRAME, value: tr === "op" ? num("#iO") : num("#iV"), interpolation: "linear" }]); renderInspector.sel = null; await refresh(); await renderInspector(); };
+  const keyAt = async (tr) => { const num = (id) => Number(document.querySelector(id).value); await window.palmier.op("setKeyframe", [SEQ.id, sel0(), tr, { frame: FRAME, value: tr === "op" ? num("#iO") : num("#iV"), interpolation: "linear" }]); renderInspector.sel = ""; await refresh(); await renderInspector(); };
   document.querySelector("#iKeyOp").addEventListener("click", () => keyAt("opacity"));
   document.querySelector("#iKeyVol").addEventListener("click", () => keyAt("volume"));
   document.querySelector("#iApply").addEventListener("click", async () => {
@@ -63,7 +66,7 @@ async function renderInspector() {
     const r8 = await window.palmier.op("setBlend", [SEQ.id, c.id, document.querySelector("#iBl").value]);
     const cp = document.querySelector("#iCr").value.split(",").map(Number);
     const r7 = cp.length === 4 && cp.every(Number.isFinite) ? await window.palmier.op("setCrop", [SEQ.id, c.id, { l: cp[0], t: cp[1], r: cp[2], b: cp[3] }]) : { noop: true };
-    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok, r5.noop || r5.ok, r6.noop || r6.ok, r7.noop || r7.ok, r8.noop || r8.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
+    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok, r5.noop || r5.ok, r6.noop || r6.ok, r7.noop || r7.ok, r8.noop || r8.ok])); renderInspector.sel = ""; await refresh(); await renderInspector();
   });
 }
 async function markActive() {
@@ -71,7 +74,7 @@ async function markActive() {
   const hit = await window.palmier.clipAt(SEQ.id, FRAME);
   document.querySelectorAll(".clip").forEach(el => {
     el.classList.toggle("active", !!hit && el.dataset.id === hit.id);
-    el.classList.toggle("sel", el.dataset.id === SEL);
+    el.classList.toggle("sel", SEL.has(el.dataset.id));
   });
   renderInspector();
   const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
@@ -142,10 +145,10 @@ function paintTracks() {
 }
 function bindClips() {
   document.querySelectorAll(".clip").forEach(el => {
-    el.addEventListener("dblclick", async (e) => { e.stopPropagation(); const c = SEQ.clips.find(x => x.id === el.dataset.id); if (!c) return; const rel = Math.min(Math.max(FRAME - c.startFrame, 0), c.durationFrames); const tr = c.kind === "audio" ? "volume" : "opacity"; const val = tr === "volume" ? c.volume : c.opacity; const r = await window.palmier.op("setKeyframe", [SEQ.id, c.id, tr, { frame: c.startFrame + rel, value: val, interpolation: "linear" }]); log("key: " + JSON.stringify(r)); renderInspector.sel = null; await refresh(); await renderInspector(); });
+    el.addEventListener("dblclick", async (e) => { e.stopPropagation(); const c = SEQ.clips.find(x => x.id === el.dataset.id); if (!c) return; const rel = Math.min(Math.max(FRAME - c.startFrame, 0), c.durationFrames); const tr = c.kind === "audio" ? "volume" : "opacity"; const val = tr === "volume" ? c.volume : c.opacity; const r = await window.palmier.op("setKeyframe", [SEQ.id, c.id, tr, { frame: c.startFrame + rel, value: val, interpolation: "linear" }]); log("key: " + JSON.stringify(r)); renderInspector.sel = ""; await refresh(); await renderInspector(); });
     el.addEventListener("mousedown", (e) => {
       e.preventDefault();
-      SEL = el.dataset.id; markActive();
+      if (e.ctrlKey || e.metaKey) { const id = el.dataset.id; if (SEL.has(id)) SEL.delete(id); else SEL.add(id); } else SEL = new Set([el.dataset.id]); markActive();
       const tl = $("tl").getBoundingClientRect();
       const x0 = e.clientX;
       const edge = e.target.dataset && e.target.dataset.e;
@@ -155,12 +158,12 @@ function bindClips() {
         const dx = ev.clientX - x0;
         const df = Math.round(dx / tl.width * DUR());
         if (df === 0) return;
-        const c = SEQ.clips.find(x => x.id === SEL);
+        const c = SEQ.clips.find(x => x.id === el.dataset.id);
         let r;
-        if (edge === "l") r = await window.palmier.op("trimStart", [SEQ.id, SEL, df]);
-        else if (edge === "r") r = await window.palmier.op("trimEnd", [SEQ.id, SEL, c.durationFrames + df]);
+        if (edge === "l") r = await window.palmier.op("trimStart", [SEQ.id, sel0(), df]);
+        else if (edge === "r") r = await window.palmier.op("trimEnd", [SEQ.id, sel0(), c.durationFrames + df]);
         else if (ev.altKey) { r = await window.palmier.op("overwritePlace", [SEQ.id, c.trackId, { kind: c.kind, assetId: c.assetId, startFrame: Math.max(c.startFrame + df, 0), durationFrames: c.durationFrames, name: c.name }]); }
-        else { const snapped = await window.palmier.snapMove(SEQ.id, SEL, Math.max(c.startFrame + df, 0), FRAME); r = await window.palmier.op("moveClip", [SEQ.id, SEL, c.trackId, snapped]); }
+        else { const ids = [...SEL].filter((id) => SEQ.clips.some((x) => x.id === id)); const all = ids.length > 1 && ids.includes(el.dataset.id) ? ids : [el.dataset.id]; const moves = []; for (const id of all) { const cc = SEQ.clips.find((x) => x.id === id); moves.push({ clipId: id, toTrackId: cc.trackId, toStart: 0 }); } for (const m of moves) { const cc = SEQ.clips.find((x) => x.id === m.clipId); const raw = Math.max(cc.startFrame + df, 0); const sn = await window.palmier.snapMove(SEQ.id, m.clipId, raw, FRAME); m.toStart = sn; } r = all.length > 1 ? await window.palmier.op("moveClips", [SEQ.id, moves]) : await window.palmier.op("moveClip", [SEQ.id, all[0], SEQ.clips.find((x) => x.id === all[0]).trackId, moves[0].toStart]); }
         log(((edge === "l") ? "trimStart" : (edge === "r") ? "trimEnd" : "move") + ": " + JSON.stringify(r));
         await refresh();
       };
@@ -184,15 +187,16 @@ $("bUndo").addEventListener("click", async () => { const r = await window.palmie
 $("bRedo").addEventListener("click", async () => { const r = await window.palmier.op("redo", []); log("redo: " + JSON.stringify(r)); await refresh(); });
 document.addEventListener("keydown", async (e) => {
   if ((e.key === "m" || e.key === "M") && SEQ && document.activeElement.tagName !== "INPUT") { const r = await window.palmier.op("addMarker", [SEQ.id, { name: "M" + FRAME, startFrame: FRAME }]); log("marker: " + JSON.stringify(r)); await refresh(); return; }
-  if ((e.key === "Delete" || e.key === "Backspace") && SEL && document.activeElement.tagName !== "INPUT") {
-    const r = await window.palmier.op(e.shiftKey ? "rippleDelete" : "deleteClip", [SEQ.id, SEL]);
-    log("delete: " + JSON.stringify(r)); SEL = null; await refresh();
+  if ((e.key === "Delete" || e.key === "Backspace") && SEL.size && document.activeElement.tagName !== "INPUT") {
+    const ids = [...SEL];
+    const r = ids.length === 1 && e.shiftKey ? await window.palmier.op("rippleDelete", [SEQ.id, ids[0]]) : await window.palmier.op("deleteClips", [SEQ.id, ids]);
+    log("delete: " + JSON.stringify(r)); SEL = new Set(); await refresh();
   }
 });
 window.palmier.onStoreChanged(() => refresh());
 document.querySelector("#rate").addEventListener("change", (e) => { document.querySelector("#pv").playbackRate = Number(e.target.value); });
-document.querySelector("#ag").addEventListener("keydown", async (e) => { if (e.key !== "Enter") return; const q = e.target.value; e.target.value = ""; const r = await window.palmier.agentRun(q, { sequenceId: SEQ.id, playheadFrame: FRAME, selectedClipId: SEL }); const al = document.querySelector("#aglog"); al.textContent = "> " + q + "\\n" + r + "\\n" + al.textContent.slice(0, 1500); await refresh(); });
-document.querySelector("#bNew").addEventListener("click", async () => { await window.palmier.newProject(); SEL = null; await refresh(); });
+document.querySelector("#ag").addEventListener("keydown", async (e) => { if (e.key !== "Enter") return; const q = e.target.value; e.target.value = ""; const r = await window.palmier.agentRun(q, { sequenceId: SEQ.id, playheadFrame: FRAME, selectedClipId: sel0() }); const al = document.querySelector("#aglog"); al.textContent = "> " + q + "\\n" + r + "\\n" + al.textContent.slice(0, 1500); await refresh(); });
+document.querySelector("#bNew").addEventListener("click", async () => { await window.palmier.newProject(); SEL = new Set(); await refresh(); });
 document.querySelector("#bOpen").addEventListener("click", async () => { try { const r = await window.palmier.openProject(); if (r.opened) await refresh(); log("opened: " + JSON.stringify(r)); } catch (e) { log("open: " + e.message); } });
 async function paintRecents() { try { const rs = await window.palmier.listRecents(); const box = document.querySelector("#rec"); box.innerHTML = ""; rs.forEach((rp) => { const d = document.createElement("div"); const a = document.createElement("a"); a.href = "#"; a.textContent = rp; a.addEventListener("click", async (ev) => { ev.preventDefault(); await window.palmier.openProject(rp); await refresh(); }); d.appendChild(a); box.appendChild(d); }); if (!rs.length) box.innerHTML = "<small>none</small>"; } catch (e) {} }
 paintRecents();
@@ -211,6 +215,12 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
+
+
+
+
 
 
 

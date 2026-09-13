@@ -147,6 +147,31 @@ export class EditorStore {
       return { ok: true, ids: [clipId, ...shifts.map((x) => x.clipId)], warnings: [], label: "rippleDelete" };
     });
   }
+  deleteClips(seqId: string, clipIds: string[]): Receipt {
+    return this.exec("deleteClips", (p) => {
+      const s = req_seq(p, seqId);
+      const set = new Set(clipIds);
+      for (const id of set) req_clip(s, id);
+      s.clips = s.clips.filter((x) => !set.has(x.id));
+      return { ok: true, ids: [...set], warnings: [], label: "deleteClips" };
+    });
+  }
+  moveClips(seqId: string, moves: Array<{ clipId: string; toTrackId: string; toStart: number }>): Receipt {
+    return this.exec("moveClips", (p) => {
+      const s = req_seq(p, seqId);
+      const moving = new Map(moves.map((m) => [m.clipId, m]));
+      for (const m of moves) {
+        const c = req_clip(s, m.clipId);
+        if (!s.tracks.some((x) => x.id === m.toTrackId)) throw new Error("target track not found");
+        if (!Number.isInteger(m.toStart) || m.toStart < 0) throw new Error("bad startFrame");
+        void c;
+      const laid: Array<{ id: string; trackId: string; start: number; end: number }> = s.clips.map((x) => { const m = moving.get(x.id); return m ? { id: x.id, trackId: m.toTrackId, start: m.toStart, end: m.toStart + x.durationFrames } : { id: x.id, trackId: x.trackId, start: x.startFrame, end: x.startFrame + x.durationFrames }; });
+      for (let ai = 0; ai < laid.length; ai++) for (let bi = ai + 1; bi < laid.length; bi++) { const A = laid[ai], B = laid[bi]; if (A.trackId === B.trackId && rangeOverlaps(A.start, A.end, B.start, B.end)) throw new Error(`overlap after move: ${A.id} vs ${B.id}`); }
+      }
+      for (const m of moves) { const c = s.clips.find((x) => x.id === m.clipId)!; c.trackId = m.toTrackId; c.startFrame = m.toStart; }
+      return { ok: true, ids: moves.map((m) => m.clipId), warnings: [], label: "moveClips" };
+    });
+  }
   deleteClip(seqId: string, clipId: string): Receipt {
     return this.exec('deleteClip', (p) => {
       const s = req_seq(p, seqId); const i = s.clips.findIndex(x => x.id === clipId);
@@ -283,6 +308,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 
