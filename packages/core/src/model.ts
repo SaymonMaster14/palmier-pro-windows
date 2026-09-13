@@ -51,7 +51,7 @@ export interface Clip {
   speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; blend: BlendMode; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
   transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean; textAnim?: string; textShadow?: boolean; textOutline?: boolean;
 }
-export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
+export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean; volume?: number }
 export interface Sequence {
   id: string; name: string; fps: RationalFps; width: number; height: number;
   tracks: Track[]; clips: Clip[]; markers: TimelineMarker[];

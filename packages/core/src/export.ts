@@ -168,7 +168,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
       if (!inp.hasAudio) { warnings.push(`clip ${c.id} skipped in audio mix (no audio stream)`); continue; }
       if (cluster.length && c.startFrame >= Math.max(...cluster.map((m) => m.endF))) flushCluster();
       if (!cluster.length && c.startFrame > ac) { const gf = c.startFrame - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
-      const vol = c.muted ? 0 : c.volume;
+      const tgain = s.tracks.find((x) => x.id === c.trackId)?.volume ?? 1; const vol = c.muted ? 0 : c.volume * tgain;
       const aspd = c.speed ?? 1;
       const ass = t(c.sourceInFrame), ato = t(c.sourceInFrame + Math.round(c.durationFrames * aspd));
       const at = aspd === 1 ? "" : "," + atempo(aspd);

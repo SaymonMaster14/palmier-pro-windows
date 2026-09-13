@@ -117,6 +117,7 @@ button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outli
 #ctxmenu{position:fixed;z-index:300;display:none;min-width:180px;background:var(--bgelev);border:1px solid var(--linestrong);border-radius:8px;padding:4px;box-shadow:0 12px 32px rgba(0,0,0,.55)}
 #ctxmenu button{display:block;width:100%;text-align:left;background:transparent;border:none;border-radius:5px;padding:6px 10px;margin:0;font-size:12px}
 #ctxmenu button:hover{background:var(--accsoft)}
+#tracks .trk input[type=range]{width:54px;flex:none;padding:0}
 #home{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(8,8,12,.72)}
 .hcard{width:420px;max-width:92vw;background:var(--bgelev);border:1px solid var(--linestrong);border-radius:14px;padding:28px;box-shadow:0 32px 80px rgba(0,0,0,.6)}
 .hbrand{display:flex;align-items:center;gap:12px}
@@ -388,6 +389,7 @@ function paintTracks() {
       b.addEventListener("click", async () => { const p = {}; p[fl] = !tr[fl]; await window.palmier.op("setTrackFlags", [SEQ.id, tr.id, p]); await refresh(); });
       d.appendChild(b);
     });
+    if (tr.kind === "audio") { const sl = document.createElement("input"); sl.type = "range"; sl.min = "0"; sl.max = "4"; sl.step = "0.1"; sl.value = tr.volume ?? 1; sl.title = "track volume"; sl.addEventListener("change", async () => { await window.palmier.op("setTrackFlags", [SEQ.id, tr.id, { volume: Number(sl.value) }]); await refresh(); }); d.appendChild(sl); }
     box.appendChild(d);
   });
 }

@@ -228,12 +228,13 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setSpeed" };
     });
   }
-  setTrackFlags(seqId: string, trackId: string, patch: { muted?: boolean; locked?: boolean; hidden?: boolean }): Receipt {
+  setTrackFlags(seqId: string, trackId: string, patch: { muted?: boolean; locked?: boolean; hidden?: boolean; volume?: number }): Receipt {
     return this.exec("setTrackFlags", (p) => {
       const s = req_seq(p, seqId);
       const tr = s.tracks.find((x) => x.id === trackId);
       if (!tr) throw new Error("track not found");
       for (const k of ["muted", "locked", "hidden"] as const) { const v = patch[k]; if (v === undefined) continue; if (typeof v !== "boolean") throw new Error("bad flag " + k); tr[k] = v; }
+      if (patch.volume !== undefined) { if (!Number.isFinite(patch.volume) || patch.volume < 0 || patch.volume > 4) throw new Error("bad track volume"); tr.volume = patch.volume; }
       return { ok: true, ids: [tr.id], warnings: [], label: "setTrackFlags" };
     });
   }
