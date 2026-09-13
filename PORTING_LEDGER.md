@@ -222,3 +222,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Packaging hygiene: readSettings scoping bug (masked in dev by env, fatal packaged) fixed; SNAP smoke made overlap-proof; smoke result-file for uncapturable packaged stdio.
 - Rebuilt + re-verified packaged app: PROJECT-LOAD, BOOT-OK, MCP live, FINAL-E2E-PASS bytes=97690 dur=3.000. (Partial builder extraction + silent NSIS failures observed twice; clean rebuild fixed the former; portable single-exe still pending re-wrap.)
+
+## 2026-09-13 turn 41 evidence
+
+- Subtitle burn-in proof: imported SRT caption measurably adds edges vs no-caption frame in real export. Suite 37/37.

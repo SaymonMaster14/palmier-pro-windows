@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createProject } from "../model.js";
+import { createProject, createSequence, addTrack } from "../model.js";
 import { EditorStore } from "../store.js";
+import { exportSequence } from "../export.js";
 import { parseSubs, importSubtitles } from "../subs.js";
 const SRT = "1\n00:00:01,000 --> 00:00:02,500 Hello <b>world</b>\n\n2\n00:00:03,000 --> 00:00:04,000 Second line\n";
 test("srt parse strips tags, keeps timing", () => {
@@ -26,4 +27,25 @@ test("subtitle import places text clips", async () => {
   assert.equal(clips[0].startFrame, 30);
   assert.equal(clips[0].durationFrames, 45);
   await assert.rejects(() => importSubtitles(st, join(dir, "nope.srt")));
+});
+test("subtitles burn into export", async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const dir = mkdtempSync(join(tmpdir(), "palm-subx-"));
+  const { spawnSync } = await import("node:child_process");
+  const gray = dir + "/gray.mp4";
+  spawnSync("ffmpeg", ["-v", "error", "-f", "lavfi", "-i", "color=c=0x404040:size=320x240:rate=30:duration=3", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-y", gray]);
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject("sx"));
+  const seq = createSequence(st.project, "s", fps, 320, 240);
+  const v1 = addTrack(seq, "video", "V1");
+  st.addMedia({ path: gray, kind: "video", name: "g", durationFrames: 90, fps });
+  st.placeClip(seq.id, v1.id, { kind: "video", assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, name: "g" });
+  writeFileSync(dir + "/c.srt", "1\n00:00:01,000 --> 00:00:02,000 CAPTION WORDS\n");
+  await importSubtitles(st, dir + "/c.srt");
+  const out = dir + "/s.mp4";
+  await exportSequence(st.project, seq.id, out);
+  const shot = (ss: number): Buffer => { const x = spawnSync("ffmpeg", ["-v", "error", "-ss", String(ss), "-i", out, "-frames:v", "1", "-vf", "scale=64:48", "-f", "rawvideo", "-pix_fmt", "gray", "pipe:1"], { maxBuffer: 1e7 }); return x.stdout; };
+  const edge = (b: Buffer): number => { let e = 0; for (let y = 1; y < 48; y++) for (let x = 1; x < 64; x++) { const d = Math.abs(b[y * 64 + x] - b[y * 64 + x - 1]); if (d > 25) e++; } return e; };
+  const eOff = edge(shot(0.3)), eOn = edge(shot(1.5));
+  assert.ok(eOn > eOff + 30, "caption adds edges " + eOff + "/" + eOn);
 });
