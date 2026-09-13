@@ -78,3 +78,22 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - M PACKAGED: PASS (portable). PalmierProWindows-0.0.1-portable.exe (~85 MB) + win-unpacked verified: DEPS ffmpeg/ffprobe logged, PROJECT-LOAD real project, SMOKE-STATE-SEQ 1, SMOKE-UI-OP true:2, SMOKE-GEOM function, BOOT-OK, MCP getProject over HTTP against packaged app (PKG-MCP-PROJECT, PORTABLE-HEALTH true).
 - Boot dependency check: ffmpeg/ffprobe versions logged at startup, error dialog when missing (FFmpeg stays a system requirement, documented).
+
+## 2026-09-13 turn 9: N FINAL E2E + parity review (sec 38)
+
+- N FINAL E2E: PASS on packaged app (win-unpacked). Chain: import av+img+audio via MCP -> split video -> delete section -> trim image -> overlay on V2 + scale 0.5 -> text on V3 -> volume 0.7 -> save -> quit -> reopen (identical IDs/ranges) -> MCP setOpacity -> readback -> undo -> redo -> export H.264 -> ffprobe audio,video dur=3.000 + decode ok. FINAL-E2E-PASS bytes=97721 dur=3.000 streams=audio,video clips=4.
+- Harness flake fixed: per-run random MCP ports in all 4 e2e scripts (was: fixed 19789 cross-talk between consecutive runs).
+
+### Parity vs upstream (honest, per area)
+
+- Project/package/lifecycle: PARTIAL-PASS (new/save/reopen/atomic JSON; no .palmier bundle, no Save-As-into-package media copy, no relink UI).
+- Timeline ops (move/trim/split/delete/link-agnostic): PARTIAL (no ripple/overwrite engines, no nesting, no multicam, no slip/slide, no multi-select, no snap/zoom/waveform UI).
+- Undo/redo: PASS for covered ops (shared history UI+MCP, no-op guards).
+- Preview: PARTIAL (source-mapped cuts/seek; no multilayer compositing, no effects, no scopes, no scrub-audio).
+- Compositing/effects: PARTIAL (export: scale-crop/overlay/opacity/text; no color/grade/keyframes/blend/crop-inspector/chroma/matte in UI).
+- Audio: PARTIAL (import/trim/mix/volume/mute/export-sync; no meters/waveform/fades/envelopes/beat/VAD/enhance).
+- Text/captions: PARTIAL (place/edit/preview-map/export burn-in; no animation/fill-modes/caption import).
+- Export: PARTIAL-PASS for H.264 MP4 (gaps, multisource, overlays, text, mix, validation); no HDR/FCPXML/XML/project-export/queue UI.
+- Agent tools: PARTIAL (~14 intent tools w/ receipts; upstream has ~30 incl. color/captions/words/sync/multicam/organize/search/skills).
+- MCP: PASS for covered surface (HTTP real transport, read/write/undo/redo/import/export).
+- Generation: DEFERRED (provider interface only, per plan). Transcription: DEFERRED (Apple runtime). Search/index: NOT_STARTED. Agent chat/panel: NOT_STARTED. Home/settings/telemetry/auth: NOT_STARTED. Design tokens: NOT_STARTED. Localization: NOT_STARTED.

@@ -38,24 +38,7 @@ function registerIpc() {
   ipcMain.handle("openProject", async (_e, p) => { const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; changed(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
   ipcMain.handle("importMedia", async (_e, paths) => {
     if (!paths || !paths.length) { const sel = await dialog.showOpenDialog(win, { properties: ["openFile", "multiSelections"] }); if (sel.canceled) return []; paths = sel.filePaths; }
-    const out = [];
-    for (const fp of paths) {
-      const pr = await core.probeMedia(fp);
-      const kind = pr.still ? "image" : pr.hasVideo ? "video" : "audio";
-      let seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
-      if (!seq) seq = core.createSequence(store.project, "Sequence 1", { num: 30, den: 1 }, 1280, 720);
-      const fps = seq.fps;
-      const durF = kind === "image" ? 90 : core.secondsToFrames(pr.durationSec, fps);
-      const r = store.addMedia({ path: fp, kind, name: path.basename(fp), durationFrames: durF, fps, width: pr.width, height: pr.height, audioChannels: pr.audioChannels, sampleRate: pr.sampleRate });
-      const assetId = r.ids[0] || store.project.media.find((m) => m.path === fp).id;
-      const tk = kind === "audio" ? "audio" : "video";
-      let track = seq.tracks.find((x) => x.kind === tk && !x.locked) || core.addTrack(seq, tk, (tk === "audio" ? "A" : "V") + (seq.tracks.filter((x) => x.kind === tk).length + 1));
-      const start = seq.clips.filter((c) => c.trackId === track.id).reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0);
-      const clipKind = kind === "image" ? "image" : kind === "audio" ? "audio" : "video";
-      const placed = store.placeClip(seq.id, track.id, { kind: clipKind, assetId, startFrame: start, durationFrames: durF, name: path.basename(fp) });
-      out.push({ path: fp, kind, assetId, placed });
-    }
-    return out;
+    return core.importAndPlace(store, paths);
   });
   ipcMain.handle("exportActive", async (_e, outPath) => {
     const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];

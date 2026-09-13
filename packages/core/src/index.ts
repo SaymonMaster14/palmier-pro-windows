@@ -5,3 +5,5 @@ export * from './persistence.js';
 export * from './media.js';
 export * from './export.js';
 export * from './mcp.js';
+export * from './library.js';
+

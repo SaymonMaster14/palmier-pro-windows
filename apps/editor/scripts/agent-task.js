@@ -7,7 +7,9 @@ const os = require("node:os");
 const path = require("node:path");
 const ROOT = path.resolve(__dirname, "..", "..", "..");
 const ELECTRON = path.join(ROOT, "node_modules", "electron", "dist", "electron.exe");
-const BASE = "http://127.0.0.1:" + (process.env.PALM_MCP_PORT || 19789) + "/mcp";
+const PORT = Number(process.env.PALM_MCP_PORT || (19789 + Math.floor(Math.random() * 2000)));
+process.env.PALM_MCP_PORT = String(PORT);
+const BASE = "http://127.0.0.1:" + PORT + "/mcp";
 let id = 0;
 async function call(method, params) {
   const r = await fetch(BASE, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: ++id, method, params }) });
@@ -58,4 +60,5 @@ async function main() {
   }
 }
 main();
+
 
