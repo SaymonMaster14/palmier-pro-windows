@@ -429,3 +429,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - New duplicateClips domain op (one undo unit): deep-copies clips to their track ends with fresh ids, carries keyframes/fades/style, regroups internal links under a new group id (never links copies back to originals), validates existence/locks, rejects empty sets. Wired to Ctrl+D (field-guarded, no interference with typing), timeline context menu, main OPS and MCP.
 - Proof: unit suite 46/46 (new dup test: placement, keyframe carry, link regrouping vs originals, undo/redo); live SMOKE-DUP n0=3 n1=1 uniq=true errs=0 through the real keydown path; downstream CTX/VISUAL lines shifted consistently (n0=4, total 00:05), full smoke otherwise at baseline.
+
+## 2026-09-13 turn 69 packaging
+
+- Repackaged duplicate tree: portable exe fresh 85,298,759b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
