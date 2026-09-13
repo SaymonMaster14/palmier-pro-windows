@@ -279,3 +279,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Repackaged current tree (font slice + audio data-id fix + MULTI stalePre guard): prepackage rebuilt core (dist verified exposing resolveFontFile), electron-builder portable DONE-0, PalmierProWindows-0.0.1-portable.exe fresh 85,285,326b, postpackage vendor cleanup done. NSIS stage slow but clean this time, no flakes.
 - Packaged re-verification (win-unpacked): FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (byte count shifted vs 97690 because the text burn-in now carries fontfile — proof the new export graph is inside the packaged build). Kill-cleanup noise only.
 - Unit suite unchanged this turn (no core edits; 39/39 stands from turn 50 on the identical tree).
+
+## 2026-09-13 turn 53 evidence
+
+- Bold/italic (upstream TextStyle isBold/isItalic slice): Clip.fontBold/fontItalic, FONT_VARIANTS table (arial/times/cour/verdana regular+bold+italic+boldItalic; irregular Windows names mapped explicitly, no suffix guessing), resolveFontFile(family, bold, italic) with regular fallback then honest null. setTextStyle validates booleans/backfills false/noop-aware/undoable. Export selects the variant file. Inspector B/I checkboxes wired through Apply. MCP passes through.
+- Suite 40/40 green (new test: validation/noop/readback/variant resolution/undo/redo/graph fontfile/real export+validate). Dev-app smoke unchanged and green: MULTI stalePre=0 left=0, KEYLANE 1:1, KEYUI 1, ERRS [], BOOT-OK.
+- Process note: two patch anchors missed on CRLF files (multiline anchor + same-line `}` assumption); fixed with single-line anchors. All patch scaffolding removed.

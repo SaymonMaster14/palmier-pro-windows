@@ -15,13 +15,25 @@ export interface Transform { x: number; y: number; scaleX: number; scaleY: numbe
 export type BlendMode = "normal" | "screen" | "multiply" | "overlay";
 export const BLEND_MODES: BlendMode[] = ["normal", "screen", "multiply", "overlay"];
 export const FONT_FAMILIES = ["sans", "serif", "mono", "arial", "times", "courier", "verdana"];
-export const FONT_FILES: Record<string, string> = { sans: "arial.ttf", arial: "arial.ttf", helvetica: "arial.ttf", serif: "times.ttf", times: "times.ttf", mono: "cour.ttf", courier: "cour.ttf", verdana: "verdana.ttf" };
-export function resolveFontFile(family?: string): string | null {
+export const FONT_BASE: Record<string, string> = { sans: "arial", arial: "arial", helvetica: "arial", serif: "times", times: "times", mono: "cour", courier: "cour", verdana: "verdana" };
+export const FONT_VARIANTS: Record<string, { regular: string; bold: string; italic: string; boldItalic: string }> = {
+  arial: { regular: "arial.ttf", bold: "arialbd.ttf", italic: "ariali.ttf", boldItalic: "arialbi.ttf" },
+  times: { regular: "times.ttf", bold: "timesbd.ttf", italic: "timesi.ttf", boldItalic: "timesbi.ttf" },
+  cour: { regular: "cour.ttf", bold: "courbd.ttf", italic: "couri.ttf", boldItalic: "courbi.ttf" },
+  verdana: { regular: "verdana.ttf", bold: "verdanab.ttf", italic: "verdanai.ttf", boldItalic: "verdanaz.ttf" },
+};
+export function resolveFontFile(family?: string, bold?: boolean, italic?: boolean): string | null {
   const key = String(family || "sans").toLowerCase();
-  const file = FONT_FILES[key] || FONT_FILES.sans;
+  const base = FONT_BASE[key] || "arial";
+  const set = FONT_VARIANTS[base] || FONT_VARIANTS.arial;
+  const want = bold && italic ? set.boldItalic : bold ? set.bold : italic ? set.italic : set.regular;
   const dir = join(process.env.SystemRoot || "C:\\Windows", "Fonts");
-  const full = join(dir, file);
-  try { return existsSync(full) ? full : null; } catch { return null; }
+  const pick = (f: string) => join(dir, f);
+  try {
+    if (existsSync(pick(want))) return pick(want);
+    if (want !== set.regular && existsSync(pick(set.regular))) return pick(set.regular);
+    return null;
+  } catch { return null; }
 }
 export function fontFilterPath(fsPath: string): string {
   return fsPath.split("\\").join("/").split(":").join("\\:");
@@ -36,7 +48,7 @@ export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
   speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; blend: BlendMode; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
-  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string;
+  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string; fontBold?: boolean; fontItalic?: boolean;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
 export interface Sequence {

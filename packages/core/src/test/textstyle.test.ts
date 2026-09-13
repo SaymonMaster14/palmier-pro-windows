@@ -60,3 +60,35 @@ test('text font family validated, undoable, honored in export', async () => {
   const v = await validateExport(out, ex.durationSec, true);
   assert.ok(v.ok, v.details);
 });
+
+test('text bold italic resolve to variant files, validated, exported', async () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject('bi'));
+  const seq = createSequence(st.project, 's', fps, 320, 240);
+  const v1 = addTrack(seq, 'video', 'V1');
+  const v2 = addTrack(seq, 'video', 'V2');
+  st.addMedia({ path: fix('sample-av.mp4'), kind: 'video', name: 'v', durationFrames: 90, fps });
+  st.placeClip(seq.id, v1.id, { kind: 'video', assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, name: 'v' });
+  const id = st.placeClip(seq.id, v2.id, { kind: 'text', startFrame: 0, durationFrames: 90, name: 't', text: 'Bi' }).ids[0];
+  assert.ok(!st.setTextStyle(seq.id, id, { fontBold: 'yes' as never }).ok);
+  assert.ok(!st.setTextStyle(seq.id, id, { fontItalic: 1 as never }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { fontFamily: 'arial', fontBold: true, fontItalic: true }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { fontFamily: 'arial', fontBold: true, fontItalic: true }).noop);
+  const c = st.project.sequences[0].clips.find((x) => x.id === id)!;
+  assert.equal(c.fontBold, true);
+  assert.equal(c.fontItalic, true);
+  const ff = resolveFontFile('arial', true, true);
+  if (ff) assert.ok(ff.toLowerCase().endsWith('arialbi.ttf'), 'bolditalic variant, got ' + ff);
+  else assert.ok(!resolveFontFile('arial'), 'honest fallback only when regular missing too');
+  assert.ok(st.undo());
+  assert.equal(st.project.sequences[0].clips.find((x) => x.id === id)!.fontBold, undefined);
+  assert.ok(st.redo());
+  const dir = mkdtempSync(join(tmpdir(), 'palm-bi-'));
+  const plan = await buildFfmpegArgs(st.project, seq, join(dir, 'o.mp4'));
+  const fc = plan.args[plan.args.indexOf('-filter_complex') + 1];
+  if (resolveFontFile('arial', true, true)) assert.ok(fc.indexOf('fontfile=') >= 0, 'variant fontfile in graph');
+  const out = join(dir, 'b.mp4');
+  const ex = await exportSequence(st.project, seq.id, out);
+  const v = await validateExport(out, ex.durationSec, true);
+  assert.ok(v.ok, v.details);
+});
