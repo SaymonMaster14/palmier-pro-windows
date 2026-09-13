@@ -102,3 +102,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Ripple (upstream RippleEngine parity, single-track scope): pure computeRippleShifts in core/model.ts, store.rippleDelete as one undo unit, MCP + main OPS + Shift+Delete in renderer. Unit (gap closes same-track only, other track untouched, undo restores) + live RIPPLE-MCP-PASS starts=0,90.
 - Suite 11/11 green; smoke BOOT-OK.
+
+## 2026-09-13 turn 11 evidence
+
+- Markers (upstream TimelineMarker parity): id/name/start/duration/color/comment/status, name<=120 + comment<=4000 validation, store add/remove with undo, MCP add/remove/list, renderer ruler ticks + M-to-add. Unit + live MARKER-MCP-PASS (add/readback/undo).
+- Suite 12/12 green.

@@ -10,7 +10,7 @@ let core = null;
 let mcpServer = null;
 let projectPath = null;
 
-const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete"];
+const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker"];
 
 async function loadDemo() {
   try {
@@ -118,6 +118,7 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
 
 
 

@@ -19,7 +19,7 @@ export interface Clip {
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
 export interface Sequence {
   id: string; name: string; fps: RationalFps; width: number; height: number;
-  tracks: Track[]; clips: Clip[];
+  tracks: Track[]; clips: Clip[]; markers: TimelineMarker[];
 }
 export interface Project {
   version: number; id: string; name: string;
@@ -33,7 +33,7 @@ export function createProject(name: string): Project {
   return { version: PROJECT_VERSION, id: uid(), name, sequences: [], media: [] };
 }
 export function createSequence(p: Project, name: string, fps: RationalFps, w = 1280, h = 720): Sequence {
-  const s: Sequence = { id: uid(), name, fps, width: w, height: h, tracks: [], clips: [] };
+  const s: Sequence = { id: uid(), name, fps, width: w, height: h, tracks: [], clips: [], markers: [] };
   p.sequences.push(s); p.activeSequenceId ??= s.id; return s;
 }
 export function addTrack(s: Sequence, kind: 'video' | 'audio', name: string): Track {
@@ -82,3 +82,15 @@ export function computeRippleShifts(clips: Array<{ id: string; startFrame: numbe
 function shiftBefore(start: number, removed: Array<{ startFrame: number; durationFrames: number }>): number {
   return removed.filter((r) => r.startFrame + r.durationFrames <= start).reduce((a, r) => a + r.durationFrames, 0);
 }
+export type MarkerStatus = 'open' | 'review' | 'resolved';
+export interface TimelineMarker { id: string; name: string; startFrame: number; durationFrames: number; color: { r: number; g: number; b: number; a: number }; comment: string; status: MarkerStatus }
+export const MARKER_NAME_MAX = 120;
+export const MARKER_COMMENT_MAX = 4000;
+export const markerDefaultColor = () => ({ r: 0, g: 0.478, b: 1, a: 1 });
+export function validateMarker(m: { name: string; startFrame: number; durationFrames?: number; comment?: string }): void {
+  if (!m.name.trim() || m.name.length > MARKER_NAME_MAX) throw new Error('bad marker name');
+  if (!Number.isInteger(m.startFrame) || m.startFrame < 0) throw new Error('bad marker frame');
+  if (m.durationFrames !== undefined && (!Number.isInteger(m.durationFrames) || m.durationFrames < 0)) throw new Error('bad marker range');
+  if ((m.comment ?? '').length > MARKER_COMMENT_MAX) throw new Error('marker comment too long');
+}
+

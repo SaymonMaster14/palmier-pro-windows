@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, computeRippleShifts, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, computeRippleShifts, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -103,6 +103,24 @@ export class EditorStore {
       return { ok: true, ids: [c.id, right.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }, { startFrame: right.startFrame, durationFrames: right.durationFrames }], warnings: [], label: 'splitClip' };
     });
   }
+  addMarker(seqId: string, o: { name: string; startFrame: number; durationFrames?: number; comment?: string }): Receipt {
+    return this.exec("addMarker", (p) => {
+      const s = req_seq(p, seqId); s.markers ??= [];
+      validateMarker(o);
+      const m: TimelineMarker = { id: uid(), name: o.name, startFrame: o.startFrame, durationFrames: o.durationFrames ?? 0, color: markerDefaultColor(), comment: o.comment ?? "", status: "open" };
+      s.markers.push(m);
+      return { ok: true, ids: [m.id], warnings: [], label: "addMarker" };
+    });
+  }
+  removeMarker(seqId: string, markerId: string): Receipt {
+    return this.exec("removeMarker", (p) => {
+      const s = req_seq(p, seqId); s.markers ??= [];
+      const i = s.markers.findIndex((x) => x.id === markerId);
+      if (i < 0) throw new Error("marker not found");
+      const [m] = s.markers.splice(i, 1);
+      return { ok: true, ids: [m.id], warnings: [], label: "removeMarker" };
+    });
+  }
   rippleDelete(seqId: string, clipId: string): Receipt {
     return this.exec("rippleDelete", (p) => {
       const s = req_seq(p, seqId); const c = req_clip(s, clipId);
@@ -168,6 +186,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 
