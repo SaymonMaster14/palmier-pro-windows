@@ -321,3 +321,10 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged the redesigned tree: portable exe fresh 85,291,102b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 on win-unpacked (N chain unaffected by presentation-only changes, identical output expected and correct).
+
+## 2026-09-13 turn 59 evidence (UI pass 2, Palmier fidelity)
+
+- Read upstream AppTheme.swift values and shifted the theme toward the real Palmier dark UI: backgrounds to #18191c scale, clip selection outline white (was emerald), timecode amber #f29933, playhead Palmier red #ff524d, clip borders black. Emerald kept for brand dot, focus rings, slider thumb and primary Apply only (documented fusion).
+- Taller lanes without touching drag math: rows 34->44px, clips 26->34px, band 268->284px with vertical lane scroll, rail padding corrected 30->12px to match trackTop base (latent misalignment fixed), trackTop step 34->44 in one place. Keyframe dot centering is lane-height independent by construction; live KEYDRAG value now 0.806 (was 0.786), frame still pixel-perfect.
+- Details: media empty-state placeholder, track kind tags (A/V) in rail headers, transport shows position + total duration (00:00:10 / 00:04 cross-checked against 120-frame timeline).
+- Proof: full smoke green, all lines at baseline, SMOKE-VISUAL still asserting (acc kept as brand token).

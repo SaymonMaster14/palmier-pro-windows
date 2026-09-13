@@ -1,5 +1,5 @@
 ﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{
---bg:#101014;--bg1:#16161c;--bg2:#1d1d25;--bgelev:#24242e;
+--bg:#18191c;--bg1:#1e1f23;--bg2:#26272c;--bgelev:#303137;
 --line:#2a2a35;--linestrong:#3b3b4a;
 --fg:#f2f2f6;--fg2:#c4c4cf;--fg3:#8f8f9b;--mut:#6e6e7a;
 --acc:#10b981;--accstrong:#059669;--accsoft:rgba(16,185,129,.15);--accglow:rgba(16,185,129,.45);
@@ -8,7 +8,7 @@
 --r:8px;--rs:6px;
 }
 html,body{height:100%}
-body{background:var(--bg);color:var(--fg);font:12.5px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;display:grid;grid-template-rows:46px minmax(0,1fr) 268px;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--fg);font:12.5px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;display:grid;grid-template-rows:46px minmax(0,1fr) 284px;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
 header#topbar{display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bg1);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap}
 .brand{width:18px;height:18px;flex:none;border-radius:5px;background:linear-gradient(135deg,var(--acc),var(--accstrong));box-shadow:0 0 12px var(--accglow)}
 header#topbar strong{font-size:13px;letter-spacing:-.01em}
@@ -48,28 +48,28 @@ details{margin:0 12px 6px}summary{cursor:pointer;color:var(--fg3);font-size:11.5
 #pv{width:100%;max-height:40vh;background:var(--video);border-radius:var(--r);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.5)}
 #transport{display:flex;align-items:center;gap:10px;width:100%}
 #seek{flex:1}
-#tc{font:11.5px ui-monospace,Consolas,monospace;color:var(--fg2);background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap}
+#tc{font:11.5px ui-monospace,Consolas,monospace;color:#f29933;background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap}
 #rate{flex:none}
 #meter{width:100%;height:8px;background:var(--bg2);border:1px solid var(--line);border-radius:99px}
 #tlhint{color:var(--fg3);font-size:11px}
 footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:grid;grid-template-rows:30px minmax(0,1fr);min-height:0}
 #tlbar{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3)}
 #tlbar .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-size:11px}
-#tlwrap{display:grid;grid-template-columns:172px minmax(0,1fr);min-height:0}
-#tracks{border-right:1px solid var(--line);overflow:hidden;padding-top:30px;background:var(--bg1)}
-#tracks .trk{height:34px;display:flex;align-items:center;gap:3px;padding:0 8px;border-bottom:1px solid var(--line);box-sizing:border-box}
+#tlwrap{display:grid;grid-template-columns:172px minmax(0,1fr);min-height:0;overflow-y:auto}
+#tracks{border-right:1px solid var(--line);overflow:hidden;padding-top:12px;background:var(--bg1)}
+#tracks .trk{height:44px;display:flex;align-items:center;gap:3px;padding:0 8px;border-bottom:1px solid var(--line);box-sizing:border-box}
 #tracks .trkn{font-size:11.5px;font-weight:600;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 #tracks .trk button{font-size:10px;font-weight:700;padding:2px 6px;margin:0;color:var(--fg3)}
 #tlcol{display:flex;flex-direction:column;min-width:0}
 #ruler{position:relative;flex:none;height:30px;border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
 #ruler span{position:absolute;top:0;height:100%;border-left:1px solid var(--linestrong);padding:3px 0 0 4px;font:10px ui-monospace,Consolas,monospace;color:var(--fg3);pointer-events:none}
 #tl{position:relative;flex:1;background:#0c0c10;border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.025) 79px 80px)}
-.clip{position:absolute;height:26px;border-radius:6px;font-size:11px;line-height:26px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.16);border-left-width:3px;box-shadow:0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.clip{position:absolute;height:34px;border-radius:6px;font-size:11.5px;line-height:34px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(0,0,0,.65);border-left-width:3px;box-shadow:0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .clip.k-video{background:linear-gradient(180deg,#35789b,var(--c-video));border-left-color:#7fd4f7}
 .clip.k-audio{background:linear-gradient(180deg,#3a937c,var(--c-audio));border-left-color:#7fe0b8}
 .clip.k-image{background:linear-gradient(180deg,#8365a3,var(--c-image));border-left-color:#c9a8f2}
 .clip.k-text{background:linear-gradient(180deg,#d29a48,var(--c-text));border-left-color:#ffe1a8}
-.clip.sel{outline:2px solid var(--acc);outline-offset:0;box-shadow:0 0 0 3px var(--accsoft),0 2px 8px rgba(0,0,0,.45)}
+.clip.sel{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 3px rgba(255,255,255,.16),0 2px 8px rgba(0,0,0,.45)}
 .clip.active{box-shadow:0 0 0 2px var(--warn) inset,0 2px 8px rgba(0,0,0,.45)}
 .clip .h{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;border-radius:6px}
 .clip .h:hover{background:var(--accsoft)}
@@ -79,7 +79,7 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 .kd:hover{background:#fff}
 .wv{position:absolute;left:0;right:0;bottom:0;height:14px;width:100%;opacity:.85}
 .mk{position:absolute;top:0;width:3px;height:10px;background:var(--mark);border-radius:1px;box-shadow:0 0 6px var(--mark)}
-.ph{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);pointer-events:none;box-shadow:0 0 8px rgba(255,69,58,.8)}
+.ph{position:absolute;top:0;bottom:0;width:2px;background:#ff524d;pointer-events:none;box-shadow:0 0 8px rgba(255,82,77,.8)}
 #expq{font-size:11.5px;color:var(--fg2)}
 #expq span{color:var(--fg3)}
 #insp{padding:0 12px}
@@ -105,6 +105,7 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 ::-webkit-scrollbar-thumb{background:var(--linestrong);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
 ::-webkit-scrollbar-thumb:hover{background:var(--fg3);background-clip:padding-box;border:3px solid transparent}
 button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outline-offset:0}
+.empty{margin:8px 12px;padding:18px 12px;text-align:center;color:var(--fg3);font-size:12px;border:1px dashed var(--linestrong);border-radius:var(--r);background:var(--bg2)}
 </style></head><body>
 <header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
 <main><section class="panel"><div class="ptitle">Media</div><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
@@ -121,7 +122,7 @@ let S = null, SEQ = null, FRAME = 0, SEL = new Set(), FPS = 30;
 const sel0 = () => [...SEL][0] || null;
 const selKey = () => [...SEL].sort().join(",");
 const DUR = () => SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
-const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 34;
+const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 44;
 async function refresh() {
   S = await window.palmier.state();
   SEQ = S.sequences.find(s => s.id === S.activeSequenceId) || S.sequences[0];
@@ -130,7 +131,7 @@ async function refresh() {
   $("proj").textContent = S.name + " / " + SEQ.name;
   const q = ($("q").value || "").toLowerCase();
   const shown = q ? S.media.filter(m => (m.name + " " + m.kind).toLowerCase().includes(q)) : S.media;
-  $("media").innerHTML = shown.map(m => "<div class=mi>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + ">") + "<div class=minfo><div class=mname>" + m.name + "</div><span class=kbadge>" + m.kind + "</span></div></div>").join("");
+  $("media").innerHTML = shown.map(m => "<div class=mi>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + ">") + "<div class=minfo><div class=mname>" + m.name + "</div><span class=kbadge>" + m.kind + "</span></div></div>").join("") + (shown.length ? "" : "<div class=empty>No media yet — use Import to begin</div>");
   for (const im of document.querySelectorAll("img[data-th]")) { window.palmier.thumb(im.dataset.th).then(p => { im.src = "file:///" + p.replace(/\\/g, "/"); }).catch(() => {}); }
   $("hits").textContent = q ? shown.length + " of " + S.media.length : "";
   const dur = DUR();
@@ -220,7 +221,7 @@ async function markActive() {
     el.classList.toggle("sel", SEL.has(el.dataset.id));
   });
   renderInspector();
-  const tc = document.getElementById('tc'); if (tc && SEQ) { var fr = Math.max(FRAME, 0); var ff = Math.floor(fr % FPS); var stt = Math.floor(fr / FPS); tc.textContent = String(Math.floor(stt / 60)).padStart(2, '0') + ':' + String(stt % 60).padStart(2, '0') + ':' + String(ff).padStart(2, '0'); } const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
+  const tc = document.getElementById('tc'); if (tc && SEQ) { var fr = Math.max(FRAME, 0); var ff = Math.floor(fr % FPS); var stt = Math.floor(fr / FPS); tc.textContent = String(Math.floor(stt / 60)).padStart(2, '0') + ':' + String(stt % 60).padStart(2, '0') + ':' + String(ff).padStart(2, '0'); var dd = DUR(); var dss = Math.floor(dd / FPS); tc.textContent += ' / ' + String(Math.floor(dss / 60)).padStart(2, '0') + ':' + String(dss % 60).padStart(2, '0'); } const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
   // Timeline->source mapping: preview shows the edit, not the raw file position.
   const v = $("pv");
   if (v && hit && hit.assetId) {
@@ -306,7 +307,7 @@ function paintTracks() {
   const box = document.querySelector("#tracks"); box.innerHTML = "";
   SEQ.tracks.forEach((tr) => {
     const d = document.createElement("div"); d.className = "trk";
-    const nm = document.createElement("span"); nm.className = "trkn"; nm.textContent = tr.name; d.appendChild(nm);
+    const nm = document.createElement("span"); nm.className = "trkn"; nm.textContent = (tr.kind === "audio" ? "A" : "V") + " · " + tr.name; d.appendChild(nm);
     [["M", "muted"], ["H", "hidden"], ["L", "locked"]].forEach(([lb, fl]) => {
       const b = document.createElement("button"); b.textContent = (tr[fl] ? "[" + lb + "]" : lb); b.style.borderColor = tr[fl] ? "var(--warn)" : "";
       b.addEventListener("click", async () => { const p = {}; p[fl] = !tr[fl]; await window.palmier.op("setTrackFlags", [SEQ.id, tr.id, p]); await refresh(); });
