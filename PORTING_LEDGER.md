@@ -183,3 +183,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 31 evidence
 
 - Overlay opacity keys in export: colorchannelmixer proven init-only (no t/n per-frame eval), so HOLD steps via per-span sub-overlays; linear/smooth documented as hold-approximated in export. Step proven by redness (late > early + 20). Suite 27/27 + slice green.
+
+## 2026-09-13 turn 32 evidence
+
+- Crop inspector (upstream SetClipCrop parity): CropBox fractions + validation, setCrop op, export crop-zoom, MCP + OPS + inspector l,t,r,b input. Graph + real export proof. Suite 28/28.

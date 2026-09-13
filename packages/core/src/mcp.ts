@@ -63,6 +63,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     case 'removeKeyframe': return store.removeKeyframe(seqId as string, q['clipId'] as string, q['track'] as 'opacity' | 'volume', q['frame'] as number);
     case 'setTransition': return store.setTransition(seqId as string, q['clipId'] as string, q['outFrames'] as number);
     case 'setSpeed': return store.setSpeed(seqId as string, q['clipId'] as string, q['speed'] as number);
+    case 'setCrop': return store.setCrop(seqId as string, q['clipId'] as string, q['crop'] as never);
     case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
     case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
     case 'setTransform': return store.setTransform(seqId as string, q['clipId'] as string, q['patch'] as never);
@@ -80,6 +81,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     default: throw new Error(`unknown method ${method}`);
   }
 }
+
 
 
 

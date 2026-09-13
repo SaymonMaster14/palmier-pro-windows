@@ -10,10 +10,16 @@ export interface MediaAsset {
   audioChannels?: number; sampleRate?: number; offline?: boolean;
 }
 export interface Transform { x: number; y: number; scaleX: number; scaleY: number; rotationDeg: number }
+export interface CropBox { l: number; t: number; r: number; b: number }
+export const noCrop = (): CropBox => ({ l: 0, t: 0, r: 0, b: 0 });
+export function validateCrop(k: CropBox): void {
+  for (const v of [k.l, k.t, k.r, k.b]) if (!Number.isFinite(v) || v < 0 || v > 0.9) throw new Error("bad crop");
+  if (k.l + k.r >= 1 || k.t + k.b >= 1) throw new Error("crop removes frame");
+}
 export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
-  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
+  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
   transform: Transform; text?: string; fontSize?: number; color?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
@@ -176,4 +182,5 @@ export function evaluateKeyframes(kfs: Keyframe[], frame: number, base: number):
   }
   return s[s.length - 1].value;
 }
+
 
