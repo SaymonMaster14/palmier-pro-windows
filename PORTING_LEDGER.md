@@ -273,3 +273,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Proof (dev-app smoke, same crowded post-pads state): SMOKE-MULTI 14:1..14:0:stalePre=0 (was :14), SMOKE-KEYLANE 1:1, SMOKE-KEYUI 1, SMOKE-ERRS [], BOOT-OK. Method: baseline-stash run proved the failure pre-existing; #log receipt mining surfaced `delete: ok:false clip not found`; temporary DOM-vs-store id forensics isolated the ghost (`<id><canvas`); probe scaffolding reverted, the stalePre check stays in SMOKE-MULTI as a permanent guard.
 - Process note: first rewrite attempt using backslash-escaped quotes failed vm parse-check; an isolated line-level vm probe confirmed the failure and validated the single-quote rewrite before it touched the file. No core changes this turn, so unit suite stays 39/39 from turn 50.
 - Known nuance carried: SMOKE-FONT c1=none (Apply click bound to previously-selected clip under synthetic selection; op-level font flow proven times:true, Apply click exception-free). Owned by the UI-polish pass, not this fix.
+
+## 2026-09-13 turn 52 evidence
+
+- Repackaged current tree (font slice + audio data-id fix + MULTI stalePre guard): prepackage rebuilt core (dist verified exposing resolveFontFile), electron-builder portable DONE-0, PalmierProWindows-0.0.1-portable.exe fresh 85,285,326b, postpackage vendor cleanup done. NSIS stage slow but clean this time, no flakes.
+- Packaged re-verification (win-unpacked): FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (byte count shifted vs 97690 because the text burn-in now carries fontfile — proof the new export graph is inside the packaged build). Kill-cleanup noise only.
+- Unit suite unchanged this turn (no core edits; 39/39 stands from turn 50 on the identical tree).
