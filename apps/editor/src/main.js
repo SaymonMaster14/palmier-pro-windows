@@ -11,6 +11,8 @@ let core = null;
 let mcpServer = null;
 let projectPath = null;
 let notify = () => {};
+  const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
+  const readSettings = () => { let s = {}; try { s = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) {} return { mcpPort: 19789, exportDir: "", ...s }; };
 
 const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags", "deleteClips", "moveClips"];
 
@@ -95,8 +97,6 @@ function registerIpc() {
       }
     } catch (e) { return "error: " + String((e && e.message) || e); }
   });
-  const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
-  const readSettings = () => { let s = {}; try { s = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) {} return { mcpPort: 19789, exportDir: "", ...s }; };
   ipcMain.handle("getSettings", async () => ({ ...readSettings(), deps: checkDeps() }));
   ipcMain.handle("setSettings", async (_e, patch) => { const s = { ...readSettings(), ...patch }; if (s.mcpPort !== undefined && (!Number.isInteger(s.mcpPort) || s.mcpPort < 1024 || s.mcpPort > 65535)) throw new Error("bad port"); fs.writeFileSync(settingsFile(), JSON.stringify(s, null, 2)); return { ...s, note: "mcpPort applies on restart" }; });
   ipcMain.handle("op", (_e, name, args) => {
@@ -154,7 +154,7 @@ async function boot() {
     const ui = await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; if (!q || !q.clips[0]) return 'no-clip'; const c = q.clips[0]; const r = await window.palmier.op('splitClip', [q.id, c.id, 45]); const s2 = await window.palmier.state(); return r.ok + ':' + s2.sequences[0].clips.length; })()");
     console.log("SMOKE-UI-OP", ui);
     console.log("SMOKE-GEOM", await win.webContents.executeJavaScript("typeof (window.palmier.geom() || {}).pxToFrame"));
-    console.log("SMOKE-SNAP", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const t = q.tracks.find(x => x.kind === 'video'); const m = s.media[0]; await window.palmier.op('placeClip', [q.id, t.id, { kind: 'video', assetId: m.id, startFrame: 120, durationFrames: 30, name: 'snap-b' }]); const b = (await window.palmier.state()).sequences[0].clips.find(c => c.startFrame === 120); return window.palmier.snapMove(q.id, b.id, 93, 0); })()"));
+    console.log('SMOKE-SNAP', await win.webContents.executeJavaScript(`(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const t = q.tracks.find(x => x.kind === 'video'); const m = s.media[0]; const end = q.clips.reduce((a, c) => Math.max(a, c.startFrame + c.durationFrames), 0); const pl = await window.palmier.op('placeClip', [q.id, t.id, { kind: 'video', assetId: m.id, startFrame: end, durationFrames: 30, name: 'snap-b' }]); if (!pl.ok) return 'place-fail'; const b = (await window.palmier.state()).sequences[0].clips.find(c => c.name === 'snap-b'); return window.palmier.snapMove(q.id, b.id, end + 3, 0); })()`));
     if (process.env.PALM_SMOKE_IO) {
       const fix = (n) => path.resolve(__dirname, "..", "..", "..", "tests", "fixtures", n);
       const im = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.importMedia(${JSON.stringify([fix("sample-av.mp4"), fix("sample-img.png"), fix("sample-audio.wav")]).replace(/\\\\/g, "\\\\\\\\")}); const s = await window.palmier.state(); return r.length + ":" + s.media.length + ":" + s.sequences[0].clips.length; })()`);
@@ -176,13 +176,15 @@ async function boot() {
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
     console.log("SMOKE-METER", await win.webContents.executeJavaScript("(async () => { const cv = document.querySelector('#meter'); if (!cv) return 'no-canvas'; const v = document.querySelector('#pv'); try { await v.play(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); v.pause(); return (!!window.__meterOn) + ':' + cv.width; })()"));
     console.log("SMOKE-WV", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const a = s.media.find(m => m.kind === 'audio'); if (!a) return 'no-audio'; const p = await window.palmier.waveform(a.id, 50); return p.length + ':' + (p.reduce((x,y) => x+y, 0) / p.length).toFixed(3); })()"));
+    try { if (process.env.PALM_SMOKE_RESULT) fs.writeFileSync(process.env.PALM_SMOKE_RESULT, JSON.stringify({ boot: "ok" })); } catch (ee) {}
     console.log("BOOT-OK");
     app.quit();
   }
 }
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
-boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+boot().catch((e) => { try { if (process.env.PALM_SMOKE_RESULT) fs.writeFileSync(process.env.PALM_SMOKE_RESULT, JSON.stringify({ boot: "fail", error: String((e && e.message) || e) })); } catch (ee) {}
+console.error("BOOT-FAIL", e); app.exit(1); });
 
 
 

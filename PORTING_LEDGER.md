@@ -217,3 +217,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 39 evidence
 
 - Export queue (§24): ffmpeg -progress pipe parsing to fractional progress, jobs map with start/status/cancel (AbortController, abort path unit-tested), renderer queue rows with live % + cancel, Export button queues. SMOKE-IO-EXPORT done:1 validated. Errors now report stderr tail. Suite 36/36.
+
+## 2026-09-13 turn 40 evidence
+
+- Packaging hygiene: readSettings scoping bug (masked in dev by env, fatal packaged) fixed; SNAP smoke made overlap-proof; smoke result-file for uncapturable packaged stdio.
+- Rebuilt + re-verified packaged app: PROJECT-LOAD, BOOT-OK, MCP live, FINAL-E2E-PASS bytes=97690 dur=3.000. (Partial builder extraction + silent NSIS failures observed twice; clean rebuild fixed the former; portable single-exe still pending re-wrap.)
