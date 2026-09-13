@@ -20,6 +20,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   const fpsStr = `${s.fps.num}/${s.fps.den}`;
   const t = (f: number) => framesToSeconds(f, s.fps).toFixed(6);
   const cropF = (c: Clip): string => { const k = c.crop ?? { l: 0, t: 0, r: 0, b: 0 }; if (!k.l && !k.t && !k.r && !k.b) return ""; return `,crop=w=iw*${1 - k.l - k.r}:h=ih*${1 - k.t - k.b}:x=iw*${k.l}:y=ih*${k.t},scale=${W}:${H}`; };
+  const rot = (c: Clip): string => { const a = c.transform.rotationDeg ?? 0; if (!a) return ""; return `,rotate=${(a * Math.PI / 180).toFixed(6)}:fillcolor=black`; };
   const vf = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,fade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}:alpha=1` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,fade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}:alpha=1` : ""; return fi + fo; };
   const volExpr = (c: Clip, base: number): string => (c.volumeKeys && c.volumeKeys.length ? volumeExpr(c.volumeKeys, c.startFrame, s.fps.num / s.fps.den, c.muted ? 0 : base) : String(c.muted ? 0 : base));
   const af = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,afade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,afade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}` : ""; return fi + fo; };
@@ -71,12 +72,12 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const l = `[vs${n++}]`;
     if (c.kind === 'image') {
       const sc = c.transform.scaleX !== 1 || c.transform.scaleY !== 1 ? `,scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}` : '';
-      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${cropF(c)}${vf(c)},format=yuv420p,settb=AVTB${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${cropF(c)}${vf(c)}${rot(c)},format=yuv420p,settb=AVTB${l}`);
     } else {
       const spd = c.speed ?? 1;
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + Math.round(c.durationFrames * spd));
       const sts = spd === 1 ? "setpts=PTS-STARTPTS" : `setpts=(PTS-STARTPTS)/${spd}`;
-      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},${sts},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${cropF(c)}${vf(c)},format=yuv420p,settb=AVTB${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},${sts},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${cropF(c)}${vf(c)}${rot(c)},format=yuv420p,settb=AVTB${l}`);
     }
     vsegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
     cursor = c.startFrame + c.durationFrames;
@@ -225,6 +226,7 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
 
 
 

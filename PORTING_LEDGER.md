@@ -191,3 +191,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 33 evidence
 
 - Blend modes (upstream SetClipBlendMode parity): normal/screen/multiply/overlay, full-frame blend path in export with gbrp conversion (YUV blend proven wrong: 216 vs 253), transform+blend falls back with warning. Proven screen>=250, multiply darkens. Suite 29/29.
+
+## 2026-09-13 turn 34 evidence
+
+- Rotation: transform.rotationDeg honored in export (base + overlays, in-frame fill black documented), inspector rot input. Graph + real export proof. Suite 30/30.

@@ -1,0 +1,28 @@
+﻿import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createProject, createSequence, addTrack } from "../model.js";
+import { EditorStore } from "../store.js";
+import { buildFfmpegArgs, exportSequence, validateExport } from "../export.js";
+const fix = (n: string): string => join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "tests", "fixtures", n);
+test("rotation renders when set, absent when zero", async () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject("rt"));
+  const seq = createSequence(st.project, "s", fps, 320, 240);
+  const v1 = addTrack(seq, "video", "V1");
+  st.addMedia({ path: fix("sample-av.mp4"), kind: "video", name: "v", durationFrames: 90, fps });
+  const id = st.placeClip(seq.id, v1.id, { kind: "video", assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, name: "v" }).ids[0];
+  const dir = mkdtempSync(join(tmpdir(), "palm-rt-"));
+  let plan = await buildFfmpegArgs(st.project, seq, join(dir, "a.mp4"));
+  assert.ok(!plan.args[plan.args.indexOf("-filter_complex") + 1].includes("rotate="));
+  assert.ok(st.setTransform(seq.id, id, { rotationDeg: 45 }).ok);
+  plan = await buildFfmpegArgs(st.project, seq, join(dir, "b.mp4"));
+  assert.ok(plan.args[plan.args.indexOf("-filter_complex") + 1].includes("rotate=0.785398"));
+  const out = join(dir, "r.mp4");
+  const ex = await exportSequence(st.project, seq.id, out);
+  const v = await validateExport(out, ex.durationSec, true);
+  assert.ok(v.ok, v.details);
+});
