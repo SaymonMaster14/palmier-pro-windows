@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld("palmier", {
   agentRun: (text, ctx) => ipcRenderer.invoke("agentRun", text, ctx),
   getSettings: () => ipcRenderer.invoke("getSettings"),
   setSettings: (patch) => ipcRenderer.invoke("setSettings", patch),
-  exportStart: (outPath) => ipcRenderer.invoke("exportStart", outPath),
+  exportStart: (outPath, quality) => ipcRenderer.invoke("exportStart", outPath, quality),
   exportStatus: (id) => ipcRenderer.invoke("exportStatus", id),
   exportCancel: (id) => ipcRenderer.invoke("exportCancel", id),
   onExportProgress: (cb) => ipcRenderer.on("export-progress", (_e, j) => cb(j)),
@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld("palmier", {
   newProject: (name) => ipcRenderer.invoke("newProject", name),
   listRecents: () => ipcRenderer.invoke("listRecents"),
   importMedia: (paths) => ipcRenderer.invoke("importMedia", paths),
-  exportActive: (outPath) => ipcRenderer.invoke("exportActive", outPath),
+  exportActive: (outPath, quality) => ipcRenderer.invoke("exportActive", outPath, quality),
   geom: () => ({
     pxToFrame: (...a) => ipcRenderer.sendSync("geomSync", "pxToFrame", a),
     frameToPx: (...a) => ipcRenderer.sendSync("geomSync", "frameToPx", a),

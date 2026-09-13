@@ -10,7 +10,8 @@ export interface ExportResult { outPath: string; durationSec: number; bytes: num
 interface InputInfo { idx: number; path: string; loop: boolean; hasVideo: boolean; hasAudio: boolean }
 // Export resolves the same start/duration/sourceIn math as preview (videoClipAt).
 // Timeline gaps are rendered as black/silence so export duration matches the model.
-export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string): Promise<{ args: string[]; expectSec: number; expectAudio: boolean; warnings: string[] }> {
+export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string, quality: ExportQuality = "balanced"): Promise<{ args: string[]; expectSec: number; expectAudio: boolean; warnings: string[] }> {
+  if (quality !== undefined && EXPORT_QUALITIES.indexOf(quality) < 0) throw new Error("bad export quality");
   const durFrames = sequenceDurationFrames(s);
   if (durFrames <= 0) throw new Error('empty timeline: nothing to export');
   const warnings: string[] = [];
@@ -193,16 +194,23 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   }
   const expectAudio = !!alabel;
   const inArgs: string[] = []; for (const i of inputs) inArgs.push(...(i.loop ? ["-loop", "1", "-t", expectSec.toFixed(3)] : []), "-i", i.path); const finalArgs = [...inArgs, "-filter_complex", filters.join(";"), "-map", vlabel, ...(expectAudio ? ["-map", alabel] : []),
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', fpsStr,
+    '-c:v', 'libx264', ...qualityArgs(quality), '-pix_fmt', 'yuv420p', '-r', fpsStr,
     ...(expectAudio ? ['-c:a', 'aac', '-b:a', '128k'] : []),
     '-movflags', '+faststart', '-y', outPath];
   return { args: finalArgs, expectSec, expectAudio, warnings };
 }
-export interface ExportOpts { signal?: AbortSignal; onProgress?: (frac: number) => void }
+export type ExportQuality = "draft" | "balanced" | "high";
+export const EXPORT_QUALITIES: ExportQuality[] = ["draft", "balanced", "high"];
+export function qualityArgs(q: ExportQuality): string[] {
+  if (q === "draft") return ["-preset", "veryfast", "-crf", "28"];
+  if (q === "high") return ["-preset", "slow", "-crf", "18"];
+  return [];
+}
+export interface ExportOpts { signal?: AbortSignal; onProgress?: (frac: number) => void; quality?: ExportQuality }
 export async function exportSequence(p: Project, seqId: string, outPath: string, signal?: AbortSignal, opts: ExportOpts = {}): Promise<ExportResult> {
   const s = p.sequences.find(x => x.id === seqId);
   if (!s) throw new Error('sequence not found');
-  const { args, expectSec, warnings } = await buildFfmpegArgs(p, s, outPath);
+  const { args, expectSec, warnings } = await buildFfmpegArgs(p, s, outPath, opts.quality);
   for (const w of warnings) console.warn('export-warn', w);
   await new Promise<void>((res, rej) => {
     let child: ChildProcess;
