@@ -350,3 +350,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Playhead was never positioned (static div since the timeline was built). markActive now places it in view coordinates and hides it outside the window.
 - Real sync bug found via the zoom probe (not theory): the video timeupdate handler wrote FRAME = videoTime*FPS ignoring clip offset, so on any edited timeline every timeupdate yanked the playhead/seek to source time (seek 44 became 14 through a [30,90) clip). Inverts through the current clip now (asset-backed clips; text-on-top edge keeps prior behavior, documented gap). Single-clip-at-0 projects were immune, which is why E2E never caught it.
 - Proof: SMOKE-ZOOM clip:true ph:true (clip % exact, playhead ~50% in-zoom, state untouched after reset) on the crowded timeline; full smoke otherwise at baseline with ERRS [] and BOOT-OK. Renderer-only change; unit suite untouched and standing.
+
+## 2026-09-13 turn 61 packaging
+
+- Repackaged zoom tree: portable exe fresh 85,292,232b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (renderer-only delta, identical output expected and correct).
