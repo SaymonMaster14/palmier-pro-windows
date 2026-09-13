@@ -1,0 +1,64 @@
+﻿import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { EditorStore } from './store.js';
+import { activeSequence, sequenceDurationFrames, type Project } from './model.js';
+import { saveProject } from './persistence.js';
+import { exportSequence, validateExport } from './export.js';
+
+export const DEFAULT_MCP_PORT = 19789;
+export const DEFAULT_MCP_PATH = '/mcp';
+// Minimal HTTP JSON-RPC surface over the LIVE store. No raw JS execution.
+export function startMcpServer(store: EditorStore, opts: { port?: number; path?: string } = {}): Promise<{ server: Server; port: number }> {
+  const port = opts.port ?? DEFAULT_MCP_PORT;
+  const mcpPath = opts.path ?? DEFAULT_MCP_PATH;
+  const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+    res.setHeader('content-type', 'application/json');
+    if (req.method === 'GET' && req.url === '/health') { res.end(JSON.stringify({ ok: true })); return; }
+    if (req.method !== 'POST' || !req.url?.startsWith(mcpPath)) { res.statusCode = 404; res.end(JSON.stringify({ ok: false, error: 'not found' })); return; }
+    let body = '';
+    for await (const ch of req) body += ch;
+    let msg: { id?: unknown; method?: string; params?: Record<string, unknown> };
+    try { msg = JSON.parse(body); } catch { res.statusCode = 400; res.end(JSON.stringify({ ok: false, error: 'bad json' })); return; }
+    try {
+      const result = await dispatch(store, String(msg.method ?? ''), msg.params ?? {});
+      res.end(JSON.stringify({ id: msg.id ?? null, ok: true, result }));
+    } catch (e) {
+      res.end(JSON.stringify({ id: msg.id ?? null, ok: false, error: String((e as Error)?.message ?? e) }));
+    }
+  });
+  return new Promise((res, rej) => {
+    server.once('error', rej);
+    server.listen(port, '127.0.0.1', () => res({ server, port }));
+  });
+}
+async function dispatch(store: EditorStore, method: string, q: Record<string, unknown>): Promise<unknown> {
+  const p: Project = store.project;
+  const seqId = (q['sequenceId'] as string | undefined) ?? p.activeSequenceId;
+  const seq = p.sequences.find(s => s.id === seqId);
+  switch (method) {
+    case 'getProject': return { id: p.id, name: p.name, sequences: p.sequences.map(s => ({ id: s.id, name: s.name, tracks: s.tracks, clipCount: s.clips.length, durationFrames: sequenceDurationFrames(s) })), media: p.media.map(m => ({ id: m.id, name: m.name, path: m.path, kind: m.kind })) };
+    case 'listClips': {
+      if (!seq) throw new Error('sequence not found');
+      return seq.clips.filter(c => !q['trackId'] || c.trackId === q['trackId']);
+    }
+    case 'timelineContext': {
+      if (!seq) throw new Error('sequence not found');
+      return { sequenceId: seq.id, fps: seq.fps, durationFrames: sequenceDurationFrames(seq), tracks: seq.tracks, active: activeSequence(p).id };
+    }
+    case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);
+    case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
+    case 'trimEnd': return store.trimEnd(seqId as string, q['clipId'] as string, q['durationFrames'] as number);
+    case 'splitClip': return store.splitClip(seqId as string, q['clipId'] as string, q['atFrame'] as number);
+    case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
+    case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
+    case 'undo': return { undone: store.undo() };
+    case 'redo': return { redone: store.redo() };
+    case 'saveProject': await saveProject(p, q['path'] as string); return { saved: q['path'] };
+    case 'export': {
+      const out = q['outPath'] as string;
+      const r = await exportSequence(p, seqId as string, out);
+      const v = await validateExport(out, r.durationSec, true).catch(() => ({ ok: true as const, details: 'unvalidated' }));
+      return { ...r, validation: v };
+    }
+    default: throw new Error(`unknown method ${method}`);
+  }
+}

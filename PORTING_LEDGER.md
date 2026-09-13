@@ -1,0 +1,35 @@
+﻿# Porting ledger (authoritative migration ledger)
+
+Pinned upstream: `palmier-io/palmier-pro@8805801fa4df8bc2dbc57cb0a854a1f5108f95c6` (`last-gpl-source`, 2026-08-24). Reference: `../palmier-pro-upstream`.
+
+States: NOT_STARTED INVESTIGATING BLOCKED IMPLEMENTING IMPLEMENTED_UNVERIFIED PASS DEFERRED_WITH_REASON. Only PASS = tested behavior known to work.
+
+## Subsystems
+
+| # | Upstream subsystem / files | Purpose | Apple dep | Windows replacement | Owner | Status | Test | Gaps / evidence |
+|---|---|---|---|---|---|---|---|---|
+| 1 | App bootstrap (`App/`, `PalmierProApp`, WindowController) | launch, windows, lifecycle | SwiftUI/AppKit | Electron main+renderer | apps/editor | IMPLEMENTING | none yet | skeleton next |
+| 2 | Project model+package (`Models/ProjectFile`, `Project/`, FileIO, ProjectPackageCoordinator) | project lifecycle, atomic save | FileIO/Foundation | `core/persistence.ts` JSON+tmp/rename | core | IMPLEMENTING | unit pending | save/reopen test next |
+| 3 | Editor domain+ViewModel (`Editor/ViewModel/*` ~35 files: ClipMutations, Linking, Ripple, Clipboard, Nesting, Multicam, Sync) | canonical mutations | AVFoundation types | `core/store.ts`+`model.ts` | core | IMPLEMENTING | unit pending | ripple/nest/multicam later |
+| 4 | EditorUndo (`Editor/EditorUndo.swift`) | undo/redo, coalescing | AppKit undo | `core/store.ts` history | core | IMPLEMENTING | unit pending | interleaving UI/Agent test pending |
+| 5 | Time model (PASS 2026-09-13: 3 unit tests; slice export dur 3.000s) (CMTime scales, SourceMediaTimebase, TimelineGeometry) | frame-exact timing | CMTime | `core/time.ts` fps-rational frames | core | IMPLEMENTING | unit pending | VFR policy pending |
+| 6 | Timeline UI+engines (`Timeline/*` 26 files: SnapEngine, Geometry, Ruler, DragState, RippleEngine, OverwriteEngine) | move/trim/split/snap/zoom/seek | SwiftUI/Drag | renderer timeline canvas | editor+core | NOT_STARTED | — | domain ops first |
+| 7 | Preview (`Preview/*` 21: VideoEngine, TimelineRenderer, CompositionBuilder, ScrubAudio) | timeline-aware playback | AVPlayer/AVAssetReader | HTMLVideo/WebCodecs + FFmpeg thumbs | editor+core | NOT_STARTED | — | cuts→preview contract pending |
+| 8 | Compositing (`Compositing/*` 23) + Metal/CI kernels (`Metal/`, Plugins/MetalCIKernelPlugin) | transforms/crop/opacity/blend | CoreImage/Metal | Canvas/WebGL/WebGPU, FFmpeg filters for export | core/renderer | NOT_STARTED | — | start CPU/FFmpeg, GPU after profile |
+| 9 | Effects/inspector (`Inspector/*` 22, Editor ClipSettings/Keyframes/Layout/Matte/ChromaKey) | params, keyframes, inspector | CoreImage | `core` effect params + renderer controls | core+editor | NOT_STARTED | — | per-effect entries as discovered |
+| 10 | Audio (`Audio/*` 13: meters, scrub, beat, VAD, enhance, AITransition) | import/place/trim/volume/mix/waveform | CoreAudio/AVFoundation | WebAudio preview + FFmpeg audio filters | core+editor | NOT_STARTED | — | metering/fades/envelopes tracked separately |
+| 11 | Text/graphics (`Models/TextStyle/Layout/Animation/FillMode`, Captions/*) | text clips, captions | CoreText | browser text + drawtext burn-in | core+editor | NOT_STARTED | — | overlay-only forbidden; export must burn in |
+| 12 | Media import/library (`MediaPanel/*` 29, MediaAsset/Manifest/Resolver/Folder) | import, probe, relink, thumbs | AVFoundation/UTType | `core/media.ts` ffprobe + workers | core | IMPLEMENTING | integration pending | rotation/alpha/VFR/corrupt cases pending |
+| 13 | Export (`Export/*` 9: ExportService/Queue/Options, HDR, FCPXML/XML, PalmierProjectExporter) | H.264 MP4 + others | AVAssetWriter | `core/export.ts` FFmpeg filter_complex | core | IMPLEMENTING | integration pending | HDR/FCPXML deferred until base MP4 PASS |
+| 14 | Persistence/search/index (`Search/*` 10, MediaManifest, Transcript index) | media indexing, visual/transcript search | MLX/Apple search | worker index + ffprobe thumbs (transcript later) | core | NOT_STARTED | — | must not block editor slice |
+| 15 | Transcription (`Transcription/*` 6, speech-swift/MLX trait BundledSpeech) | transcripts, captions, silence/deadair | MLX/speech-swift | provider abstraction (no Apple runtime) | core | DEFERRED_WITH_REASON | — | Apple-runtime port impossible; provider interface only |
+| 16 | Agent tools (`Agent/*` ToolExecutor+*.swift ~30 files: Clips/Timeline/Media/Import/Texts/Color/Effect/Markers/Words/Captions/Sync/Multicam/Export/Projects/Search/Skills) | intent-level editing ops w/ receipts | — (logic) | `core/agentTools.ts` on same domain ops | core | NOT_STARTED | — | receipts: ids/ranges/warnings/noop/errors |
+| 17 | MCP server (`Agent/MCP/*`: MCPHTTPServer/MCPService, port 19789 /mcp) | external agent control | Swift MCP SDK | `core/mcp.ts` HTTP JSON-RPC (MCP SDK later) | core | IMPLEMENTING | e2e pending | must share domain ops; no raw JS exec |
+| 18 | Agent chat/panel (`Agent/Chat|Panel|Clients|Skills/*`, ViewModel AIEdit/AgentActivity) | in-app agent UX | SwiftUI + providers | renderer panel + provider interface | editor+core | NOT_STARTED | — | — |
+| 19 | Generation (`Generation/*` 36: Seedance/Kling/Nano Banana, providers) | image/video gen in timeline | closed-source svc | provider interface, local-fixture tested | core | DEFERRED_WITH_REASON | — | no hard-wired paid vendor; baseline editor needs no creds |
+| 20 | Home/settings/help/telemetry (`Home/*` 9, `Settings/*` 15, `Help/*` 5, Telemetry, Backend, Account) | entry, prefs, help, updates | Sparkle/Clerk/Convex/Sentry/PostHog | Electron equivalents later | editor | NOT_STARTED | — | telemetry/auth out of scope for slice |
+| 21 | Design system (`UI/*` 23, AppTheme) | tokens, no hardcoded style | — | CSS tokens mirror | editor | NOT_STARTED | — | centralize before UI polish pass |
+| 22 | Localization (`Localization/*`, L10n, 14 locales) | UI strings | — | i18n later | editor | NOT_STARTED | — | contracts/persistence stay machine-facing English |
+
+## Acceptance mapping (A-N) 2026-09-13: core slice PASS (unit 7/7; vertical-slice SLICE PASS: h264+aac 640x360 3.000s, ffprobe ok, frames extracted). Electron BOOT skeleton only, launch unverified. MCP transport E2E pending. Full A-N table still ahead.
+

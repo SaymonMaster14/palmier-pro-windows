@@ -1,0 +1,11 @@
+﻿node_modules/
+dist/
+.DS_Store
+*.log
+tests/fixtures/*.mp4
+tests/fixtures/*.png
+tests/fixtures/*.wav
+!tests/fixtures/.gitkeep
+apps/editor/dist/
+*.palmier.json
+slice*.mp4
