@@ -451,3 +451,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Add video/audio track buttons in the timeline bar (existing addTrack op, auto V/A names, refresh funnel); rail follows. Transition wedge badge on clips carrying transitionOutFrames (previously invisible state). Color input gained a guidance datalist (still free text, zero constraint risk).
 - Proof: SMOKE-FX exp=1 got=1 errs=0 and SMOKE-TRACK tracks=2>3 rail=3 through real UI paths; full smoke otherwise at baseline with BOOT-OK.
+
+## 2026-09-13 turn 71 packaging
+
+- Repackaged tracks tree: portable exe fresh 85,300,554b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
