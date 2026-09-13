@@ -343,3 +343,10 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged pass-3 tree: portable exe fresh 85,292,539b, postpackage cleanup done. Mid-build scare disproven again: node parents go quiet while 7za works (184s CPU observed) — wait for the 7z artifact, not the parent CPU.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (presentation-only delta, identical output expected and correct).
+
+## 2026-09-13 turn 61 evidence (timeline zoom + playhead + sync fix)
+
+- Timeline zoom (renderer-ephemeral VIEW window, never serialized): clips/markers/ruler all map through viewStart/viewDur; drag math uses the visible width; seek stays full-range; +/- fit-zoom controls in the timeline bar with % label; window.__setZoom test hook (established pattern). Fit mode output is byte-identical to pre-zoom math.
+- Playhead was never positioned (static div since the timeline was built). markActive now places it in view coordinates and hides it outside the window.
+- Real sync bug found via the zoom probe (not theory): the video timeupdate handler wrote FRAME = videoTime*FPS ignoring clip offset, so on any edited timeline every timeupdate yanked the playhead/seek to source time (seek 44 became 14 through a [30,90) clip). Inverts through the current clip now (asset-backed clips; text-on-top edge keeps prior behavior, documented gap). Single-clip-at-0 projects were immune, which is why E2E never caught it.
+- Proof: SMOKE-ZOOM clip:true ph:true (clip % exact, playhead ~50% in-zoom, state untouched after reset) on the crowded timeline; full smoke otherwise at baseline with ERRS [] and BOOT-OK. Renderer-only change; unit suite untouched and standing.
