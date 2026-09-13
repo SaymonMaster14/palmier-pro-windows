@@ -36,7 +36,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;border-ra
 #media{padding:2px 10px}
 #media .mi{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid transparent;border-radius:var(--r);margin-bottom:4px}
 #media .mi:hover{background:var(--bg2);border-color:var(--line)}
-#media img{width:64px;height:36px;object-fit:cover;border-radius:5px;background:#000;flex:none}
+#media img{width:96px;height:54px;object-fit:cover;border-radius:5px;background:#000;flex:none}
 #media .mname{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #media .kbadge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg2);background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:0 7px;margin-top:2px}
 #hits{color:var(--fg3);font-size:11px;padding:0 12px}
@@ -45,13 +45,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;border-ra
 #rec a:hover{color:var(--acc)}
 details{margin:0 12px 6px}summary{cursor:pointer;color:var(--fg3);font-size:11.5px}
 #stage{display:flex;flex-direction:column;gap:8px;padding:12px 14px;align-items:center;background:radial-gradient(120% 90% at 50% 0%,#17171e 0%,var(--bg1) 60%)}
-#pv{width:100%;max-height:40vh;background:var(--video);border-radius:var(--r);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#pv{width:100%;max-height:38vh;background:#000;display:block}
 #transport{display:flex;align-items:center;gap:10px;width:100%}
 #seek{flex:1}
 #tc{font:11.5px ui-monospace,Consolas,monospace;color:#f29933;background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap}
 #rate{flex:none}
 #meter{width:100%;height:8px;background:var(--bg2);border:1px solid var(--line);border-radius:99px}
 #tlhint{color:var(--fg3);font-size:11px}
+#screenwrap{position:relative;width:100%;background:#000;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#textov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;padding:6% 8%}
+#textov span{white-space:pre-wrap;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.85);padding:2px 10px;border-radius:6px}
 footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:grid;grid-template-rows:30px minmax(0,1fr);min-height:0}
 #tlbar{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3)}
 #tlbar .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-size:11px}
@@ -107,9 +110,9 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outline-offset:0}
 .empty{margin:8px 12px;padding:18px 12px;text-align:center;color:var(--fg3);font-size:12px;border:1px dashed var(--linestrong);border-radius:var(--r);background:var(--bg2)}
 </style></head><body>
-<header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
+<header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit" title="Split @ playhead">✂ Split</button><button id="bUndo" title="Undo">↺ Undo</button><button id="bRedo" title="Redo">↻ Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
 <main><section class="panel"><div class="ptitle">Media</div><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
-<section class="panel"><div class="ptitle">Preview</div><div id="stage"><video id="pv" controls></video><div id="transport"><input id="seek" type="range" min="0" max="90" value="0"><span id="tc">00:00:00</span><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div><audio id="scrub" preload="auto"></audio><canvas id="meter" width="220" height="10"></canvas><div id="expq"></div></div></section>
+<section class="panel"><div class="ptitle">Preview</div><div id="stage"><div id="screenwrap"><video id="pv" controls></video><div id="textov"><span id="textovt"></span></div></div><div id="transport"><input id="seek" type="range" min="0" max="90" value="0"><span id="tc">00:00:00</span><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div><audio id="scrub" preload="auto"></audio><canvas id="meter" width="220" height="10"></canvas><div id="expq"></div></div></section>
 <section class="panel"><div class="ptitle">Inspector</div><section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>Agent (local commands)</h3><input id="ag" placeholder="split here | marker x | ..." style="width:100%"><div id="aglog" style="font-size:12px"></div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main><footer id="tlband"><div id="tlbar"><span>Timeline</span><span class="hint">drag move · edge trim · Alt+drag overwrite · Shift+Del ripple · Del delete · M marker · dblclick key</span></div><div id="tlwrap"><div id="tracks"></div><div id="tlcol"><div id="ruler"></div><div id="tl"></div></div></div></footer>
 <script>
 window.__errs = []; window.addEventListener("error", (e) => window.__errs.push(String((e.error && e.error.stack) || e.message)));
@@ -124,6 +127,7 @@ const selKey = () => [...SEL].sort().join(",");
 const DUR = () => SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
 const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 44;
 async function refresh() {
+  try { const t0 = document.getElementById('textov'); if (t0) t0.style.display = 'none'; } catch (e) {}
   S = await window.palmier.state();
   SEQ = S.sequences.find(s => s.id === S.activeSequenceId) || S.sequences[0];
   if (!SEQ) return;
@@ -222,6 +226,26 @@ async function markActive() {
   });
   renderInspector();
   const tc = document.getElementById('tc'); if (tc && SEQ) { var fr = Math.max(FRAME, 0); var ff = Math.floor(fr % FPS); var stt = Math.floor(fr / FPS); tc.textContent = String(Math.floor(stt / 60)).padStart(2, '0') + ':' + String(stt % 60).padStart(2, '0') + ':' + String(ff).padStart(2, '0'); var dd = DUR(); var dss = Math.floor(dd / FPS); tc.textContent += ' / ' + String(Math.floor(dss / 60)).padStart(2, '0') + ':' + String(dss % 60).padStart(2, '0'); } const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
+  try {
+    const tov = document.getElementById('textov'), tovt = document.getElementById('textovt');
+    const tx = (hit && hit.kind === 'text' && hit.text) ? hit : null;
+    if (tov && tovt) {
+      if (!tx) { tov.style.display = 'none'; }
+      else {
+        const vv = document.getElementById('pv');
+        const sc = ((vv && vv.clientHeight) || SEQ.height) / SEQ.height;
+        tov.style.display = 'flex';
+        tovt.textContent = tx.text;
+        tovt.style.fontSize = ((tx.fontSize || 48) * sc) + 'px';
+        tovt.style.color = tx.color || 'white';
+        tovt.style.fontFamily = ({ sans: 'Arial', arial: 'Arial', serif: 'Georgia', times: 'Times New Roman', mono: 'Consolas', courier: 'Courier New', verdana: 'Verdana' })[String(tx.fontFamily || 'sans').toLowerCase()] || 'Arial';
+        tovt.style.fontWeight = tx.fontBold ? 'bold' : 'normal';
+        tovt.style.fontStyle = tx.fontItalic ? 'italic' : 'normal';
+        tov.style.justifyContent = tx.textAlign === 'left' ? 'flex-start' : tx.textAlign === 'right' ? 'flex-end' : 'center';
+        tovt.style.background = tx.textBg ? 'rgba(0,0,0,.55)' : 'transparent';
+      }
+    }
+  } catch (e) {}
   // Timeline->source mapping: preview shows the edit, not the raw file position.
   const v = $("pv");
   if (v && hit && hit.assetId) {

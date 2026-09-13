@@ -333,3 +333,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged pass-2 tree: portable exe fresh 85,292,268b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (presentation + lane-geometry changes do not affect the N render; identical output expected and correct).
+
+## 2026-09-13 turn 60 evidence (UI pass 3)
+
+- Text overlay in preview (functional gap, not just paint): text clips were export-only. markActive now renders the topmost visible text clip at the playhead into a #textov overlay (reuses the existing clipAt hit, same topmost-track ordering as export), honoring size (scaled to displayed video), color, align, family, bold, italic and bg box; hidden on every refresh so no stale frames. Toolbar Split/Undo/Redo gained unicode glyphs + titles; media thumbs 64->96px.
+- Proof: new SMOKE-TEXTOV vis|text-ok through the real seek path; full smoke green (timecode now 00:03:05 / 00:04, cross-checked against seek=95f and 120f timeline).
