@@ -163,3 +163,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 26 evidence
 
 - Project entry: New/Open header buttons, recents (userData, capped/deduped/existence-filtered) with click-to-open, save/open touch recents. Fixed notify scoping bug (registerIpc out of boot scope). SMOKE-PROJ true:0:3.
+
+## 2026-09-13 turn 27 evidence
+
+- Local command agent: core parseAgentCommand (split/marker/text/volume/delete/ripple/undo/redo with context validation + honest errors), agentRun IPC on canonical ops, chat panel with receipts. Unit + SMOKE-AGENT marker: |error. LLM provider explicitly deferred.

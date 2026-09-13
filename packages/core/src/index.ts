@@ -13,3 +13,5 @@ export * from './search.js';
 
 export * from './thumbs.js';
 
+export * from './agent.js';
+

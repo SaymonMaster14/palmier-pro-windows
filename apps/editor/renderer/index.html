@@ -173,6 +173,7 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 window.palmier.onStoreChanged(() => refresh());
+document.querySelector("#ag").addEventListener("keydown", async (e) => { if (e.key !== "Enter") return; const q = e.target.value; e.target.value = ""; const r = await window.palmier.agentRun(q, { sequenceId: SEQ.id, playheadFrame: FRAME, selectedClipId: SEL }); const al = document.querySelector("#aglog"); al.textContent = "> " + q + "\\n" + r + "\\n" + al.textContent.slice(0, 1500); await refresh(); });
 document.querySelector("#bNew").addEventListener("click", async () => { await window.palmier.newProject(); SEL = null; await refresh(); });
 document.querySelector("#bOpen").addEventListener("click", async () => { try { const r = await window.palmier.openProject(); if (r.opened) await refresh(); log("opened: " + JSON.stringify(r)); } catch (e) { log("open: " + e.message); } });
 async function paintRecents() { try { const rs = await window.palmier.listRecents(); const box = document.querySelector("#rec"); box.innerHTML = ""; rs.forEach((rp) => { const d = document.createElement("div"); const a = document.createElement("a"); a.href = "#"; a.textContent = rp; a.addEventListener("click", async (ev) => { ev.preventDefault(); await window.palmier.openProject(rp); await refresh(); }); d.appendChild(a); box.appendChild(d); }); if (!rs.length) box.innerHTML = "<small>none</small>"; } catch (e) {} }
@@ -184,6 +185,7 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
 
 
 
