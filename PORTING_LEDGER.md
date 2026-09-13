@@ -377,3 +377,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged shadow/outline tree: portable exe fresh 85,293,459b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 64 evidence (timeline context menu)
+
+- Right-click on clips (Split here at the click frame via zoom-aware mapping, Delete, Ripple delete, Add marker here) and on empty lane space (marker), all through the existing domain ops with structured log receipts; dismiss on any click. Empty-lane handler attached once to the persistent #tl node (never duplicated by refresh); clip items bound per render like the other clip handlers.
+- Proof: SMOKE-CTX menu:split n0=3 n1=4 errs=0 through the real contextmenu event path; full smoke otherwise at baseline with ERRS [] and BOOT-OK.
