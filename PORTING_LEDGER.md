@@ -295,3 +295,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Envelope editing by drag (timeline interaction parity): dots now sit at value height (opacity 0..1, volume 0..4, center-anchored via calc -3px so the dot tracks the cursor exactly by construction), and dragging a dot commits ONE moveKeyframe op on mouseup (remove-old + upsert-new in a single exec = single undo unit, same-domain-op rule kept for UI/MCP/agent). Plain click still selects (no-op commit skipped). New store.moveKeyframe validates track/value, preserves interpolation when omitted, noop-aware. Wired into main OPS, MCP dispatch, and a live SMOKE-KEYDRAG (synthetic drag with real clientX/Y through the actual event path).
 - Proof: unit suite 43/43 (new keymove test: missing-key failure, bad-value rejection, atomic move, noop, undo/redo, interpolation carry); live SMOKE-KEYDRAG expF=44 keys=44=0.825 errs=0 — frame pixel-perfect, value within half-subpixel round-trip (0.025 on a 26px lane), no renderer errors. Full smoke otherwise unchanged and green.
+
+## 2026-09-13 turn 56 evidence
+
+- Repackaged current tree (text anim + keyframe drag): portable exe fresh 85,291,139b, postpackage cleanup done. NSIS/7za stage slow (~heavy compression) but clean; verified 7za alive before concluding stall.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4 (N chain unaffected by new features, identical output expected), PLUS a one-off packaged MCP probe (deleted after): setTextAnim + setKeyframe + moveKeyframe + readbacks + undo/redo over real transport against win-unpacked — MCP-PROBE-PASS anim=slideUp key=278=0.3 undo-redo-ok.
+- Probe debugging note: PALM_DEMO silently skips in the packaged app (fixtures live outside the asar), so a packaged probe must import absolute fixture paths first like FINAL-E2E does; fixed the probe accordingly instead of blaming the app.
