@@ -246,3 +246,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 46 evidence
 
 - Timeline filmstrip: per-clip thumbs at 25/50/75% source time via cached thumbAt IPC. Live SMOKE-STRIP 3:3.
+
+## 2026-09-13 turn 47 evidence
+
+- Repackaged with all features since last build (queue, links, subs, agent, settings, scrub, strips); portable exe fresh; FINAL-E2E-PASS bytes=97690 on packaged app.
