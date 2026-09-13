@@ -131,3 +131,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 17 evidence
 
 - Audio meter: WebAudio analyser tapped on preview element, peak bar canvas with clip indicator, autoplay-safe resume. Live SMOKE-METER true:220 (analyser on during real playback). No calibrated dB claims.
+
+## 2026-09-13 turn 18 evidence
+
+- Design tokens: all hardcoded UI color literals centralized in :root (AppTheme discipline); canvas paint reads tokens via cssVar. No literals outside tokens. Smoke suite still BOOT-OK.
