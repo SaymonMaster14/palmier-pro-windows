@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("palmier", {
   snapMove: (seqId, clipId, rawStart, ph) => ipcRenderer.invoke("snapMove", seqId, clipId, rawStart, ph),
   saveProject: (p) => ipcRenderer.invoke("saveProject", p),
   openProject: (p) => ipcRenderer.invoke("openProject", p),
+  newProject: (name) => ipcRenderer.invoke("newProject", name),
+  listRecents: () => ipcRenderer.invoke("listRecents"),
   importMedia: (paths) => ipcRenderer.invoke("importMedia", paths),
   exportActive: (outPath) => ipcRenderer.invoke("exportActive", outPath),
   geom: () => ({
@@ -19,6 +21,7 @@ contextBridge.exposeInMainWorld("palmier", {
   }),
   onStoreChanged: (cb) => ipcRenderer.on("store-changed", (_e, rev) => cb(rev)),
 });
+
 
 
 

@@ -159,3 +159,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 25 evidence
 
 - Clip speed 0.25-4: setSpeed op, export honors via source-range + setpts/atempo, preview source mapping fixed, MCP + OPS + inspector. Export proof 2x->3s with audio. Suite 22/22 + slice green.
+
+## 2026-09-13 turn 26 evidence
+
+- Project entry: New/Open header buttons, recents (userData, capped/deduped/existence-filtered) with click-to-open, save/open touch recents. Fixed notify scoping bug (registerIpc out of boot scope). SMOKE-PROJ true:0:3.

@@ -2,6 +2,7 @@
 // Main owns the single EditorStore. UI (renderer) and MCP operate on this same store.
 const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
 
 let win = null;
@@ -9,6 +10,7 @@ let store = null;
 let core = null;
 let mcpServer = null;
 let projectPath = null;
+let notify = () => {};
 
 const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed"];
 
@@ -38,8 +40,13 @@ function registerIpc() {
   });
   ipcMain.on("geomSync", (e, kind, args) => { e.returnValue = (kind === "pxToFrame" || kind === "frameToPx") ? core[kind](...args) : null; });
   ipcMain.handle("snapMove", (_e, seqId, clipId, rawStart, ph) => { const s = store.project.sequences.find((x) => x.id === seqId); if (!s) throw new Error("sequence not found"); return core.snapClipStart(s.clips, clipId, rawStart, 6, { playheadFrame: ph, markerFrames: (s.markers || []).map((m) => m.startFrame) }); });
-  ipcMain.handle("saveProject", async (_e, p) => { const fp = p || projectPath || path.join(app.getPath("userData"), "untitled.palmier.json"); await core.saveProject(store.project, fp); projectPath = fp; return { saved: fp }; });
-  ipcMain.handle("openProject", async (_e, p) => { const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; changed(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
+  ipcMain.handle("saveProject", async (_e, p) => { const fp = p || projectPath || path.join(app.getPath("userData"), "untitled.palmier.json"); await core.saveProject(store.project, fp); projectPath = fp; touchRecent(fp); return { saved: fp }; });
+  const recentsFile = () => path.join(app.getPath("userData"), "recents.json");
+  const readRecents = () => { try { return JSON.parse(fs.readFileSync(recentsFile(), "utf8")); } catch (e) { return []; } };
+  const touchRecent = (fp) => { try { const l = [fp, ...readRecents().filter((x) => x !== fp)].slice(0, 10); fs.writeFileSync(recentsFile(), JSON.stringify(l)); } catch (e) {} };
+  ipcMain.handle("newProject", async (_e, name) => { store.loadFrom(core.createProject(name || "Untitled")); projectPath = null; notify(); return { name: store.project.name }; });
+  ipcMain.handle("listRecents", async () => readRecents().filter((fp) => { try { return fs.statSync(fp).isFile(); } catch (e) { return false; } }));
+  ipcMain.handle("openProject", async (_e, p) => { if (!p) { const sel = await dialog.showOpenDialog(win, { properties: ["openFile"] }); if (sel.canceled) return { opened: null }; p = sel.filePaths[0]; } const loaded = await core.loadProject(p); store.loadFrom(loaded); projectPath = p; touchRecent(p); notify(); return { opened: p, clips: loaded.sequences.reduce((n, s) => n + s.clips.length, 0) }; });
   ipcMain.handle("importMedia", async (_e, paths) => {
     if (!paths || !paths.length) { const sel = await dialog.showOpenDialog(win, { properties: ["openFile", "multiSelections"] }); if (sel.canceled) return []; paths = sel.filePaths; }
     return core.importAndPlace(store, paths);
@@ -81,8 +88,8 @@ async function boot() {
   store = new core.EditorStore(core.createProject("Untitled"));
   let rev = 0;
   const rawExec = store.exec.bind(store);
-  const changed = () => { if (win) { rev++; try { win.webContents.send("store-changed", rev); } catch (e) {} } };
-  store.exec = (label, fn) => { const r = rawExec(label, fn); if (r.ok && !r.noop) changed(); return r; };
+  notify = () => { if (win) { rev++; try { win.webContents.send("store-changed", rev); } catch (e) {} } };
+  store.exec = (label, fn) => { const r = rawExec(label, fn); if (r.ok && !r.noop) notify(); return r; };
   projectPath = process.env.PALM_PROJECT || null;
   if (projectPath) { try { store.loadFrom(await core.loadProject(projectPath)); console.log("PROJECT-LOAD", projectPath); } catch (e) { console.warn("PROJECT-LOAD-FAIL", String((e && e.message) || e)); } }
   if (process.env.PALM_DEMO) await loadDemo();
@@ -118,6 +125,7 @@ async function boot() {
     }
     console.log("SMOKE-TH", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 1500)); const ims = [...document.querySelectorAll('#media img')]; return ims.map(i => (i.alt || '?') + '=' + (i.src ? 'y' : 'n') + (i.naturalWidth || 0)).join(','); })()"));
     console.log("SMOKE-SEARCH", await win.webContents.executeJavaScript("(async () => { const q = document.querySelector('#q'); q.value = 'sample'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 50)); const n = document.querySelectorAll('#media div').length; const h = document.querySelector('#hits').textContent; return n + '|' + h; })()"));
+    console.log("SMOKE-PROJ", await win.webContents.executeJavaScript("(async () => { const sv = await window.palmier.saveProject(); const rs = await window.palmier.listRecents(); const hasRec = rs.includes(sv.saved); await window.palmier.newProject('fresh'); const empty = (await window.palmier.state()).sequences.length; await window.palmier.openProject(sv.saved); const back = (await window.palmier.state()).sequences[0].clips.length; return hasRec + ':' + empty + ':' + back; })()"));
     console.log("SMOKE-KEYLANE", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); await new Promise(r => setTimeout(r, 500)); const s = await window.palmier.state(); const keys = s.sequences[0].clips[0].opacityKeys.length; const dots = document.querySelectorAll('.kd').length; return keys + ':' + dots; })()"));
     console.log("SMOKE-KEYUI", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); document.querySelector('#iKeyOp').click(); await new Promise(r => setTimeout(r, 400)); const s = await window.palmier.state(); return s.sequences[0].clips[0].opacityKeys.length; })()"));
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
@@ -130,6 +138,10 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
+
+
 
 
 
