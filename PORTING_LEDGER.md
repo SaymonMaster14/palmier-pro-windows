@@ -419,3 +419,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged mixer tree: portable exe fresh 85,296,720b, postpackage cleanup done. Also committed the .gitignore scaffolding guard (patch/probe/append scripts now ignored so git add -A can never sweep them in again).
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 68 evidence (§29 performance baseline)
+
+- First real measurements on this host (dev app, MCP transport, 215-clip timeline, 42s 640x360 H.264 export): startup-to-healthy 1247ms; import 3 files 349ms; 10 placements 94ms (~9ms/op); export 3809ms = 11x realtime; 200 placements 2723ms (13.6ms/op incl. notify+refresh each); single moveClip 19ms; listClips 15ms / 96KB; app peak RSS UNMEASURED (tasklist parse failed, recorded honestly instead of inventing a number).
+- Verdict per §5/§29: nothing pathological — sub-20ms interactions, 11x export, 1.2s startup. No optimization warranted; no code changed. Next profiling only if a workload complains.
