@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type ClipKind, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -57,7 +57,7 @@ export class EditorStore {
       for (const c of trackClips(s, trackId))
         if (rangeOverlaps(o.startFrame, o.startFrame + o.durationFrames, c.startFrame, c.startFrame + c.durationFrames))
           throw new Error(`overlap with clip ${c.id}`);
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, crop: noCrop(), opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, crop: noCrop(), blend: "normal", opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'placeClip' };
     });
@@ -74,7 +74,7 @@ export class EditorStore {
         else if (a.type === "trimStart") { c.startFrame = a.newStartFrame; c.sourceInFrame = a.newSourceIn; c.durationFrames = a.newDuration; }
         else { const right: Clip = { ...structuredClone(c), id: uid(), startFrame: a.rightStartFrame, durationFrames: a.rightDuration, sourceInFrame: a.rightSourceIn }; c.durationFrames = a.leftDuration; s.clips.push(right); }
       }
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, crop: noCrop(), opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, crop: noCrop(), blend: "normal", opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: "overwritePlace" };
     });
@@ -185,6 +185,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setSpeed" };
     });
   }
+  setBlend(seqId: string, clipId: string, blend: string): Receipt {
+    return this.exec("setBlend", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!(BLEND_MODES as string[]).includes(blend)) throw new Error("bad blend");
+      if ((c.blend ?? "normal") === blend) return { noop: true };
+      c.blend = blend as BlendMode;
+      return { ok: true, ids: [c.id], warnings: [], label: "setBlend" };
+    });
+  }
   setCrop(seqId: string, clipId: string, crop: { l: number; t: number; r: number; b: number }): Receipt {
     return this.exec("setCrop", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -263,6 +272,9 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
+
+
 
 
 

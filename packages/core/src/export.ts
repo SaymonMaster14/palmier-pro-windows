@@ -102,12 +102,24 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const inp = await forAsset(c.assetId, true);
     const sc = `scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}`;
     const x = `${W}/2-w/2+(${c.transform.x})`, y = `${H}/2-h/2+(${c.transform.y})`;
+    const full = c.transform.x === 0 && c.transform.y === 0 && c.transform.scaleX === 1 && c.transform.scaleY === 1;
+    const mode = (c.blend ?? "normal") === "normal" || !full ? "normal" : (c.blend as string);
+    if (mode !== "normal") warnings.push(`clip ${c.id} blend applies full-frame (transform ignored)`);
     for (const sp of spans) {
+      if (mode === "normal") {
       const oo = sp.aa < 1 ? `,format=rgba,colorchannelmixer=aa=${sp.aa}` : '';
       filters.push(`[${inp.idx}:v]${sc}${oo}${vf(c)},setsar=1[ov${k}]`);
       const out = `[vtmp${k}]`;
       filters.push(vlabel + '[ov' + k + ']overlay=x=' + String.fromCharCode(39) + x + String.fromCharCode(39) + ':y=' + String.fromCharCode(39) + y + String.fromCharCode(39) + ':enable=' + String.fromCharCode(39) + 'between(t,' + t(sp.from) + ',' + t(sp.to) + ')' + String.fromCharCode(39) + out);
       vlabel = out; k++;
+      } else {
+        filters.push(`${vlabel}split=2[vk${k}][vcut${k}]`);
+        filters.push(`[vcut${k}]trim=start=${t(sp.from)}:end=${t(sp.to)},setpts=PTS-STARTPTS[vseg${k}]`);
+        filters.push(`[${inp.idx}:v]trim=start=${t(sp.from)}:end=${t(sp.to)},setpts=PTS-STARTPTS,scale=${W}:${H},setsar=1[ovt${k}]`);
+        filters.push(`[vseg${k}]format=gbrp[vg${k}];[ovt${k}]format=gbrp[og${k}];[vg${k}][og${k}]blend=all_mode='${mode}':all_opacity=${sp.aa},format=yuv420p[vbl${k}]`);
+        filters.push(`[vk${k}][vbl${k}]overlay=0:0:enable='between(t,${t(sp.from)},${t(sp.to)})'[vtmp${k}]`);
+        vlabel = `[vtmp${k}]`; k++;
+      }
     }
   }
   // Text burn-in.

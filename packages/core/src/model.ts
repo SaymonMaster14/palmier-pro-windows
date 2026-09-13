@@ -10,6 +10,8 @@ export interface MediaAsset {
   audioChannels?: number; sampleRate?: number; offline?: boolean;
 }
 export interface Transform { x: number; y: number; scaleX: number; scaleY: number; rotationDeg: number }
+export type BlendMode = "normal" | "screen" | "multiply" | "overlay";
+export const BLEND_MODES: BlendMode[] = ["normal", "screen", "multiply", "overlay"];
 export interface CropBox { l: number; t: number; r: number; b: number }
 export const noCrop = (): CropBox => ({ l: 0, t: 0, r: 0, b: 0 });
 export function validateCrop(k: CropBox): void {
@@ -19,7 +21,7 @@ export function validateCrop(k: CropBox): void {
 export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
-  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
+  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; blend: BlendMode; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
   transform: Transform; text?: string; fontSize?: number; color?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
@@ -182,5 +184,6 @@ export function evaluateKeyframes(kfs: Keyframe[], frame: number, base: number):
   }
   return s[s.length - 1].value;
 }
+
 
 
