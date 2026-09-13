@@ -9,3 +9,5 @@ export * from './library.js';
 
 export * from './waveform.js';
 
+export * from './search.js';
+

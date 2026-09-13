@@ -115,3 +115,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 13 evidence
 
 - Waveform: core waveformPeaks (mono 8kHz decode, bucketed peaks, mtime cache, single-flight bound), unit (tone-vs-silence contrast, cache identity, errors), waveform IPC + preload, canvas rendering on audio clips. Live SMOKE-WV 50:0.125.
+
+## 2026-09-13 turn 14 evidence
+
+- Search (first slice): core searchProject/searchSequence (media names+kinds, clip names+text, marker names+comments, ranked, capped), MCP search case, renderer media filter box. Unit + SMOKE-SEARCH 4|4 of 4 + live SEARCH-MCP-PASS n=2. Visual/transcript indexes stay deferred.
