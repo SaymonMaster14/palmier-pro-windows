@@ -387,3 +387,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged context-menu tree: portable exe fresh 85,294,394b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 65 evidence (preview text fx parity)
+
+- Preview overlay now honors textShadow (2px offset, mirroring export values) and textOutline (2px stroke) alongside the existing size/color/align/family/bold/italic/bg handling, closing the preview-vs-export gap from turn 63.
+- Proof: SMOKE-TEXTOV vis|text-ok|anim=ppslide|fx=true:2px through the real seek path with computed-style readback; full smoke otherwise at baseline.

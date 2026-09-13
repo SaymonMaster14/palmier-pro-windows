@@ -258,6 +258,8 @@ async function markActive() {
         tovt.style.fontStyle = tx.fontItalic ? 'italic' : 'normal';
         tov.style.justifyContent = tx.textAlign === 'left' ? 'flex-start' : tx.textAlign === 'right' ? 'flex-end' : 'center';
         tovt.style.background = tx.textBg ? 'rgba(0,0,0,.55)' : 'transparent';
+        tovt.style.textShadow = tx.textShadow ? '2px 2px 0 #000' : 'none';
+        tovt.style.webkitTextStroke = tx.textOutline ? '2px #000' : '0px transparent';
       }
     }
   } catch (e) {}
