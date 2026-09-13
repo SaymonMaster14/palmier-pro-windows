@@ -143,3 +143,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 21 evidence
 
 - Thumbnails (first MediaVisualCache slice): core thumbnail() (seek+fallback for stills, sha1 cache key, empty-output retry), thumb IPC (userData cache), media-panel imgs (audio skipped honestly). Unit + live SMOKE-TH 3 loaded @160px.
+
+## 2026-09-13 turn 22 evidence
+
+- Keyframe UI: key op/vol @playhead buttons + key list with remove, all on canonical ops. Live SMOKE-KEYUI 1 (real click path creates key).
