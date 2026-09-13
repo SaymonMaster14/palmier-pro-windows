@@ -372,3 +372,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Upstream TextStyle Shadow/Outline slice at port granularity (flags like textBg): Clip.textShadow/textOutline, setTextStyle validates/backfills/noop-aware/undoable, export adds drawtext shadow + borderw, inspector checkboxes wired through Apply, MCP pass-through.
 - Proof: unit suite 44/44 (new test: validation/noop/readback/graph tokens/real export+validate); full dev-app smoke green with the renderer change (Apply path + ERRS [] guard the new checkboxes).
+
+## 2026-09-13 turn 63 packaging
+
+- Repackaged shadow/outline tree: portable exe fresh 85,293,459b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
