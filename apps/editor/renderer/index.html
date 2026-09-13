@@ -20,7 +20,8 @@ async function refresh() {
   $("proj").textContent = S.name + " / " + SEQ.name;
   const q = ($("q").value || "").toLowerCase();
   const shown = q ? S.media.filter(m => (m.name + " " + m.kind).toLowerCase().includes(q)) : S.media;
-  $("media").innerHTML = shown.map(m => "<div>" + m.name + " <small>(" + m.kind + ")</small></div>").join("");
+  $("media").innerHTML = shown.map(m => "<div>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + " width=80>") + " " + m.name + " <small>(" + m.kind + ")</small></div>").join("");
+  for (const im of document.querySelectorAll("img[data-th]")) { window.palmier.thumb(im.dataset.th).then(p => { im.src = "file:///" + p.replace(/\\/g, "/"); }).catch(() => {}); }
   $("hits").textContent = q ? shown.length + " of " + S.media.length : "";
   const dur = DUR();
   $("seek").max = dur;
@@ -158,6 +159,9 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
+
 
 
 

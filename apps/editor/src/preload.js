@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("palmier", {
   state: () => ipcRenderer.invoke("state"),
   op: (name, args) => ipcRenderer.invoke("op", name, args),
   clipAt: (seqId, frame) => ipcRenderer.invoke("clipAt", seqId, frame),
+  thumb: (assetId) => ipcRenderer.invoke("thumb", assetId),
   waveform: (assetId, buckets) => ipcRenderer.invoke("waveform", assetId, buckets),
   evalKeys: (seqId, clipId, frame) => ipcRenderer.invoke("evalKeys", seqId, clipId, frame),
   snapMove: (seqId, clipId, rawStart, ph) => ipcRenderer.invoke("snapMove", seqId, clipId, rawStart, ph),
@@ -18,6 +19,7 @@ contextBridge.exposeInMainWorld("palmier", {
   }),
   onStoreChanged: (cb) => ipcRenderer.on("store-changed", (_e, rev) => cb(rev)),
 });
+
 
 
 

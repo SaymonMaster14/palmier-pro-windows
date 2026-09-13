@@ -139,3 +139,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 19 evidence
 
 - Keyframes (upstream KeyframeTrack parity, numeric scope): sorted upsert, linear/hold/smooth eval, store set/remove with validation+undo, MCP, evalKeys IPC, inspector live op/vol at playhead. Unit + SMOKE-KEYS 0.2. Export honoring keyframes explicitly deferred.
+
+## 2026-09-13 turn 21 evidence
+
+- Thumbnails (first MediaVisualCache slice): core thumbnail() (seek+fallback for stills, sha1 cache key, empty-output retry), thumb IPC (userData cache), media-panel imgs (audio skipped honestly). Unit + live SMOKE-TH 3 loaded @160px.

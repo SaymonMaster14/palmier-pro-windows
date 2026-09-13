@@ -30,6 +30,7 @@ function registerIpc() {
   ipcMain.handle("health", () => ({ ok: true, app: "palmier-pro-windows" }));
   ipcMain.handle("waveform", async (_e, assetId, buckets) => { const m = store.project.media.find((x) => x.id === assetId); if (!m) throw new Error("media not found"); return core.waveformPeaks(m.path, buckets || 200); });
   ipcMain.handle("evalKeys", (_e, seqId, clipId, frame) => { const s = store.project.sequences.find((x) => x.id === seqId); const c = s && s.clips.find((x) => x.id === clipId); if (!c) throw new Error("clip not found"); return { op: core.evaluateKeyframes(c.opacityKeys || [], frame, c.opacity), vol: core.evaluateKeyframes(c.volumeKeys || [], frame, c.volume) }; });
+  ipcMain.handle("thumb", async (_e, assetId) => { const m = store.project.media.find((x) => x.id === assetId); if (!m) throw new Error("media not found"); return core.thumbnail(m.path, path.join(app.getPath("userData"), "thumbs")); });
   ipcMain.handle("clipAt", (_e, seqId, frame) => {
     const s = store.project.sequences.find((x) => x.id === seqId);
     if (!s) throw new Error("sequence not found");
@@ -115,6 +116,7 @@ async function boot() {
       const ex = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.exportActive(${JSON.stringify(process.env.PALM_SMOKE_OUT || (process.env.TEMP + "/smoke-export.mp4"))}); return r.bytes + ":" + r.validation.ok; })()`);
       console.log("SMOKE-IO-EXPORT", ex);
     }
+    console.log("SMOKE-TH", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 1500)); const ims = [...document.querySelectorAll('#media img')]; return ims.map(i => (i.alt || '?') + '=' + (i.src ? 'y' : 'n') + (i.naturalWidth || 0)).join(','); })()"));
     console.log("SMOKE-SEARCH", await win.webContents.executeJavaScript("(async () => { const q = document.querySelector('#q'); q.value = 'sample'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 50)); const n = document.querySelectorAll('#media div').length; const h = document.querySelector('#hits').textContent; return n + '|' + h; })()"));
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
     console.log("SMOKE-METER", await win.webContents.executeJavaScript("(async () => { const cv = document.querySelector('#meter'); if (!cv) return 'no-canvas'; const v = document.querySelector('#pv'); try { await v.play(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); v.pause(); return (!!window.__meterOn) + ':' + cv.width; })()"));
@@ -126,6 +128,9 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
+
 
 
 

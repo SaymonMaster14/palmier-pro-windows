@@ -11,3 +11,5 @@ export * from './waveform.js';
 
 export * from './search.js';
 
+export * from './thumbs.js';
+
