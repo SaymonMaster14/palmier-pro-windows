@@ -118,6 +118,7 @@ async function boot() {
     }
     console.log("SMOKE-TH", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 1500)); const ims = [...document.querySelectorAll('#media img')]; return ims.map(i => (i.alt || '?') + '=' + (i.src ? 'y' : 'n') + (i.naturalWidth || 0)).join(','); })()"));
     console.log("SMOKE-SEARCH", await win.webContents.executeJavaScript("(async () => { const q = document.querySelector('#q'); q.value = 'sample'; q.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 50)); const n = document.querySelectorAll('#media div').length; const h = document.querySelector('#hits').textContent; return n + '|' + h; })()"));
+    console.log("SMOKE-KEYLANE", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); await new Promise(r => setTimeout(r, 500)); const s = await window.palmier.state(); const keys = s.sequences[0].clips[0].opacityKeys.length; const dots = document.querySelectorAll('.kd').length; return keys + ':' + dots; })()"));
     console.log("SMOKE-KEYUI", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); document.querySelector('#iKeyOp').click(); await new Promise(r => setTimeout(r, 400)); const s = await window.palmier.state(); return s.sequences[0].clips[0].opacityKeys.length; })()"));
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
     console.log("SMOKE-METER", await win.webContents.executeJavaScript("(async () => { const cv = document.querySelector('#meter'); if (!cv) return 'no-canvas'; const v = document.querySelector('#pv'); try { await v.play(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); v.pause(); return (!!window.__meterOn) + ':' + cv.width; })()"));
@@ -129,6 +130,7 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
 
 
 

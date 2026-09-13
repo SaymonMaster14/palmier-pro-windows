@@ -147,3 +147,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 22 evidence
 
 - Keyframe UI: key op/vol @playhead buttons + key list with remove, all on canonical ops. Live SMOKE-KEYUI 1 (real click path creates key).
+
+## 2026-09-13 turn 23 evidence
+
+- Keyframe lane: key dots on clips (opacity/volume), dblclick adds key at playhead with base value. Live SMOKE-KEYLANE 1:1.
