@@ -1,13 +1,19 @@
-﻿{
+{
   "name": "palmier-pro-windows",
   "private": true,
   "version": "0.0.1",
   "license": "GPL-3.0-only",
-  "workspaces": ["packages/core", "apps/editor"],
+  "workspaces": [
+    "packages/core",
+    "apps/editor"
+  ],
   "scripts": {
     "build": "npm run build -w packages/core",
     "test": "npm run test -w packages/core",
     "fixtures": "powershell -ExecutionPolicy Bypass -File scripts/make-fixtures.ps1",
     "e2e:slice": "npm run e2e:slice -w packages/core"
+  },
+  "allowScripts": {
+    "electron@38.8.6": true
   }
 }

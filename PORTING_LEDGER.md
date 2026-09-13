@@ -33,3 +33,13 @@ States: NOT_STARTED INVESTIGATING BLOCKED IMPLEMENTING IMPLEMENTED_UNVERIFIED PA
 
 ## Acceptance mapping (A-N) 2026-09-13: core slice PASS (unit 7/7; vertical-slice SLICE PASS: h264+aac 640x360 3.000s, ffprobe ok, frames extracted). Electron BOOT skeleton only, launch unverified. MCP transport E2E pending. Full A-N table still ahead.
 
+
+## 2026-09-13 turn 2 evidence
+
+- A BOOT: PASS. \PALM_SMOKE=1 PALM_DEMO=1 PALM_HEADLESS=1 npx electron apps/editor\ -> DEMO-LOAD ok, MCP-LISTEN 19789, SMOKE-STATE-SEQ 1, BOOT-OK, exit 0. IPC handlers registered before loadFile (no-handler race fixed). Headless GPU log noise only.
+- J MCP READ: PASS. External node client over HTTP 127.0.0.1:19789/mcp: getProject/listClips/timelineContext against running app.
+- K MCP WRITE: PARTIAL. placeClip via MCP -> readback 1->2, undo ->1, redo ->2, final undo, all through real transport on live store (\
+ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-live-reflection of MCP edits still pending.
+- #1 App bootstrap: PASS. #17 MCP server: PASS (transport). #7 Preview: IMPLEMENTING (source file preview + clipAt highlight + seek; multi-layer/effects pending).
+- Electron binary note: npm postinstall extraction yields only locales/ on this host; workaround is Expand-Archive of the cached zip + path.txt (see README troubleshooting).
+

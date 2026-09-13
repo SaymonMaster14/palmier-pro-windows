@@ -13,9 +13,9 @@ Palmier Pro source. **Not an official Palmier product. No affiliation with palmi
       store, undo/redo, atomic persistence — 7/7 unit tests green
 - [x] Vertical slice (Node): probe real media → place/split/delete/overlay/text →
       save/reopen → H.264 export → ffprobe validation — `SLICE PASS`
-- [ ] Electron app shell: skeleton only (`apps/editor`), not yet launch-verified
+- [x] Electron app shell: launches headless with BOOT-OK, demo project from real media, IPC state/ops/clipAt (PALM_SMOKE/PALM_DEMO) (`apps/editor`), not yet launch-verified
 - [ ] Timeline UI, preview playback, inspector, agent chat: not started
-- [ ] MCP server: implemented against live store, transport E2E pending
+- [x] MCP server: live in app on 127.0.0.1:19789; external-client E2E PASS (place/readback/undo/redo)
 
 ## Requirements
 
@@ -36,3 +36,7 @@ node packages/core/dist/scripts/vertical-slice.js
 Packaged installer and MCP transport E2E land after the Electron shell is wired
 to the core store. See `PORTING_LEDGER.md` for per-subsystem status.
 Do not advertise beyond the checklist above.
+
+## Troubleshooting
+
+If Electron dist contains only locales/ after install, the postinstall extractor stalled on this host. Re-extract the cached zip into node_modules/electron/dist, write electron.exe into node_modules/electron/path.txt, then re-run npx electron --version.
