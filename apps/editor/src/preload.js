@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld("palmier", {
   health: () => ipcRenderer.invoke("health"),
   state: () => ipcRenderer.invoke("state"),
   op: (name, args) => ipcRenderer.invoke("op", name, args),
+  audioAt: (seqId, frame) => ipcRenderer.invoke('audioAt', seqId, frame),
   clipAt: (seqId, frame) => ipcRenderer.invoke("clipAt", seqId, frame),
   thumb: (assetId) => ipcRenderer.invoke("thumb", assetId),
   waveform: (assetId, buckets) => ipcRenderer.invoke("waveform", assetId, buckets),

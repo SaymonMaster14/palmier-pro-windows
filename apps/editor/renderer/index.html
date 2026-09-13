@@ -69,6 +69,23 @@ async function renderInspector() {
     log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok, r5.noop || r5.ok, r6.noop || r6.ok, r7.noop || r7.ok, r8.noop || r8.ok, r9.noop || r9.ok])); renderInspector.sel = ""; await refresh(); await renderInspector();
   });
 }
+let scrubTimer = null;
+async function scrubGrain() {
+  const v = document.querySelector('#pv');
+  if (!SEQ || (v && !v.paused)) return;
+  try {
+    const hit = await window.palmier.audioAt(SEQ.id, FRAME);
+    const el = document.querySelector('#scrub');
+    if (!hit) { el.pause(); return; }
+    const url = 'file:///' + hit.path.replace(/\\/g, '/');
+    if (el.src !== url) el.src = url;
+    el.currentTime = Math.max(hit.atSec, 0);
+    await el.play().catch(() => {});
+    window.__scrubbed = (window.__scrubbed || 0) + 1;
+    if (scrubTimer) clearTimeout(scrubTimer);
+    scrubTimer = setTimeout(() => el.pause(), 150);
+  } catch (e) {}
+}
 async function markActive() {
   if (!SEQ) return;
   const hit = await window.palmier.clipAt(SEQ.id, FRAME);
@@ -147,6 +164,7 @@ function bindClips() {
   document.querySelectorAll(".clip").forEach(el => {
     el.addEventListener("dblclick", async (e) => { e.stopPropagation(); const c = SEQ.clips.find(x => x.id === el.dataset.id); if (!c) return; const rel = Math.min(Math.max(FRAME - c.startFrame, 0), c.durationFrames); const tr = c.kind === "audio" ? "volume" : "opacity"; const val = tr === "volume" ? c.volume : c.opacity; const r = await window.palmier.op("setKeyframe", [SEQ.id, c.id, tr, { frame: c.startFrame + rel, value: val, interpolation: "linear" }]); log("key: " + JSON.stringify(r)); renderInspector.sel = ""; await refresh(); await renderInspector(); });
     el.addEventListener("mousedown", (e) => {
+
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) { const id = el.dataset.id; if (SEL.has(id)) SEL.delete(id); else SEL.add(id); } else SEL = new Set([el.dataset.id]); markActive();
       const tl = $("tl").getBoundingClientRect();
@@ -171,7 +189,7 @@ function bindClips() {
     });
   });
 }
-$("seek").addEventListener("input", async (e) => { FRAME = Number(e.target.value); await markActive(); });
+$("seek").addEventListener("input", async (e) => { FRAME = Number(e.target.value); await markActive(); await scrubGrain(); });
 $("pv").addEventListener("timeupdate", async (e) => {
   if (document.activeElement === $("seek")) return;
   FRAME = Math.min(Math.round(e.target.currentTime * FPS), Number($("seek").max));

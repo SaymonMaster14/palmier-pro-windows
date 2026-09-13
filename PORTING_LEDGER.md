@@ -234,3 +234,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 43 evidence
 
 - Text style (upstream TextStyle/Layout slice): align left/center/right + background box on text clips, setTextStyle op, drawtext x/box in export, MCP + inspector. Graph + real export proof. Suite 38/38.
+
+## 2026-09-13 turn 44 evidence
+
+- Multi-select UI + audio scrub grains (audioAt IPC, 150ms grains while paused) + missing Agent panel HTML fixed (was killing later bindings). SMOKE-MULTI 3:1,2,3:0, scrub path live. Suite 38/38.
