@@ -13,7 +13,7 @@ export interface Transform { x: number; y: number; scaleX: number; scaleY: numbe
 export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
-  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
+  speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
   transform: Transform; text?: string; fontSize?: number; color?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
@@ -176,3 +176,4 @@ export function evaluateKeyframes(kfs: Keyframe[], frame: number, base: number):
   }
   return s[s.length - 1].value;
 }
+

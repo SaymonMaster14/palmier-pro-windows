@@ -12,7 +12,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   const durFrames = sequenceDurationFrames(s);
   if (durFrames <= 0) throw new Error('empty timeline: nothing to export');
   const warnings: string[] = [];
-  const expectSec = framesToSeconds(durFrames, s.fps);
+  let expectSec = framesToSeconds(durFrames, s.fps);
   const byAsset = new Map(p.media.map(m => [m.id, m.path]));
   const W = s.width, H = s.height;
   const fpsStr = `${s.fps.num}/${s.fps.den}`;
@@ -53,30 +53,38 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
 
   const filters: string[] = [];
   // Base video walk with black gap fill.
-  const vsegs: string[] = [];
+  const vsegs: Array<{ l: string; d: number; tr: number }> = [];
   let cursor = 0, n = 0;
   const black = (frames: number): string => {
     const l = `[blk${n++}]`;
-    filters.push(`color=c=black:s=${W}x${H}:r=${fpsStr}:d=${t(frames)}${l}`);
+    filters.push(`color=c=black:s=${W}x${H}:r=${fpsStr}:d=${t(frames)},format=yuv420p,settb=AVTB${l}`);
     return l;
   };
   for (const c of base) {
-    if (c.startFrame > cursor) vsegs.push(black(c.startFrame - cursor));
+    if (c.startFrame > cursor) { const bf = c.startFrame - cursor; vsegs.push({ l: black(bf), d: Number(t(bf)), tr: 0 }); }
     const inp = await forAsset(c.assetId, c.kind === 'image');
     if (!inp.hasVideo) throw new Error(`asset has no video stream: ${inp.path}`);
     const l = `[vs${n++}]`;
     if (c.kind === 'image') {
       const sc = c.transform.scaleX !== 1 || c.transform.scaleY !== 1 ? `,scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}` : '';
-      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${vf(c)}${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${vf(c)},format=yuv420p,settb=AVTB${l}`);
     } else {
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
-      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${vf(c)}${l}`);
+      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${vf(c)},format=yuv420p,settb=AVTB${l}`);
     }
-    vsegs.push(l);
+    vsegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
     cursor = c.startFrame + c.durationFrames;
   }
-  if (cursor < durFrames) vsegs.push(black(durFrames - cursor));
-  filters.push(`${vsegs.join('')}concat=n=${vsegs.length}:v=1:a=0,setsar=1[vbase]`);
+  if (cursor < durFrames) { const bf = durFrames - cursor; vsegs.push({ l: black(bf), d: Number(t(bf)), tr: 0 }); }
+  let vacc = vsegs[0].l, acc = vsegs[0].d;
+  for (let vi = 1; vi < vsegs.length; vi++) {
+    const f = Math.min(vsegs[vi - 1].tr, acc, vsegs[vi].d);
+    if (f > 1e-9) { filters.push(`${vacc}${vsegs[vi].l}xfade=transition=fade:duration=${f.toFixed(6)}:offset=${(acc - f).toFixed(6)}[vx${n}]`); vacc = `[vx${n}]`; n++; acc = acc + vsegs[vi].d - f; }
+    else { filters.push(`${vacc}${vsegs[vi].l}concat=n=2:v=1:a=0[vc${n}]`); vacc = `[vc${n}]`; n++; acc = acc + vsegs[vi].d; }
+  }
+  filters.push(`${vacc}setsar=1[vbase]`);
+  const videoAcc = acc;
+  expectSec = videoAcc;
 
   // Higher-track image overlays.
 
@@ -104,7 +112,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   const aclips = s.clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.assetId).sort((a, b) => a.startFrame - b.startFrame);
   let alabel = '';
   if (aclips.length) {
-    const asegs: string[] = [];
+    const asegs: Array<{ l: string; d: number; tr: number }> = [];
     let ac = 0, an = 0;
     const silence = (frames: number): string => {
       const l = `[as${an++}]`;
@@ -114,18 +122,25 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     for (const c of aclips) {
       const inp = await forAsset(c.assetId, false);
       if (!inp.hasAudio) { warnings.push(`clip ${c.id} skipped in audio mix (no audio stream)`); continue; }
-      if (c.startFrame > ac) asegs.push(silence(c.startFrame - ac));
+      if (c.startFrame > ac) { const gf = c.startFrame - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
       const vol = c.muted ? 0 : c.volume;
       const l = `[as${an++}]`;
       filters.push(`[${inp.idx}:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol},aresample=48000,aformat=channel_layouts=stereo${af(c)}${l}`);
-      asegs.push(l);
+      asegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
       ac = Math.max(ac, c.startFrame + c.durationFrames);
     }
     const tailTarget = Math.max(durFrames, ac);
-    if (ac < tailTarget) asegs.push(silence(tailTarget - ac));
-    if (asegs.length === 1) alabel = asegs[0];
-    else if (asegs.length > 1) { filters.push(`${asegs.join('')}concat=n=${asegs.length}:v=0:a=1[amix]`); alabel = '[amix]'; }
+    if (ac < tailTarget) { const gf = tailTarget - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
+    let aacc = 0;
+    if (asegs.length) { let al = asegs[0].l; aacc = asegs[0].d;
+      for (let ai = 1; ai < asegs.length; ai++) {
+        const f = Math.min(asegs[ai - 1].tr, aacc, asegs[ai].d);
+        if (f > 1e-9) { filters.push(`${al}${asegs[ai].l}acrossfade=d=${f.toFixed(6)}:curve=tri[ax${an}]`); al = `[ax${an}]`; an++; aacc = aacc + asegs[ai].d - f; }
+        else { filters.push(`${al}${asegs[ai].l}concat=n=2:v=0:a=1[ac${an}]`); al = `[ac${an}]`; an++; aacc = aacc + asegs[ai].d; }
+      }
+      alabel = al;
+    }
     if (alabel) { filters.push(`${alabel}atrim=0:${expectSec.toFixed(6)},asetpts=PTS-STARTPTS[aout]`); alabel = '[aout]'; }
   }
   const expectAudio = !!alabel;
@@ -172,5 +187,8 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
+
+
 
 

@@ -57,7 +57,7 @@ export class EditorStore {
       for (const c of trackClips(s, trackId))
         if (rangeOverlaps(o.startFrame, o.startFrame + o.durationFrames, c.startFrame, c.startFrame + c.durationFrames))
           throw new Error(`overlap with clip ${c.id}`);
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'placeClip' };
     });
@@ -74,7 +74,7 @@ export class EditorStore {
         else if (a.type === "trimStart") { c.startFrame = a.newStartFrame; c.sourceInFrame = a.newSourceIn; c.durationFrames = a.newDuration; }
         else { const right: Clip = { ...structuredClone(c), id: uid(), startFrame: a.rightStartFrame, durationFrames: a.rightDuration, sourceInFrame: a.rightSourceIn }; c.durationFrames = a.leftDuration; s.clips.push(right); }
       }
-      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
+      const c: Clip = { id: uid(), trackId, kind: o.kind, name: o.name, assetId: o.assetId, startFrame: o.startFrame, durationFrames: o.durationFrames, sourceInFrame: o.sourceInFrame ?? 0, speed: 1, opacity: 1, volume: 1, muted: false, fadeInFrames: 0, fadeOutFrames: 0, transitionOutFrames: 0, opacityKeys: [], volumeKeys: [], transform: defaultTransform(), text: o.text };
       s.clips.push(c);
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: "overwritePlace" };
     });
@@ -176,6 +176,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setTransform" };
     });
   }
+  setTransition(seqId: string, clipId: string, outFrames: number): Receipt {
+    return this.exec("setTransition", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!Number.isInteger(outFrames) || outFrames < 0 || outFrames > c.durationFrames) throw new Error("bad transition");
+      if ((c.transitionOutFrames ?? 0) === outFrames) return { noop: true };
+      c.transitionOutFrames = outFrames;
+      return { ok: true, ids: [c.id], warnings: [], label: "setTransition" };
+    });
+  }
   setFade(seqId: string, clipId: string, fadeInFrames: number, fadeOutFrames: number): Receipt {
     return this.exec("setFade", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -236,6 +245,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 

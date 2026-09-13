@@ -151,3 +151,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 23 evidence
 
 - Keyframe lane: key dots on clips (opacity/volume), dblclick adds key at playhead with base value. Live SMOKE-KEYLANE 1:1.
+
+## 2026-09-13 turn 24 evidence
+
+- Dissolve transitions: Clip.transitionOutFrames + setTransition (validated), export xfade/acrossfade fold with timebase normalization, program shortens honestly (expectSec from fold). Blend proven by luma (mid between colors), 1.5s duration. MCP + OPS + inspector seconds input. Suite 21/21 + slice green.
