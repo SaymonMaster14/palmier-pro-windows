@@ -176,6 +176,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setTransform" };
     });
   }
+  setSpeed(seqId: string, clipId: string, speed: number): Receipt {
+    return this.exec("setSpeed", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!Number.isFinite(speed) || speed < 0.25 || speed > 4) throw new Error("bad speed");
+      if (c.speed === speed) return { noop: true };
+      c.speed = speed;
+      return { ok: true, ids: [c.id], warnings: [], label: "setSpeed" };
+    });
+  }
   setTransition(seqId: string, clipId: string, outFrames: number): Receipt {
     return this.exec("setTransition", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -245,6 +254,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 

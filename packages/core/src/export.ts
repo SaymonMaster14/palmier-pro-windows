@@ -69,8 +69,10 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
       const sc = c.transform.scaleX !== 1 || c.transform.scaleY !== 1 ? `,scale=iw*${c.transform.scaleX}:ih*${c.transform.scaleY}` : '';
       filters.push(`[${inp.idx}:v]trim=start=0:end=${t(c.durationFrames)},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${sc}${vf(c)},format=yuv420p,settb=AVTB${l}`);
     } else {
-      const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
-      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},setpts=PTS-STARTPTS,scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${vf(c)},format=yuv420p,settb=AVTB${l}`);
+      const spd = c.speed ?? 1;
+      const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + Math.round(c.durationFrames * spd));
+      const sts = spd === 1 ? "setpts=PTS-STARTPTS" : `setpts=(PTS-STARTPTS)/${spd}`;
+      filters.push(`[${inp.idx}:v]trim=start=${ss}:end=${to},${sts},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}${vf(c)},format=yuv420p,settb=AVTB${l}`);
     }
     vsegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
     cursor = c.startFrame + c.durationFrames;
@@ -115,6 +117,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     const asegs: Array<{ l: string; d: number; tr: number }> = [];
     let ac = 0, an = 0;
     const silence = (frames: number): string => {
+      const atempo = (s: number): string => { const parts: string[] = []; let v = s; while (v < 0.5) { parts.push("atempo=0.5"); v *= 2; } parts.push(`atempo=${v}`); return parts.join(","); };
       const l = `[as${an++}]`;
       filters.push(`anullsrc=r=48000:cl=stereo:d=${t(frames)}${l}`);
       return l;
@@ -125,8 +128,12 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
       if (c.startFrame > ac) { const gf = c.startFrame - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
       const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
       const vol = c.muted ? 0 : c.volume;
+      const atempo = (s: number): string => { const parts: string[] = []; let v = s; while (v < 0.5) { parts.push("atempo=0.5"); v *= 2; } parts.push(`atempo=${v}`); return parts.join(","); };
       const l = `[as${an++}]`;
-      filters.push(`[${inp.idx}:a]atrim=start=${ss}:end=${to},asetpts=PTS-STARTPTS,volume=${vol},aresample=48000,aformat=channel_layouts=stereo${af(c)}${l}`);
+      const aspd = c.speed ?? 1;
+      const ass = t(c.sourceInFrame), ato = t(c.sourceInFrame + Math.round(c.durationFrames * aspd));
+      const at = aspd === 1 ? "" : "," + atempo(aspd);
+      filters.push(`[${inp.idx}:a]atrim=start=${ass}:end=${ato},asetpts=PTS-STARTPTS${at},volume=${vol},aresample=48000,aformat=channel_layouts=stereo${af(c)}${l}`);
       asegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
       ac = Math.max(ac, c.startFrame + c.durationFrames);
     }
@@ -187,6 +194,7 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
 
 
 

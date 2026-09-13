@@ -43,9 +43,9 @@ async function renderInspector() {
   if (!c) { box.textContent = "select a clip"; return; }
   box.innerHTML = "clip " + c.name + " <small>at playhead op/vol: <span id=iLive></span></small>";
   window.palmier.evalKeys(SEQ.id, c.id, FRAME).then(r => { const el = document.querySelector("#iLive"); if (el) el.textContent = Number(r.op).toFixed(2) + "/" + Number(r.vol).toFixed(2); }).catch(() => {});
-  box.innerHTML += "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> tr <input id=iTr size=4> <button id=iApply>Apply</button><br><button id=iKeyOp>key op @playhead</button><button id=iKeyVol>key vol @playhead</button><div id=iKeys style=font-size:11px></div>";
+  box.innerHTML += "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> tr <input id=iTr size=4> sp <input id=iSp size=4> <button id=iApply>Apply</button><br><button id=iKeyOp>key op @playhead</button><button id=iKeyVol>key vol @playhead</button><div id=iKeys style=font-size:11px></div>";
   const set = (id, v) => { document.querySelector(id).value = v; };
-  set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iO", c.opacity); set("#iV", c.volume);
+  set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iO", c.opacity); set("#iV", c.volume); set("#iSp", c.speed || 1);
   const keyList = () => { const el = document.querySelector("#iKeys"); if (!el) return; const c2 = SEQ.clips.find(x => x.id === SEL); el.innerHTML = "op:" + (c2.opacityKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=op:" + k.frame + ">x</a></span>").join(" ") + " vol:" + (c2.volumeKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=vol:" + k.frame + ">x</a></span>").join(" "); el.querySelectorAll("a[data-k]").forEach(a => a.addEventListener("click", async (e) => { e.preventDefault(); const [tr, fr] = a.dataset.k.split(":"); await window.palmier.op("removeKeyframe", [SEQ.id, SEL, tr, Number(fr)]); renderInspector.sel = null; await refresh(); await renderInspector(); })); };
   keyList();
   const keyAt = async (tr) => { const num = (id) => Number(document.querySelector(id).value); await window.palmier.op("setKeyframe", [SEQ.id, SEL, tr, { frame: FRAME, value: tr === "op" ? num("#iO") : num("#iV"), interpolation: "linear" }]); renderInspector.sel = null; await refresh(); await renderInspector(); };
@@ -58,7 +58,8 @@ async function renderInspector() {
     const r3 = await window.palmier.op("setVolume", [SEQ.id, c.id, num("#iV")]);
     const r4 = await window.palmier.op("setFade", [SEQ.id, c.id, Math.round(num("#iFi") * FPS), Math.round(num("#iFo") * FPS)]);
     const r5 = await window.palmier.op("setTransition", [SEQ.id, c.id, Math.round(num("#iTr") * FPS)]);
-    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok, r5.noop || r5.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
+    const r6 = await window.palmier.op("setSpeed", [SEQ.id, c.id, num("#iSp")]);
+    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok, r4.noop || r4.ok, r5.noop || r5.ok, r6.noop || r6.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
   });
 }
 async function markActive() {
@@ -73,7 +74,7 @@ async function markActive() {
   // Timeline->source mapping: preview shows the edit, not the raw file position.
   const v = $("pv");
   if (v && hit && hit.assetId) {
-    const srcSec = (hit.sourceInFrame + (FRAME - hit.startFrame)) / FPS;
+    const srcSec = (hit.sourceInFrame + (FRAME - hit.startFrame) * (hit.speed || 1)) / FPS;
     if (Math.abs(v.currentTime - srcSec) > 0.18) { try { v.currentTime = Math.max(srcSec, 0); } catch (e) {} }
   }
 }
@@ -179,6 +180,8 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
 
 
 
