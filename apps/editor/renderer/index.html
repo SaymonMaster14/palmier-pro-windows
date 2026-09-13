@@ -31,7 +31,7 @@ async function refresh() {
   const tl = $("tl");
   tl.innerHTML = SEQ.clips.map(c => {
     const l = c.startFrame / dur * 100, w = c.durationFrames / dur * 100;
-    return "<div class=clip data-id=" + c.id + (c.kind === "audio" ? "<canvas class=wv data-asset=" + (c.assetId || "") + "></canvas>" : "") + " style=left:" + l + "%;width:" + w + "%;top:" + trackTop(SEQ.tracks.find(t => t.id === c.trackId) || SEQ.tracks[0]) + "px>" + "<span class=h hl data-e=l></span>" + c.name + "<span class=h hr data-e=r></span></div>";
+    return "<div class=clip data-id='" + c.id + "' style=left:" + l + "%;width:" + w + "%;top:" + trackTop(SEQ.tracks.find(t => t.id === c.trackId) || SEQ.tracks[0]) + "px>" + (c.kind === "audio" ? "<canvas class=wv data-asset='" + (c.assetId || "") + "'></canvas>" : "") + "<span class=h hl data-e=l></span>" + c.name + "<span class=h hr data-e=r></span></div>";
   }).join("") + (SEQ.markers || []).map(m => "<div class=mk data-id=" + m.id + " title=" + m.name + " style=left:" + (m.startFrame / dur * 100) + "%></div>").join("") + "<div class=ph id=ph></div>";
   paintTracks();
   bindClips();
