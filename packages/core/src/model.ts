@@ -74,3 +74,11 @@ export function frameToPx(frame: number, widthPx: number, durationFrames: number
   return (frame / durationFrames) * widthPx;
 }
 
+
+export function computeRippleShifts(clips: Array<{ id: string; startFrame: number; durationFrames: number }>, removedIds: Set<string>): Array<{ clipId: string; newStartFrame: number }> {
+  const gone = clips.filter((c) => removedIds.has(c.id));
+  return clips.filter((c) => !removedIds.has(c.id)).map((c) => ({ clipId: c.id, newStartFrame: c.startFrame - shiftBefore(c.startFrame, gone) }));
+}
+function shiftBefore(start: number, removed: Array<{ startFrame: number; durationFrames: number }>): number {
+  return removed.filter((r) => r.startFrame + r.durationFrames <= start).reduce((a, r) => a + r.durationFrames, 0);
+}

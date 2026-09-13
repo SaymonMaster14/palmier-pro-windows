@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, computeRippleShifts, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -103,6 +103,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id, right.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }, { startFrame: right.startFrame, durationFrames: right.durationFrames }], warnings: [], label: 'splitClip' };
     });
   }
+  rippleDelete(seqId: string, clipId: string): Receipt {
+    return this.exec("rippleDelete", (p) => {
+      const s = req_seq(p, seqId); const c = req_clip(s, clipId);
+      const shifts = computeRippleShifts(trackClips(s, c.trackId), new Set([clipId]));
+      s.clips = s.clips.filter((x) => x.id !== clipId);
+      for (const sh of shifts) req_clip(s, sh.clipId).startFrame = sh.newStartFrame;
+      return { ok: true, ids: [clipId, ...shifts.map((x) => x.clipId)], warnings: [], label: "rippleDelete" };
+    });
+  }
   deleteClip(seqId: string, clipId: string): Receipt {
     return this.exec('deleteClip', (p) => {
       const s = req_seq(p, seqId); const i = s.clips.findIndex(x => x.id === clipId);
@@ -159,6 +168,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
 
 
 

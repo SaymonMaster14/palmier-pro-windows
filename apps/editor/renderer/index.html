@@ -103,7 +103,7 @@ $("bUndo").addEventListener("click", async () => { const r = await window.palmie
 $("bRedo").addEventListener("click", async () => { const r = await window.palmier.op("redo", []); log("redo: " + JSON.stringify(r)); await refresh(); });
 document.addEventListener("keydown", async (e) => {
   if ((e.key === "Delete" || e.key === "Backspace") && SEL && document.activeElement.tagName !== "INPUT") {
-    const r = await window.palmier.op("deleteClip", [SEQ.id, SEL]);
+    const r = await window.palmier.op(e.shiftKey ? "rippleDelete" : "deleteClip", [SEQ.id, SEL]);
     log("delete: " + JSON.stringify(r)); SEL = null; await refresh();
   }
 });
@@ -113,6 +113,7 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
 
 
 

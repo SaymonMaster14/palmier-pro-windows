@@ -97,3 +97,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Agent tools: PARTIAL (~14 intent tools w/ receipts; upstream has ~30 incl. color/captions/words/sync/multicam/organize/search/skills).
 - MCP: PASS for covered surface (HTTP real transport, read/write/undo/redo/import/export).
 - Generation: DEFERRED (provider interface only, per plan). Transcription: DEFERRED (Apple runtime). Search/index: NOT_STARTED. Agent chat/panel: NOT_STARTED. Home/settings/telemetry/auth: NOT_STARTED. Design tokens: NOT_STARTED. Localization: NOT_STARTED.
+
+## 2026-09-13 turn 10 evidence
+
+- Ripple (upstream RippleEngine parity, single-track scope): pure computeRippleShifts in core/model.ts, store.rippleDelete as one undo unit, MCP + main OPS + Shift+Delete in renderer. Unit (gap closes same-track only, other track untouched, undo restores) + live RIPPLE-MCP-PASS starts=0,90.
+- Suite 11/11 green; smoke BOOT-OK.

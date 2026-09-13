@@ -51,6 +51,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
     case 'trimEnd': return store.trimEnd(seqId as string, q['clipId'] as string, q['durationFrames'] as number);
     case 'splitClip': return store.splitClip(seqId as string, q['clipId'] as string, q['atFrame'] as number);
+    case 'rippleDelete': return store.rippleDelete(seqId as string, q['clipId'] as string);
     case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
     case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
     case 'setTransform': return store.setTransform(seqId as string, q['clipId'] as string, q['patch'] as never);
@@ -68,6 +69,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     default: throw new Error(`unknown method ${method}`);
   }
 }
+
 
 
 
