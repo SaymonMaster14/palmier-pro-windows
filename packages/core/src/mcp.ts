@@ -4,6 +4,7 @@ import { activeSequence, sequenceDurationFrames, type Project } from './model.js
 import { saveProject } from './persistence.js';
 import { exportSequence, validateExport } from './export.js';
 import { importAndPlace } from './library.js';
+import { importSubtitles } from './subs.js';
 import { searchProject } from './search.js';
 
 export const DEFAULT_MCP_PORT = 19789;
@@ -47,6 +48,7 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
       return { sequenceId: seq.id, fps: seq.fps, durationFrames: sequenceDurationFrames(seq), tracks: seq.tracks, active: activeSequence(p).id };
     }
     case 'search': return searchProject(store.project, q['query'] as string);
+case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'import': return importAndPlace(store, q['paths'] as string[]);
     case 'addTrack': return store.addTrack(seqId as string, q['kind'] as 'video' | 'audio', q['name'] as string);
     case 'overwritePlace': return store.overwritePlace(seqId as string, q['trackId'] as string, q['clip'] as never);

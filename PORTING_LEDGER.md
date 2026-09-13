@@ -209,3 +209,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 37 evidence
 
 - Clip linking (upstream ManageClipLinks parity): linkGroup model, link/unlink ops, move/delete/ripple propagate to group in one undo unit, shared applyMoves layout check (caught mover-vs-mover overlap gap), Link/Unlink buttons + MCP. Unit links.test green. Suite 33/33.
+
+## 2026-09-13 turn 38 evidence
+
+- Subtitle import (first slice): SRT/VTT cue parse (timing+text, tags stripped, inline/standard layouts, group-index fix m[4]->m[3]), importSubtitles places text clips on a Subtitles track, MCP importSubs. Unit green. Suite 35/35.
