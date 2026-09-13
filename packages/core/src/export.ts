@@ -191,24 +191,27 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     '-movflags', '+faststart', '-y', outPath];
   return { args: finalArgs, expectSec, expectAudio, warnings };
 }
-
-export async function exportSequence(p: Project, seqId: string, outPath: string, signal?: AbortSignal): Promise<ExportResult> {
+export interface ExportOpts { signal?: AbortSignal; onProgress?: (frac: number) => void }
+export async function exportSequence(p: Project, seqId: string, outPath: string, signal?: AbortSignal, opts: ExportOpts = {}): Promise<ExportResult> {
   const s = p.sequences.find(x => x.id === seqId);
   if (!s) throw new Error('sequence not found');
   const { args, expectSec, warnings } = await buildFfmpegArgs(p, s, outPath);
   for (const w of warnings) console.warn('export-warn', w);
   await new Promise<void>((res, rej) => {
     let child: ChildProcess;
-    try { child = spawn('ffmpeg', ['-v', 'error', ...args], { windowsHide: true }); }
+    const wantProgress = !!opts.onProgress;
+    try { child = spawn('ffmpeg', [...(wantProgress ? ['-progress', 'pipe:1', '-nostats'] : ['-v', 'error']), ...args], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch (e) { rej(e); return; }
     const onAbort = () => { try { child.kill(); } catch { /* noop */ } rej(new Error('export cancelled')); };
     signal?.addEventListener('abort', onAbort, { once: true });
+    let pbuf = '';
     let err = '';
+    child.stdout?.on('data', (d: Buffer) => { pbuf += d.toString(); let ix; while ((ix = pbuf.indexOf(String.fromCharCode(10))) >= 0) { const line = pbuf.slice(0, ix); pbuf = pbuf.slice(ix + 1); if (line.startsWith('out_time_ms=')) { const ms = Number(line.slice(12)); if (Number.isFinite(ms) && expectSec > 0 && opts.onProgress) opts.onProgress(Math.min(1, Math.max(0, ms / 1000000 / expectSec))); } } });
     child.stderr?.on('data', (d: Buffer) => err += d);
     child.on('error', (e: Error) => { signal?.removeEventListener('abort', onAbort); rej(e); });
     child.on('close', (code: number) => {
       signal?.removeEventListener('abort', onAbort);
-      if (code !== 0) { rej(new Error(`ffmpeg exit ${code}: ${err.slice(0, 800)}`)); return; }
+      if (code !== 0) { rej(new Error(`ffmpeg exit ${code}: ${err.slice(-800)}`)); return; }
       res();
     });
   });

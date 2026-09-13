@@ -51,6 +51,25 @@ function registerIpc() {
     if (!paths || !paths.length) { const sel = await dialog.showOpenDialog(win, { properties: ["openFile", "multiSelections"] }); if (sel.canceled) return []; paths = sel.filePaths; }
     return core.importAndPlace(store, paths);
   });
+  const expJobs = new Map();
+  let expN = 0;
+  ipcMain.handle("exportStart", async (_e, outPath) => {
+    const seq = store.project.sequences.find((x) => x.id === store.project.activeSequenceId) || store.project.sequences[0];
+    if (!seq) throw new Error("no sequence");
+    const fp = outPath || path.join(app.getPath("userData"), "export.mp4");
+    const id = "exp" + (++expN);
+    const ctrl = new AbortController();
+    const job = { id, outPath: fp, status: "running", progress: 0 };
+    job.ctrl = ctrl;
+    expJobs.set(id, job);
+    const say = () => { try { if (win) win.webContents.send("export-progress", { id, status: job.status, progress: job.progress }); } catch (e) {} };
+    core.exportSequence(store.project, seq.id, fp, ctrl.signal, { onProgress: (fr) => { job.progress = fr; say(); } })
+      .then(async (r) => { const v = await core.validateExport(fp, r.durationSec, true).catch((e) => ({ ok: false, details: String(e) })); Object.assign(job, { status: v.ok ? "done" : "error", progress: 1, result: { ...r, validation: v } }); say(); })
+      .catch((e) => { Object.assign(job, { status: ctrl.signal.aborted ? "cancelled" : "error", error: String((e && e.message) || e) }); say(); });
+    return { id, outPath: fp };
+  });
+  ipcMain.handle("exportStatus", async (_e, id) => { const j = expJobs.get(id); if (!j) throw new Error("unknown job"); const { ctrl, ...rest } = j; return rest; });
+  ipcMain.handle("exportCancel", async (_e, id) => { const j = expJobs.get(id); if (!j) throw new Error("unknown job"); try { j.ctrl.abort(); } catch (e) {} return { cancelled: id }; });
   ipcMain.handle("exportActive", async (_e, outPath) => {
     const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
     if (!seq) throw new Error("no sequence");
@@ -140,7 +159,7 @@ async function boot() {
       const fix = (n) => path.resolve(__dirname, "..", "..", "..", "tests", "fixtures", n);
       const im = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.importMedia(${JSON.stringify([fix("sample-av.mp4"), fix("sample-img.png"), fix("sample-audio.wav")]).replace(/\\\\/g, "\\\\\\\\")}); const s = await window.palmier.state(); return r.length + ":" + s.media.length + ":" + s.sequences[0].clips.length; })()`);
       console.log("SMOKE-IO-IMPORT", im);
-      const ex = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.exportActive(${JSON.stringify(process.env.PALM_SMOKE_OUT || (process.env.TEMP + "/smoke-export.mp4"))}); return r.bytes + ":" + r.validation.ok; })()`);
+      const ex = await win.webContents.executeJavaScript(`(async () => { const j = await window.palmier.exportStart("C:\\\\Users\\\\PCTRAB~1\\\\AppData\\\\Local\\\\Temp/smoke-export.mp4"); let st = null; for (let i = 0; i < 90; i++) { await new Promise(r => setTimeout(r, 500)); st = await window.palmier.exportStatus(j.id); if (st.status !== "running") break; } return JSON.stringify(st).slice(0, 400); })()`);
       console.log("SMOKE-IO-EXPORT", ex);
     }
     console.log("SMOKE-TH", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 1500)); const ims = [...document.querySelectorAll('#media img')]; return ims.map(i => (i.alt || '?') + '=' + (i.src ? 'y' : 'n') + (i.naturalWidth || 0)).join(','); })()"));

@@ -1,0 +1,21 @@
+﻿import test from "node:test";
+import assert from "node:assert/strict";
+import { join, dirname } from "node:path";
+import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
+import { createProject, createSequence, addTrack } from "../model.js";
+import { EditorStore } from "../store.js";
+import { exportSequence } from "../export.js";
+const fix = (n: string): string => join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "tests", "fixtures", n);
+test("export abort cancels", async () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject("ab"));
+  const seq = createSequence(st.project, "s", fps, 1280, 720);
+  const v1 = addTrack(seq, "video", "V1");
+  st.addMedia({ path: fix("sample-av.mp4"), kind: "video", name: "v", durationFrames: 180, fps });
+  st.placeClip(seq.id, v1.id, { kind: "video", assetId: st.project.media[0].id, startFrame: 0, durationFrames: 180, name: "v" });
+  const ctrl = new AbortController();
+  const out = join(tmpdir(), "abort-probe.mp4");
+  setTimeout(() => ctrl.abort(), 400);
+  await assert.rejects(() => exportSequence(st.project, seq.id, out, ctrl.signal), /cancelled/);
+});

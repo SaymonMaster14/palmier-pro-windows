@@ -213,3 +213,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 38 evidence
 
 - Subtitle import (first slice): SRT/VTT cue parse (timing+text, tags stripped, inline/standard layouts, group-index fix m[4]->m[3]), importSubtitles places text clips on a Subtitles track, MCP importSubs. Unit green. Suite 35/35.
+
+## 2026-09-13 turn 39 evidence
+
+- Export queue (§24): ffmpeg -progress pipe parsing to fractional progress, jobs map with start/status/cancel (AbortController, abort path unit-tested), renderer queue rows with live % + cancel, Export button queues. SMOKE-IO-EXPORT done:1 validated. Errors now report stderr tail. Suite 36/36.
