@@ -35,6 +35,16 @@ function registerIpc() {
   ipcMain.handle("waveform", async (_e, assetId, buckets) => { const m = store.project.media.find((x) => x.id === assetId); if (!m) throw new Error("media not found"); return core.waveformPeaks(m.path, buckets || 200); });
   ipcMain.handle("evalKeys", (_e, seqId, clipId, frame) => { const s = store.project.sequences.find((x) => x.id === seqId); const c = s && s.clips.find((x) => x.id === clipId); if (!c) throw new Error("clip not found"); return { op: core.evaluateKeyframes(c.opacityKeys || [], frame, c.opacity), vol: core.evaluateKeyframes(c.volumeKeys || [], frame, c.volume) }; });
   ipcMain.handle("thumb", async (_e, assetId) => { const m = store.project.media.find((x) => x.id === assetId); if (!m) throw new Error("media not found"); return core.thumbnail(m.path, path.join(app.getPath("userData"), "thumbs")); });
+  ipcMain.handle("audioAt", (_e, seqId, frame) => {
+    const s = store.project.sequences.find((x) => x.id === seqId);
+    if (!s) throw new Error("sequence not found");
+    const muted = new Set(s.tracks.filter((x) => x.muted).map((x) => x.id));
+    const hit = s.clips.find((c) => (c.kind === "audio" || c.kind === "video") && !muted.has(c.trackId) && frame >= c.startFrame && frame < c.startFrame + c.durationFrames && c.assetId);
+    if (!hit) return null;
+    const media = store.project.media.find((x) => x.id === hit.assetId);
+    if (!media) return null;
+    return { path: media.path, atSec: (hit.sourceInFrame + (frame - hit.startFrame) * (hit.speed || 1)) / (s.fps.num / s.fps.den) };
+  });
   ipcMain.handle("clipAt", (_e, seqId, frame) => {
     const s = store.project.sequences.find((x) => x.id === seqId);
     if (!s) throw new Error("sequence not found");
@@ -175,7 +185,7 @@ async function boot() {
     console.log("SMOKE-KEYUI", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); document.querySelector('#iKeyOp').click(); await new Promise(r => setTimeout(r, 400)); const s = await window.palmier.state(); return s.sequences[0].clips[0].opacityKeys.length; })()"));
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
     console.log("SMOKE-METER", await win.webContents.executeJavaScript("(async () => { const cv = document.querySelector('#meter'); if (!cv) return 'no-canvas'; const v = document.querySelector('#pv'); try { await v.play(); } catch (e) {} await new Promise(r => setTimeout(r, 800)); v.pause(); return (!!window.__meterOn) + ':' + cv.width; })()"));
-    console.log('SMOKE-SCRUB', await win.webContents.executeJavaScript(`(async () => { const sk = document.querySelector('#seek'); sk.value = 10; sk.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 900)); return window.__scrubbed || 0; })()`));
+    console.log('SMOKE-SCRUB', await win.webContents.executeJavaScript(`(async () => { const sk = document.querySelector('#seek'); sk.value = 10; sk.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 900)); const au = await window.palmier.audioAt((await window.palmier.state()).sequences[0].id, 10); const el = document.querySelector("#scrub"); return (window.__scrubbed || 0) + "|" + JSON.stringify(au) + "|" + !!el; })()`));
     console.log("SMOKE-WV", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const a = s.media.find(m => m.kind === 'audio'); if (!a) return 'no-audio'; const p = await window.palmier.waveform(a.id, 50); return p.length + ':' + (p.reduce((x,y) => x+y, 0) / p.length).toFixed(3); })()"));
     try { if (process.env.PALM_SMOKE_RESULT) fs.writeFileSync(process.env.PALM_SMOKE_RESULT, JSON.stringify({ boot: "ok" })); } catch (ee) {}
     console.log("BOOT-OK");
@@ -186,6 +196,7 @@ async function boot() {
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { try { if (process.env.PALM_SMOKE_RESULT) fs.writeFileSync(process.env.PALM_SMOKE_RESULT, JSON.stringify({ boot: "fail", error: String((e && e.message) || e) })); } catch (ee) {}
 console.error("BOOT-FAIL", e); app.exit(1); });
+
 
 
 
