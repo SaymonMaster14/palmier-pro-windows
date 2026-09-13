@@ -195,3 +195,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 34 evidence
 
 - Rotation: transform.rotationDeg honored in export (base + overlays, in-frame fill black documented), inspector rot input. Graph + real export proof. Suite 30/30.
+
+## 2026-09-13 turn 35 evidence
+
+- Track mute/hide/lock: setTrackFlags op, lock enforced in shared req_clip (all mutating ops), export skips hidden video + muted audio, clipAt skips hidden, header M/H/L toggles. Unit + export proof. SMOKE-DOM 3:3.
+- Caught latent renderer syntax break (unquoted attr since crop turn) via new SMOKE-DOM guard; fixed.

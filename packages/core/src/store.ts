@@ -185,6 +185,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setSpeed" };
     });
   }
+  setTrackFlags(seqId: string, trackId: string, patch: { muted?: boolean; locked?: boolean; hidden?: boolean }): Receipt {
+    return this.exec("setTrackFlags", (p) => {
+      const s = req_seq(p, seqId);
+      const tr = s.tracks.find((x) => x.id === trackId);
+      if (!tr) throw new Error("track not found");
+      for (const k of ["muted", "locked", "hidden"] as const) { const v = patch[k]; if (v === undefined) continue; if (typeof v !== "boolean") throw new Error("bad flag " + k); tr[k] = v; }
+      return { ok: true, ids: [tr.id], warnings: [], label: "setTrackFlags" };
+    });
+  }
   setBlend(seqId: string, clipId: string, blend: string): Receipt {
     return this.exec("setBlend", (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -268,10 +277,15 @@ function req_seq(p: Project, id: string): Sequence {
   const s = p.sequences.find(x => x.id === id); if (!s) throw new Error('sequence not found'); return s;
 }
 function req_clip(s: Sequence, id: string): Clip {
-  const c = s.clips.find(x => x.id === id); if (!c) throw new Error('clip not found'); return c;
+  const c = s.clips.find(x => x.id === id); if (!c) throw new Error('clip not found');
+  if (s.tracks.find((x) => x.id === c.trackId)?.locked) throw new Error("track locked");
+  return c;
 }
 export { activeSequence };
 export type { Track };
+
+
+
 
 
 

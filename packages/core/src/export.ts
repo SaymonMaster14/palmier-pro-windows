@@ -40,8 +40,10 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
 
   const order = new Map(s.tracks.map((x, i) => [x.id, i]));
   const lowestVideo = Math.min(...s.tracks.filter(x => x.kind === 'video').map(x => order.get(x.id) ?? 0));
-  const videoClips = s.clips.filter(c => c.kind === 'video').sort((a, b) => a.startFrame - b.startFrame);
-  const imageClips = s.clips.filter(c => c.kind === 'image').sort((a, b) => a.startFrame - b.startFrame);
+  const hidden = new Set(s.tracks.filter((x) => x.hidden).map((x) => x.id));
+  const muted = new Set(s.tracks.filter((x) => x.muted).map((x) => x.id));
+  const videoClips = s.clips.filter(c => !hidden.has(c.trackId) && c.kind === 'video').sort((a, b) => a.startFrame - b.startFrame);
+  const imageClips = s.clips.filter(c => !hidden.has(c.trackId) && c.kind === 'image').sort((a, b) => a.startFrame - b.startFrame);
   // Base layer: video clips + lowest-track images that do not overlap video. Others overlay.
   const base: Clip[] = [...videoClips];
   const overlays: Clip[] = [];
@@ -132,7 +134,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
     vlabel = `[vtxt${k}]`; k++;
   }
   // Audio walk with silence gap fill (uniform 48kHz stereo for concat).
-  const aclips = s.clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.assetId).sort((a, b) => a.startFrame - b.startFrame);
+  const aclips = s.clips.filter(c => !muted.has(c.trackId) && (c.kind === 'video' || c.kind === 'audio') && c.assetId).sort((a, b) => a.startFrame - b.startFrame);
   let alabel = '';
   if (aclips.length) {
     const asegs: Array<{ l: string; d: number; tr: number }> = [];
@@ -226,6 +228,7 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
 
 
 

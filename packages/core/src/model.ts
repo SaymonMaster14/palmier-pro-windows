@@ -64,7 +64,8 @@ export function sequenceDurationFrames(s: Sequence): number {
 }
 // Preview contract shared by renderer and export: topmost visible video clip at frame.
 export function videoClipAt(s: Sequence, frame: number): Clip | undefined {
-  const vids = s.clips.filter(c => (c.kind === 'video' || c.kind === 'image' || c.kind === 'text') && frame >= c.startFrame && frame < c.startFrame + c.durationFrames);
+  const hidden = new Set(s.tracks.filter((x) => x.hidden).map((x) => x.id));
+  const vids = s.clips.filter(c => !hidden.has(c.trackId) && (c.kind === 'video' || c.kind === 'image' || c.kind === 'text') && frame >= c.startFrame && frame < c.startFrame + c.durationFrames);
   if (!vids.length) return undefined;
   const order = new Map(s.tracks.map((t, i) => [t.id, i]));
   return vids.sort((a, b) => (order.get(b.trackId) ?? 0) - (order.get(a.trackId) ?? 0))[0];

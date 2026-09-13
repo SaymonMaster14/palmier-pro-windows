@@ -12,7 +12,7 @@ let mcpServer = null;
 let projectPath = null;
 let notify = () => {};
 
-const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend"];
+const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "rippleDelete", "addMarker", "removeMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags"];
 
 async function loadDemo() {
   try {
@@ -149,6 +149,7 @@ async function boot() {
     console.log("SMOKE-SETS", await win.webContents.executeJavaScript("(async () => { const a = await window.palmier.getSettings(); const bad = await window.palmier.setSettings({ mcpPort: 80 }).then(() => 'nothrow').catch(e => 'threw'); const ok = await window.palmier.setSettings({ mcpPort: a.mcpPort }); return (!!a.deps.ffmpeg) + ':' + bad + ':' + (ok.mcpPort === a.mcpPort); })()"));
     console.log("SMOKE-RATE", await win.webContents.executeJavaScript("(async () => { const r = document.querySelector('#rate'); r.value = '2'; r.dispatchEvent(new Event('change')); return document.querySelector('#pv').playbackRate; })()"));
     console.log("SMOKE-AGENT", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); const q = (await window.palmier.state()).sequences[0]; const a = await window.palmier.agentRun('marker smoke-m', { sequenceId: q.id, playheadFrame: 20, selectedClipId: null }); const b = await window.palmier.agentRun('dance', { sequenceId: q.id, playheadFrame: 20, selectedClipId: null }); return a.slice(0, 8) + '|' + b.slice(0, 5); })()"));
+    console.log("SMOKE-DOM", await win.webContents.executeJavaScript("(async () => { await new Promise(r => setTimeout(r, 500)); return document.querySelectorAll('.clip').length + ':' + document.querySelectorAll('#tracks button').length; })()"));
     console.log("SMOKE-KEYLANE", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); await new Promise(r => setTimeout(r, 500)); const s = await window.palmier.state(); const keys = s.sequences[0].clips[0].opacityKeys.length; const dots = document.querySelectorAll('.kd').length; return keys + ':' + dots; })()"));
     console.log("SMOKE-KEYUI", await win.webContents.executeJavaScript("(async () => { const el = document.querySelector('.clip'); el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); await new Promise(r => setTimeout(r, 200)); document.querySelector('#iKeyOp').click(); await new Promise(r => setTimeout(r, 400)); const s = await window.palmier.state(); return s.sequences[0].clips[0].opacityKeys.length; })()"));
     console.log("SMOKE-KEYS", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const q = s.sequences[0]; const c = q.clips[0]; await window.palmier.op('setKeyframe', [q.id, c.id, 'opacity', { frame: 45, value: 0.2 }]); const r = await window.palmier.evalKeys(q.id, c.id, 45); return r.op; })()"));
@@ -161,6 +162,8 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
 
 
 
