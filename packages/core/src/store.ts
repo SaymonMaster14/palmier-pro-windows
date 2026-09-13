@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, FONT_FAMILIES, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -246,14 +246,15 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "setBlend" };
     });
   }
-  setTextStyle(seqId: string, clipId: string, patch: { fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean }): Receipt {
+  setTextStyle(seqId: string, clipId: string, patch: { fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string }): Receipt {
     return this.exec('setTextStyle', (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
       if (c.kind !== 'text') throw new Error('not a text clip');
       if (patch.fontSize !== undefined && (!(patch.fontSize >= 8 && patch.fontSize <= 500) || !Number.isFinite(patch.fontSize))) throw new Error('bad font size');
       if (patch.textAlign !== undefined && ['left', 'center', 'right'].indexOf(patch.textAlign) < 0) throw new Error('bad align');
-      const nx = { fontSize: patch.fontSize ?? c.fontSize ?? 48, color: patch.color ?? c.color ?? 'white', textAlign: patch.textAlign ?? c.textAlign ?? 'center', textBg: patch.textBg ?? c.textBg ?? false };
-      if (JSON.stringify({ fontSize: c.fontSize, color: c.color, textAlign: c.textAlign, textBg: c.textBg }) === JSON.stringify({ fontSize: nx.fontSize, color: nx.color, textAlign: nx.textAlign, textBg: nx.textBg })) return { noop: true };
+      if (patch.fontFamily !== undefined && FONT_FAMILIES.indexOf(patch.fontFamily) < 0) throw new Error('bad font family');
+      const nx = { fontSize: patch.fontSize ?? c.fontSize ?? 48, color: patch.color ?? c.color ?? 'white', textAlign: patch.textAlign ?? c.textAlign ?? 'center', textBg: patch.textBg ?? c.textBg ?? false, fontFamily: patch.fontFamily ?? c.fontFamily ?? 'sans' };
+      if (JSON.stringify({ fontSize: c.fontSize, color: c.color, textAlign: c.textAlign, textBg: c.textBg, fontFamily: c.fontFamily }) === JSON.stringify({ fontSize: nx.fontSize, color: nx.color, textAlign: nx.textAlign, textBg: nx.textBg, fontFamily: nx.fontFamily })) return { noop: true };
       Object.assign(c, nx);
       return { ok: true, ids: [c.id], warnings: [], label: 'setTextStyle' };
     });

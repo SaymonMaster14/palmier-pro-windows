@@ -31,3 +31,32 @@ test("text style validated, aligned, boxed in export", async () => {
   const v = await validateExport(out, ex.durationSec, true);
   assert.ok(v.ok, v.details);
 });
+
+import { resolveFontFile } from '../model.js';
+test('text font family validated, undoable, honored in export', async () => {
+  const fps = { num: 30, den: 1 };
+  const st = new EditorStore(createProject('ff'));
+  const seq = createSequence(st.project, 's', fps, 320, 240);
+  const v1 = addTrack(seq, 'video', 'V1');
+  const v2 = addTrack(seq, 'video', 'V2');
+  st.addMedia({ path: fix('sample-av.mp4'), kind: 'video', name: 'v', durationFrames: 90, fps });
+  const vclip = st.placeClip(seq.id, v1.id, { kind: 'video', assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, name: 'v' }).ids[0];
+  assert.ok(!st.setTextStyle(seq.id, vclip, { fontFamily: 'arial' }).ok);
+  const id = st.placeClip(seq.id, v2.id, { kind: 'text', startFrame: 0, durationFrames: 90, name: 't', text: 'Ff' }).ids[0];
+  assert.ok(!st.setTextStyle(seq.id, id, { fontFamily: 'comic' }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { fontFamily: 'times' }).ok);
+  assert.ok(st.setTextStyle(seq.id, id, { fontFamily: 'times' }).noop);
+  assert.equal(st.project.sequences[0].clips.find((c) => c.id === id)!.fontFamily, 'times');
+  assert.ok(st.undo());
+  assert.equal(st.project.sequences[0].clips.find((c) => c.id === id)!.fontFamily, undefined);
+  assert.ok(st.redo());
+  const dir = mkdtempSync(join(tmpdir(), 'palm-ff-'));
+  const plan = await buildFfmpegArgs(st.project, seq, join(dir, 'o.mp4'));
+  const fc = plan.args[plan.args.indexOf('-filter_complex') + 1];
+  if (resolveFontFile('times')) assert.ok(fc.indexOf('fontfile=') >= 0, 'fontfile in graph');
+  else assert.ok(fc.indexOf('fontfile=') < 0, 'honest fallback without system fonts');
+  const out = join(dir, 'f.mp4');
+  const ex = await exportSequence(st.project, seq.id, out);
+  const v = await validateExport(out, ex.durationSec, true);
+  assert.ok(v.ok, v.details);
+});

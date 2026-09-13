@@ -258,3 +258,11 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 49 evidence
 
 - Repackaged current tree (portable fresh); FINAL-E2E-PASS bytes=97690 on packaged app.
+
+## 2026-09-13 turn 50 evidence
+
+- Font family (upstream TextStyle.fontName slice): Clip.fontFamily + FONT_FAMILIES allowlist (sans/serif/mono/arial/times/courier/verdana) + resolveFontFile (Windows Fonts mapping, null when missing) + fontFilterPath (filter-safe escaping). setTextStyle validates/backfills default sans/noop-aware/undoable. Export adds fontfile when resolvable, honest fallback otherwise. MCP setTextStyle passes patch through (no change needed). Inspector font dropdown + Apply now sends setTextStyle (align/bg/font) instead of silently dropping text style.
+- Latent fixes: inspector Apply referenced undefined r9 (ReferenceError after the other ops; now r9 = setTextStyle receipt with .catch so non-text clips report honest failure instead of throwing). Main OPS allowlist was missing setTextStyle/linkClips/unlinkClips even though the renderer calls them (Link/Unlink buttons threw unknown-op; now allowed, sharing the same domain ops as MCP).
+- Suite 39/39 green (textstyle.test.ts +1: validation/noop/undo/redo/graph fontfile/real export+validate). Smoke on dev app: SMOKE-FONT 0:none:times:true (Apply click exception-free, op-level set/readback live-proven) + BOOT-OK + ERRS [] + IO/MCP/PROJ/SETS/RATE/AGENT/SCRUB/WV all matching baseline.
+- Baseline attribution (git stash + rebuild + same smoke, then pop): SMOKE-MULTI 14:...:14, SMOKE-KEYLANE place-fail, SMOKE-KEYUI 0 are IDENTICAL without this turn's diff — pre-existing smoke-order effects of the crowded post-pads timeline (delete-all leaves 14, fixed-start-0 place collides), not regressions. Recorded as known gaps for the timeline-smoke hardening pass.
+- Known nuance: SMOKE-FONT c1=none means the Apply click acted on the previously-selected (video) clip rather than the synthetic-selected text clip — inspector re-render timing under synthetic selection needs a dedicated look during UI polish; op-level font flow is proven. Packaged build still predates this slice (re-verify on next packaging turn).

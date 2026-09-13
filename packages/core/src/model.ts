@@ -1,4 +1,6 @@
 ﻿import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type { RationalFps } from './time.js';
 
 export const PROJECT_VERSION = 1;
@@ -12,6 +14,18 @@ export interface MediaAsset {
 export interface Transform { x: number; y: number; scaleX: number; scaleY: number; rotationDeg: number }
 export type BlendMode = "normal" | "screen" | "multiply" | "overlay";
 export const BLEND_MODES: BlendMode[] = ["normal", "screen", "multiply", "overlay"];
+export const FONT_FAMILIES = ["sans", "serif", "mono", "arial", "times", "courier", "verdana"];
+export const FONT_FILES: Record<string, string> = { sans: "arial.ttf", arial: "arial.ttf", helvetica: "arial.ttf", serif: "times.ttf", times: "times.ttf", mono: "cour.ttf", courier: "cour.ttf", verdana: "verdana.ttf" };
+export function resolveFontFile(family?: string): string | null {
+  const key = String(family || "sans").toLowerCase();
+  const file = FONT_FILES[key] || FONT_FILES.sans;
+  const dir = join(process.env.SystemRoot || "C:\\Windows", "Fonts");
+  const full = join(dir, file);
+  try { return existsSync(full) ? full : null; } catch { return null; }
+}
+export function fontFilterPath(fsPath: string): string {
+  return fsPath.split("\\").join("/").split(":").join("\\:");
+}
 export interface CropBox { l: number; t: number; r: number; b: number }
 export const noCrop = (): CropBox => ({ l: 0, t: 0, r: 0, b: 0 });
 export function validateCrop(k: CropBox): void {
@@ -22,7 +36,7 @@ export interface Clip {
   id: string; trackId: string; kind: ClipKind; name: string;
   assetId?: string; startFrame: number; durationFrames: number; sourceInFrame: number;
   speed: number; opacity: number; volume: number; muted: boolean; fadeInFrames: number; fadeOutFrames: number; transitionOutFrames: number; crop: CropBox; blend: BlendMode; opacityKeys: Keyframe[]; volumeKeys: Keyframe[];
-  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean;
+  transform: Transform; text?: string; linkGroup?: string; fontSize?: number; color?: string; textAlign?: 'left' | 'center' | 'right'; textBg?: boolean; fontFamily?: string;
 }
 export interface Track { id: string; kind: 'video' | 'audio'; name: string; locked?: boolean; hidden?: boolean; muted?: boolean }
 export interface Sequence {
