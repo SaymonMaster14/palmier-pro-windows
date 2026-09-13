@@ -1,4 +1,5 @@
 ﻿import { basename } from 'node:path';
+import { importSubtitles } from './subs.js';
 import { EditorStore, type Receipt } from './store.js';
 import { addTrack as mkTrack, createSequence, type MediaKind } from './model.js';
 import { probeMedia } from './media.js';
@@ -9,6 +10,16 @@ export interface ImportResult { path: string; kind: MediaKind; assetId: string; 
 export async function importAndPlace(store: EditorStore, paths: string[]): Promise<ImportResult[]> {
   const out: ImportResult[] = [];
   for (const fp of paths) {
+    if (/\.srt$/i.test(fp) || /\.vtt$/i.test(fp)) {
+      const p0 = store.project;
+      let seq0 = p0.sequences.find((x) => x.id === p0.activeSequenceId) ?? p0.sequences[0];
+      if (!seq0) seq0 = createSequence(p0, 'Sequence 1', { num: 30, den: 1 }, 1280, 720);
+      const am = store.addMedia({ path: fp, kind: 'subtitle', name: fp.split(/[\\/]/).pop() ?? fp, durationFrames: 0, fps: seq0.fps });
+      const assetId = am.ids[0] ?? p0.media.find((x) => x.path === fp)!.id;
+      const ids = await importSubtitles(store, fp);
+      out.push({ path: fp, kind: 'subtitle', assetId, placed: { ok: true, ids, warnings: [], label: 'importSubtitles' } });
+      continue;
+    }
     const pr = await probeMedia(fp);
     const kind: MediaKind = pr.still ? 'image' : pr.hasVideo ? 'video' : 'audio';
     const p = store.project;

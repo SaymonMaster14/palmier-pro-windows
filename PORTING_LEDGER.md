@@ -226,3 +226,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 41 evidence
 
 - Subtitle burn-in proof: imported SRT caption measurably adds edges vs no-caption frame in real export. Suite 37/37.
+
+## 2026-09-13 turn 42 evidence
+
+- Subtitle import path: .srt/.vtt routed in importAndPlace (UI dialog + MCP import), subtitle media kind, clips placed. Live SUBIMP subtitle/1. Suite 37/37.

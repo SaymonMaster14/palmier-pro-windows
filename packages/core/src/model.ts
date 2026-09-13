@@ -2,7 +2,7 @@
 import type { RationalFps } from './time.js';
 
 export const PROJECT_VERSION = 1;
-export type MediaKind = 'video' | 'audio' | 'image';
+export type MediaKind = 'video' | 'audio' | 'image' | 'subtitle';
 export type ClipKind = 'video' | 'audio' | 'image' | 'text';
 export interface MediaAsset {
   id: string; path: string; kind: MediaKind; name: string;
