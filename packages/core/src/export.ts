@@ -2,6 +2,7 @@
 import { stat } from 'node:fs/promises';
 import { framesToSeconds } from './time.js';
 import { sequenceDurationFrames, type Clip, type Project, type Sequence } from './model.js';
+import { volumeExpr } from './keyexpr.js';
 import { probeMedia } from './media.js';
 
 export interface ExportResult { outPath: string; durationSec: number; bytes: number; warnings: string[] }
@@ -18,6 +19,7 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
   const fpsStr = `${s.fps.num}/${s.fps.den}`;
   const t = (f: number) => framesToSeconds(f, s.fps).toFixed(6);
   const vf = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,fade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}:alpha=1` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,fade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}:alpha=1` : ""; return fi + fo; };
+  const volExpr = (c: Clip, base: number): string => (c.volumeKeys && c.volumeKeys.length ? volumeExpr(c.volumeKeys, c.startFrame, s.fps.num / s.fps.den, c.muted ? 0 : base) : String(c.muted ? 0 : base));
   const af = (c: Clip): string => { const fi = (c.fadeInFrames ?? 0) > 0 ? `,afade=t=in:st=0:d=${t(c.fadeInFrames ?? 0)}` : ""; const fo = (c.fadeOutFrames ?? 0) > 0 ? `,afade=t=out:st=${t(c.durationFrames - (c.fadeOutFrames ?? 0))}:d=${t(c.fadeOutFrames ?? 0)}` : ""; return fi + fo; };
 
   // Distinct file inputs (probed once). Images loop; AV files plain.
@@ -122,21 +124,32 @@ export async function buildFfmpegArgs(p: Project, s: Sequence, outPath: string):
       filters.push(`anullsrc=r=48000:cl=stereo:d=${t(frames)}${l}`);
       return l;
     };
+    let cluster: Array<{ l: string; startF: number; endF: number; tr: number }> = [];
+    const flushCluster = (): void => {
+      if (!cluster.length) return;
+      if (cluster.length === 1) { const m = cluster[0]; asegs.push({ l: m.l, d: Number(t(m.endF - m.startF)), tr: m.tr }); }
+      else { const cs = cluster[0].startF; const ce = Math.max(...cluster.map((m) => m.endF));
+        const ins = cluster.map((m) => { const dl = `[ad${an++}]`; const ms = Math.round(((m.startF - cs) / (s.fps.num / s.fps.den)) * 1000); filters.push(`${m.l}adelay=${ms}|${ms}${dl}`); return dl; }).join("");
+        const mx = `[amx${an++}]`; filters.push(`${ins}amix=inputs=${cluster.length}:normalize=0${mx}`);
+        asegs.push({ l: mx, d: Number(t(ce - cs)), tr: Math.max(...cluster.map((m) => m.tr)) }); }
+      cluster = [];
+    };
+    const atempo = (sv: number): string => { const parts: string[] = []; let q = sv; while (q < 0.5) { parts.push("atempo=0.5"); q *= 2; } parts.push(`atempo=${q}`); return parts.join(","); };
     for (const c of aclips) {
       const inp = await forAsset(c.assetId, false);
       if (!inp.hasAudio) { warnings.push(`clip ${c.id} skipped in audio mix (no audio stream)`); continue; }
-      if (c.startFrame > ac) { const gf = c.startFrame - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
-      const ss = t(c.sourceInFrame), to = t(c.sourceInFrame + c.durationFrames);
+      if (cluster.length && c.startFrame >= Math.max(...cluster.map((m) => m.endF))) flushCluster();
+      if (!cluster.length && c.startFrame > ac) { const gf = c.startFrame - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
       const vol = c.muted ? 0 : c.volume;
-      const atempo = (s: number): string => { const parts: string[] = []; let v = s; while (v < 0.5) { parts.push("atempo=0.5"); v *= 2; } parts.push(`atempo=${v}`); return parts.join(","); };
-      const l = `[as${an++}]`;
       const aspd = c.speed ?? 1;
       const ass = t(c.sourceInFrame), ato = t(c.sourceInFrame + Math.round(c.durationFrames * aspd));
       const at = aspd === 1 ? "" : "," + atempo(aspd);
-      filters.push(`[${inp.idx}:a]atrim=start=${ass}:end=${ato},asetpts=PTS-STARTPTS${at},volume=${vol},aresample=48000,aformat=channel_layouts=stereo${af(c)}${l}`);
-      asegs.push({ l, d: Number(t(c.durationFrames)), tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
+      const kk = `[as${an++}]`;
+      filters.push(`[${inp.idx}:a]atrim=start=${ass}:end=${ato},asetpts=PTS-STARTPTS${at},volume='${volExpr(c, vol)}':eval=frame,aresample=48000,aformat=channel_layouts=stereo${af(c)}${kk}`);
+      cluster.push({ l: kk, startF: c.startFrame, endF: c.startFrame + c.durationFrames, tr: Number(t(Math.min(c.transitionOutFrames ?? 0, c.durationFrames))) });
       ac = Math.max(ac, c.startFrame + c.durationFrames);
     }
+    flushCluster();
     const tailTarget = Math.max(durFrames, ac);
     if (ac < tailTarget) { const gf = tailTarget - ac; asegs.push({ l: silence(gf), d: Number(t(gf)), tr: 0 }); }
     let aacc = 0;
@@ -194,6 +207,12 @@ export async function validateExport(outPath: string, expectSec: number, expectA
   if (expectAudio && !hAV.hasAudio) return { ok: false, details: 'no audio stream (expected audio)' };
   return { ok: true, details: `ok bytes=${st.size} dur=${got.toFixed(3)}s` };
 }
+
+
+
+
+
+
 
 
 

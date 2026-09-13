@@ -175,3 +175,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 29 evidence
 
 - Settings: persisted settings.json (mcpPort validated, restart note), getSettings exposes FFmpeg versions, renderer panel with save. SMOKE-SETS true:threw:true.
+
+## 2026-09-13 turn 30 evidence
+
+- Volume keyframes in export: per-frame volume expressions (eval=frame required on this FFmpeg build), verified by volumedetect ramp. Overlapping audio now mixes (adelay+amix clusters) instead of concatenating; overlap stays 3s with audio. Suite 26/26 + slice green.
