@@ -48,3 +48,19 @@ test('store: undo/redo restores exact state, interleaved', () => {
   assert.ok(st.redo());
   assert.notEqual(JSON.stringify(st.project), snap);
 });
+test('store: setTransform/setOpacity validated, no-op aware', () => {
+  const p2 = createProject('x');
+  const fps2 = { num: 30, den: 1 };
+  const s2 = createSequence(p2, 's', fps2);
+  const v2 = addTrack(s2, 'video', 'V1');
+  const st2 = new EditorStore(p2);
+  const rr = st2.placeClip(s2.id, v2.id, { kind: 'video', startFrame: 0, durationFrames: 30, name: 'a' });
+  const cid = rr.ids[0];
+  assert.ok(st2.setTransform(s2.id, cid, { x: 10, scaleX: 0.5 }).ok);
+  assert.ok(st2.setTransform(s2.id, cid, { x: 10 }).noop);
+  assert.ok(!st2.setTransform(s2.id, cid, { scaleY: -1 }).ok);
+  assert.ok(st2.setOpacity(s2.id, cid, 0.5).ok);
+  assert.ok(!st2.setOpacity(s2.id, cid, 9).ok);
+});
+
+

@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, rangeOverlaps, trackClips, uid, defaultTransform, type Clip, type MediaAsset, type Project, type Sequence, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -37,6 +37,14 @@ export class EditorStore {
       if (p.media.some(m => m.path === a.path)) return { noop: true };
       const m: MediaAsset = { ...a, id: uid() };
       p.media.push(m); return { ok: true, ids: [m.id], warnings: [], label: 'addMedia' };
+    });
+  }
+  addTrack(seqId: string, kind: Track["kind"], name: string): Receipt {
+    return this.exec("addTrack", (p) => {
+      const s = req_seq(p, seqId);
+      if (!name.trim()) throw new Error("track name required");
+      const tr = mkTrack(s, kind, name);
+      return { ok: true, ids: [tr.id], warnings: [], label: "addTrack" };
     });
   }
   placeClip(seqId: string, trackId: string, o: { kind: Clip['kind']; assetId?: string; startFrame: number; durationFrames: number; sourceInFrame?: number; name: string; text?: string }): Receipt {
@@ -111,6 +119,28 @@ export class EditorStore {
       c.text = text; return { ok: true, ids: [c.id], warnings: [], label: 'setText' };
     });
   }
+  setTransform(seqId: string, clipId: string, patch: Partial<{ x: number; y: number; scaleX: number; scaleY: number; rotationDeg: number }>): Receipt {
+    return this.exec("setTransform", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      for (const [k, v] of Object.entries(patch)) {
+        if (!Number.isFinite(v)) throw new Error(`bad transform ${k}`);
+        if ((k === "scaleX" || k === "scaleY") && (v as number) <= 0) throw new Error(`bad scale ${k}`);
+      }
+      const next = { ...c.transform, ...patch };
+      if (JSON.stringify(next) === JSON.stringify(c.transform)) return { noop: true };
+      c.transform = next;
+      return { ok: true, ids: [c.id], warnings: [], label: "setTransform" };
+    });
+  }
+  setOpacity(seqId: string, clipId: string, opacity: number): Receipt {
+    return this.exec("setOpacity", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!(opacity >= 0 && opacity <= 1) || !Number.isFinite(opacity)) throw new Error("bad opacity");
+      if (c.opacity === opacity) return { noop: true };
+      c.opacity = opacity;
+      return { ok: true, ids: [c.id], warnings: [], label: "setOpacity" };
+    });
+  }
   setVolume(seqId: string, clipId: string, volume: number, muted?: boolean): Receipt {
     return this.exec('setVolume', (p) => {
       const c = req_clip(req_seq(p, seqId), clipId);
@@ -129,4 +159,7 @@ function req_clip(s: Sequence, id: string): Clip {
 }
 export { activeSequence };
 export type { Track };
+
+
+
 

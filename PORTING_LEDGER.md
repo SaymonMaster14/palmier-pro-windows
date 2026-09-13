@@ -67,3 +67,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - C IMPORT in app: importMedia IPC (native dialog when no paths) + probe/kind/duration + auto-place on first unlocked matching track, tracks created if missing. SMOKE-IO-IMPORT 3:4:5 against the running app.
 - I EXPORT in app: exportActive IPC + ffprobe validation with honest audio fallback note. SMOKE-IO-EXPORT 271527:true.
 - Regressions: PERSIST-E2E-PASS, MCP-E2E-PASS, 9/9 unit.
+
+## 2026-09-13 turn 7 evidence
+
+- F/G INSPECTOR: setTransform/setOpacity store ops (validated, no-op aware) + setVolume path exposed; addTrack op added to store+main+MCP after the agent task exposed the gap. Renderer inspector edits selected clip (x/y/scale/opacity/volume).
+- L AGENTIC (scripted): agent-task.js via real MCP transport: inspect -> setTransform/Opacity/Volume -> addTrack V2 -> text -> save -> export -> validate -> undo. AGENT-TASK-PASS export=78120b dur=3.000s.
+- Regressions: 10/10 unit, smoke BOOT-OK + IO 3:4:5/271527:true, MCP-E2E-PASS, PERSIST-E2E-PASS.

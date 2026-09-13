@@ -2,7 +2,7 @@
 <header><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bImport">Import</button><button id="bExport">Export</button></header>
 <main><section><h3>Media</h3><div id="media"></div></section>
 <section><h3>Preview</h3><video id="pv" controls style="width:100%;background:#000"></video><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tl"></div><div style="color:var(--mut);font-size:12px">drag clip = move · edge handles = trim · click = select · Del = delete</div></section>
-<section><h3>State</h3><div id="log"></div></section></main>
+<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>State</h3><div id="log"></div></section></main>
 <script>
 const $ = (id) => document.getElementById(id);
 const log = (m) => { $("log").textContent = m + "\n" + $("log").textContent.slice(0, 2000); };
@@ -30,6 +30,21 @@ async function refresh() {
   if (vclip) { const m = S.media.find(x => x.id === vclip.assetId); if (m && !$("pv").src) $("pv").src = "file:///" + m.path.replace(/\\/g, "/"); }
   await markActive();
 }
+async function renderInspector() {
+  if (SEL === renderInspector.sel) return; renderInspector.sel = SEL;
+  const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === SEL);
+  if (!c) { box.textContent = "select a clip"; return; }
+  box.innerHTML = "clip " + c.name + "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> op <input id=iO size=5> vol <input id=iV size=5> <button id=iApply>Apply</button>";
+  const set = (id, v) => { document.querySelector(id).value = v; };
+  set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iO", c.opacity); set("#iV", c.volume);
+  document.querySelector("#iApply").addEventListener("click", async () => {
+    const num = (id) => Number(document.querySelector(id).value);
+    const r1 = await window.palmier.op("setTransform", [SEQ.id, c.id, { x: num("#iX"), y: num("#iY"), scaleX: num("#iS"), scaleY: num("#iS") }]);
+    const r2 = await window.palmier.op("setOpacity", [SEQ.id, c.id, num("#iO")]);
+    const r3 = await window.palmier.op("setVolume", [SEQ.id, c.id, num("#iV")]);
+    log("inspect: " + JSON.stringify([r1.noop || r1.ok, r2.noop || r2.ok, r3.noop || r3.ok])); renderInspector.sel = null; await refresh(); await renderInspector();
+  });
+}
 async function markActive() {
   if (!SEQ) return;
   const hit = await window.palmier.clipAt(SEQ.id, FRAME);
@@ -37,6 +52,7 @@ async function markActive() {
     el.classList.toggle("active", !!hit && el.dataset.id === hit.id);
     el.classList.toggle("sel", el.dataset.id === SEL);
   });
+  renderInspector();
   const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
   // Timeline->source mapping: preview shows the edit, not the raw file position.
   const v = $("pv");
@@ -97,6 +113,8 @@ document.querySelector("#bExport").addEventListener("click", async () => { try {
 $("bSave").addEventListener("click", async () => { try { const r = await window.palmier.saveProject(); log("saved: " + JSON.stringify(r)); } catch (e) { log("save FAIL: " + e.message); } });
 refresh();
 </script></body></html>
+
+
 
 
 

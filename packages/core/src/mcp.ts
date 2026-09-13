@@ -44,12 +44,16 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
       if (!seq) throw new Error('sequence not found');
       return { sequenceId: seq.id, fps: seq.fps, durationFrames: sequenceDurationFrames(seq), tracks: seq.tracks, active: activeSequence(p).id };
     }
+    case 'addTrack': return store.addTrack(seqId as string, q['kind'] as 'video' | 'audio', q['name'] as string);
     case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
     case 'trimEnd': return store.trimEnd(seqId as string, q['clipId'] as string, q['durationFrames'] as number);
     case 'splitClip': return store.splitClip(seqId as string, q['clipId'] as string, q['atFrame'] as number);
     case 'deleteClip': return store.deleteClip(seqId as string, q['clipId'] as string);
     case 'setText': return store.setText(seqId as string, q['clipId'] as string, q['text'] as string);
+    case 'setTransform': return store.setTransform(seqId as string, q['clipId'] as string, q['patch'] as never);
+    case 'setOpacity': return store.setOpacity(seqId as string, q['clipId'] as string, q['opacity'] as number);
+    case 'setVolume': return store.setVolume(seqId as string, q['clipId'] as string, q['volume'] as number, q['muted'] as boolean | undefined);
     case 'undo': return { undone: store.undo() };
     case 'redo': return { redone: store.redo() };
     case 'saveProject': await saveProject(p, q['path'] as string); return { saved: q['path'] };
@@ -62,3 +66,5 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
     default: throw new Error(`unknown method ${method}`);
   }
 }
+
+
