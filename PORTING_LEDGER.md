@@ -111,3 +111,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 ## 2026-09-13 turn 12 evidence
 
 - Snapping (upstream SnapEngine parity, clip/marker/playhead scope): pure collectSnapTargets/snapProbe/snapClipStart in core, snapMove IPC (threshold 6f, playhead + markers as targets), drag-move commits through it. Unit + live SMOKE-SNAP 90.
+
+## 2026-09-13 turn 13 evidence
+
+- Waveform: core waveformPeaks (mono 8kHz decode, bucketed peaks, mtime cache, single-flight bound), unit (tone-vs-silence contrast, cache identity, errors), waveform IPC + preload, canvas rendering on audio clips. Live SMOKE-WV 50:0.125.

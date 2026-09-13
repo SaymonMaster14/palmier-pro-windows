@@ -28,6 +28,7 @@ async function loadDemo() {
 function registerIpc() {
   ipcMain.handle("state", () => store.project);
   ipcMain.handle("health", () => ({ ok: true, app: "palmier-pro-windows" }));
+  ipcMain.handle("waveform", async (_e, assetId, buckets) => { const m = store.project.media.find((x) => x.id === assetId); if (!m) throw new Error("media not found"); return core.waveformPeaks(m.path, buckets || 200); });
   ipcMain.handle("clipAt", (_e, seqId, frame) => {
     const s = store.project.sequences.find((x) => x.id === seqId);
     if (!s) throw new Error("sequence not found");
@@ -113,6 +114,7 @@ async function boot() {
       const ex = await win.webContents.executeJavaScript(`(async () => { const r = await window.palmier.exportActive(${JSON.stringify(process.env.PALM_SMOKE_OUT || (process.env.TEMP + "/smoke-export.mp4"))}); return r.bytes + ":" + r.validation.ok; })()`);
       console.log("SMOKE-IO-EXPORT", ex);
     }
+    console.log("SMOKE-WV", await win.webContents.executeJavaScript("(async () => { const s = await window.palmier.state(); const a = s.media.find(m => m.kind === 'audio'); if (!a) return 'no-audio'; const p = await window.palmier.waveform(a.id, 50); return p.length + ':' + (p.reduce((x,y) => x+y, 0) / p.length).toFixed(3); })()"));
     console.log("BOOT-OK");
     app.quit();
   }
@@ -120,6 +122,8 @@ async function boot() {
 
 app.on("window-all-closed", () => { try { if (mcpServer) mcpServer.close(); } catch (e) {} if (process.platform !== "darwin") app.quit(); });
 boot().catch((e) => { console.error("BOOT-FAIL", e); app.exit(1); });
+
+
 
 
 

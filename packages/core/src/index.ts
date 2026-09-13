@@ -7,3 +7,5 @@ export * from './export.js';
 export * from './mcp.js';
 export * from './library.js';
 
+export * from './waveform.js';
+
