@@ -9,3 +9,14 @@ tests/fixtures/*.wav
 apps/editor/dist/
 *.palmier.json
 slice*.mp4
+
+# turn scaffolding (never commit)
+/patch-*.cjs
+/probe-*.cjs
+/append-*.cjs
+smoke*.log
+test*.log
+build*.log
+pkg*.log
+probe*.log
+final*.log

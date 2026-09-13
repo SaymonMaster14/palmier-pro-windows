@@ -414,3 +414,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Track.volume (0..4, default 1) plumbed end to end: setTrackFlags accepts/validates it (exec JSON-compare gives noop for free), export multiplies it into the per-clip base that already feeds per-frame volume expressions (keyframes included), MCP passes through, rail headers show a volume slider on audio tracks committing on change (single undo per gesture, no per-tick spam).
 - Proof: unit suite 45/45 (new trackvol test: validation/noop/readback/undo plus volumedetect export proof); live SMOKE-MIX op=0.5 slider=2 with restore to 1; full smoke otherwise at baseline.
 - Honest iteration: first test run failed on threshold (2.7dB not 12dB) because the video clip s own full-volume audio masked the wav under test; muted the video clip to isolate, implementation untouched and correct.
+
+## 2026-09-13 turn 67 packaging
+
+- Repackaged mixer tree: portable exe fresh 85,296,720b, postpackage cleanup done. Also committed the .gitignore scaffolding guard (patch/probe/append scripts now ignored so git add -A can never sweep them in again).
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
