@@ -361,3 +361,9 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - Keyboard shortcuts (second document keydown listener, no interference with existing M/Delete): Space play/pause (skipped on focused buttons/fields to avoid double activation), arrows frame-step (native slider behavior preserved when it has focus), S split, +/- zoom, 0/F fit, Home/End bounds. All edit actions reuse the existing button handlers (zero duplicated logic).
 - Preview text entrance animation: overlay span animates on clip change only (popIn fade / slideUp rise, CSS keyframes), so continuous playback and seeks within one clip never re-trigger it.
 - Proof: SMOKE-PLAY play:true pause:true fwd:true back:true and SMOKE-TEXTOV vis|text-ok|anim=ppslide through real event paths; full smoke otherwise at baseline. Honest iteration: first PLAY run raced live playback (arrows vs timeupdate rewriting FRAME); fixed the probe to pause first instead of touching the app.
+
+## 2026-09-13 turn 62 packaging
+
+- Repackaged shortcuts+anim tree: portable exe fresh 85,292,860b, postpackage cleanup done.
+- Builder flake hit again mid-turn: first attempt died silent (0-byte nsis.7z, idle parents, no DONE, no error). Recovered per precedent: removed the 0-byte artifact, re-ran, watched 7za CPU climb to completion (DONE-0). Health signal for future packaging turns: 7za CPU must keep climbing; idle parents + 0-byte artifact = dead, rebuild.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
