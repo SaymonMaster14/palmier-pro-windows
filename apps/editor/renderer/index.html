@@ -1,8 +1,115 @@
-﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{--bg:#14161a;--fg:#e8eaed;--mut:#9aa0a6;--acc:#4c8dff;--clip:#2f6fed;--line:#2a2e35;--panel:#0e1013;--btn:#23262c;--btn-line:#333842;--warn:#ffd60a;--danger:#ff453a;--wave:#7dd87d;--mark:#0af;--video:#000}body{background:var(--bg);color:var(--fg);font:14px system-ui;margin:0}header{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}main{display:grid;grid-template-columns:250px 1fr 300px;height:calc(100vh - 47px)}section{padding:12px;border-right:1px solid var(--line);overflow:auto}button{background:var(--btn);color:var(--fg);border:1px solid var(--btn-line);border-radius:6px;padding:6px 10px;margin:2px;cursor:pointer}button:hover{border-color:var(--acc)}#tl{position:relative;height:150px;background:var(--panel);border:1px solid var(--line);border-radius:6px;margin-top:8px;user-select:none}.clip{position:absolute;height:26px;background:var(--clip);border-radius:4px;font-size:11px;line-height:26px;padding:0 6px;overflow:hidden;white-space:nowrap;cursor:grab}.clip.sel{outline:2px solid var(--acc)}.clip.active{box-shadow:0 0 0 2px var(--warn) inset}.clip .h{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize}.clip .hl{left:0}.clip .hr{right:0}.strip{height:12px;opacity:.85;vertical-align:bottom}.kd{position:absolute;top:2px;width:6px;height:6px;margin-left:-3px;background:var(--warn);transform:rotate(45deg)}.wv{position:absolute;left:0;right:0;bottom:0;height:14px;width:100%;opacity:.8}.mk{position:absolute;top:0;width:3px;height:10px;background:var(--mark)}.ph{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);pointer-events:none}#log{white-space:pre-wrap;color:var(--mut);font-size:12px}</style></head><body>
-<header><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
-<main><section><h3>Media</h3><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
-<section><h3>Preview</h3><video id="pv" controls style="width:100%;background:var(--video)"></video><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select><audio id="scrub" preload="auto"></audio><canvas id="meter" width="220" height="10" style="width:100%;height:10px;background:var(--panel)"></canvas><input id="seek" type="range" min="0" max="90" value="0" style="width:100%"><div id="tracks" style="font-size:12px"></div><div id="tl"></div><div id='expq' style='font-size:12px'></div><div style="color:var(--mut);font-size:12px">drag clip = move · edge handles = trim · click = select · Del = delete</div></section>
-<section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>Agent (local commands)</h3><input id="ag" placeholder="split here | marker x | ..." style="width:100%"><div id="aglog" style="font-size:12px"></div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main>
+﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{
+--bg:#101014;--bg1:#16161c;--bg2:#1d1d25;--bgelev:#24242e;
+--line:#2a2a35;--linestrong:#3b3b4a;
+--fg:#f2f2f6;--fg2:#c4c4cf;--fg3:#8f8f9b;--mut:#6e6e7a;
+--acc:#10b981;--accstrong:#059669;--accsoft:rgba(16,185,129,.15);--accglow:rgba(16,185,129,.45);
+--warn:#ffd60a;--danger:#ff453a;--mark:#38bdf8;--video:#000;--wave:#8cc79a;
+--c-video:#2a6b8a;--c-audio:#2f7d68;--c-image:#715486;--c-text:#bd8a3c;
+--r:8px;--rs:6px;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:12.5px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;display:grid;grid-template-rows:46px minmax(0,1fr) 268px;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+header#topbar{display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bg1);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap}
+.brand{width:18px;height:18px;flex:none;border-radius:5px;background:linear-gradient(135deg,var(--acc),var(--accstrong));box-shadow:0 0 12px var(--accglow)}
+header#topbar strong{font-size:13px;letter-spacing:-.01em}
+#proj{color:var(--fg3);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.tgroup{display:flex;align-items:center;gap:4px;padding:0 10px;border-left:1px solid var(--line);height:100%}
+.tgroup .tlabel{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--fg3);margin-right:2px}
+main{display:grid;grid-template-columns:300px minmax(0,1fr) 344px;min-height:0}
+section.panel{background:var(--bg1);border-right:1px solid var(--line);overflow-y:auto;overflow-x:hidden;min-height:0;padding:0 0 20px}
+section.panel:last-child{border-right:none}
+.ptitle{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;margin:0;padding:10px 12px 8px;background:linear-gradient(var(--bg1) 85%,transparent);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3)}
+.ptitle::after{content:"";flex:1;height:1px;background:var(--line)}
+button{background:var(--bg2);color:var(--fg);border:1px solid var(--linestrong);border-radius:var(--rs);padding:5px 10px;margin:1px;font-size:12px;cursor:pointer;transition:border-color .12s,background .12s}
+button:hover{border-color:var(--acc);background:#262633}
+button.primary{background:var(--accstrong);border-color:var(--accstrong);color:#fff;font-weight:600}
+button.primary:hover{background:var(--acc)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input:not([type]),input[type=search],select{background:var(--bg2);color:var(--fg);border:1px solid var(--linestrong);border-radius:var(--rs);padding:5px 8px;font-size:12px;max-width:100%}
+input:focus,select:focus,button:focus-visible{outline:1px solid var(--acc);outline-offset:0}
+input[type=checkbox],input[type=radio]{accent-color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;height:18px}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--linestrong)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-4px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--accglow)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--linestrong)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;border-radius:50%;background:var(--acc)}
+#media{padding:2px 10px}
+#media .mi{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid transparent;border-radius:var(--r);margin-bottom:4px}
+#media .mi:hover{background:var(--bg2);border-color:var(--line)}
+#media img{width:64px;height:36px;object-fit:cover;border-radius:5px;background:#000;flex:none}
+#media .mname{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#media .kbadge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg2);background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:0 7px;margin-top:2px}
+#hits{color:var(--fg3);font-size:11px;padding:0 12px}
+#rec{font-size:11.5px}
+#rec a{color:var(--fg2);text-decoration:none}
+#rec a:hover{color:var(--acc)}
+details{margin:0 12px 6px}summary{cursor:pointer;color:var(--fg3);font-size:11.5px}
+#stage{display:flex;flex-direction:column;gap:8px;padding:12px 14px;align-items:center;background:radial-gradient(120% 90% at 50% 0%,#17171e 0%,var(--bg1) 60%)}
+#pv{width:100%;max-height:40vh;background:var(--video);border-radius:var(--r);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#transport{display:flex;align-items:center;gap:10px;width:100%}
+#seek{flex:1}
+#tc{font:11.5px ui-monospace,Consolas,monospace;color:var(--fg2);background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap}
+#rate{flex:none}
+#meter{width:100%;height:8px;background:var(--bg2);border:1px solid var(--line);border-radius:99px}
+#tlhint{color:var(--fg3);font-size:11px}
+footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:grid;grid-template-rows:30px minmax(0,1fr);min-height:0}
+#tlbar{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3)}
+#tlbar .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-size:11px}
+#tlwrap{display:grid;grid-template-columns:172px minmax(0,1fr);min-height:0}
+#tracks{border-right:1px solid var(--line);overflow:hidden;padding-top:30px;background:var(--bg1)}
+#tracks .trk{height:34px;display:flex;align-items:center;gap:3px;padding:0 8px;border-bottom:1px solid var(--line);box-sizing:border-box}
+#tracks .trkn{font-size:11.5px;font-weight:600;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#tracks .trk button{font-size:10px;font-weight:700;padding:2px 6px;margin:0;color:var(--fg3)}
+#tlcol{display:flex;flex-direction:column;min-width:0}
+#ruler{position:relative;flex:none;height:30px;border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
+#ruler span{position:absolute;top:0;height:100%;border-left:1px solid var(--linestrong);padding:3px 0 0 4px;font:10px ui-monospace,Consolas,monospace;color:var(--fg3);pointer-events:none}
+#tl{position:relative;flex:1;background:#0c0c10;border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.025) 79px 80px)}
+.clip{position:absolute;height:26px;border-radius:6px;font-size:11px;line-height:26px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.16);border-left-width:3px;box-shadow:0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.clip.k-video{background:linear-gradient(180deg,#35789b,var(--c-video));border-left-color:#7fd4f7}
+.clip.k-audio{background:linear-gradient(180deg,#3a937c,var(--c-audio));border-left-color:#7fe0b8}
+.clip.k-image{background:linear-gradient(180deg,#8365a3,var(--c-image));border-left-color:#c9a8f2}
+.clip.k-text{background:linear-gradient(180deg,#d29a48,var(--c-text));border-left-color:#ffe1a8}
+.clip.sel{outline:2px solid var(--acc);outline-offset:0;box-shadow:0 0 0 3px var(--accsoft),0 2px 8px rgba(0,0,0,.45)}
+.clip.active{box-shadow:0 0 0 2px var(--warn) inset,0 2px 8px rgba(0,0,0,.45)}
+.clip .h{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;border-radius:6px}
+.clip .h:hover{background:var(--accsoft)}
+.clip .hl{left:0}.clip .hr{right:0}
+.strip{height:12px;opacity:.9;vertical-align:bottom;border-radius:2px}
+.kd{position:absolute;top:2px;width:7px;height:7px;margin-left:-3px;box-sizing:border-box;background:var(--warn);border:1px solid #fff;transform:rotate(45deg);border-radius:1px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+.kd:hover{background:#fff}
+.wv{position:absolute;left:0;right:0;bottom:0;height:14px;width:100%;opacity:.85}
+.mk{position:absolute;top:0;width:3px;height:10px;background:var(--mark);border-radius:1px;box-shadow:0 0 6px var(--mark)}
+.ph{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);pointer-events:none;box-shadow:0 0 8px rgba(255,69,58,.8)}
+#expq{font-size:11.5px;color:var(--fg2)}
+#expq span{color:var(--fg3)}
+#insp{padding:0 12px}
+.fsec{margin:10px 0 4px;border:1px solid var(--line);border-radius:var(--r);padding:8px 10px 10px;background:var(--bg2)}
+.fsec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--fg3);margin-bottom:6px}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:2px 0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.fgrid label{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11.5px;color:var(--fg2)}
+.fgrid label.chk{justify-content:flex-start}
+.fgrid input{width:64px}
+.fgrid input[size="9"]{width:96px}
+.fgrid select{max-width:110px}
+.mut{color:var(--fg3);font-size:11px}
+#iApply{width:100%;margin-top:8px}
+#iKeys{font-size:11px;color:var(--fg2)}
+#iKeys a{color:var(--danger);text-decoration:none;margin-left:2px}
+#aglog{font-size:12px;padding:0 12px}
+#aglog>div,#aglog{white-space:pre-wrap}
+#log{white-space:pre-wrap;color:var(--fg3);font:10.5px/1.5 ui-monospace,Consolas,monospace;padding:0 12px;max-height:220px;overflow:auto}
+#sets{font-size:12px;padding:0 12px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--linestrong);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--fg3);background-clip:padding-box;border:3px solid transparent}
+button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outline-offset:0}
+</style></head><body>
+<header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><button id="bSplit">Split @ playhead</button><button id="bUndo">Undo</button><button id="bRedo">Redo</button><button id="bSave">Save</button><button id="bNew">New</button><button id="bOpen">Open</button><button id="bImport">Import</button><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div><button id="bLink">Link</button><button id="bUnlink">Unlink</button></header>
+<main><section class="panel"><div class="ptitle">Media</div><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div></section>
+<section class="panel"><div class="ptitle">Preview</div><div id="stage"><video id="pv" controls></video><div id="transport"><input id="seek" type="range" min="0" max="90" value="0"><span id="tc">00:00:00</span><select id="rate"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div><audio id="scrub" preload="auto"></audio><canvas id="meter" width="220" height="10"></canvas><div id="expq"></div></div></section>
+<section class="panel"><div class="ptitle">Inspector</div><section><h3>Inspector</h3><div id="insp" style="font-size:12px">select a clip</div><h3>Agent (local commands)</h3><input id="ag" placeholder="split here | marker x | ..." style="width:100%"><div id="aglog" style="font-size:12px"></div><h3>State</h3><div id="log"></div><h3>Settings</h3><div id="sets" style="font-size:12px"></div></section></main><footer id="tlband"><div id="tlbar"><span>Timeline</span><span class="hint">drag move · edge trim · Alt+drag overwrite · Shift+Del ripple · Del delete · M marker · dblclick key</span></div><div id="tlwrap"><div id="tracks"></div><div id="tlcol"><div id="ruler"></div><div id="tl"></div></div></div></footer>
 <script>
 window.__errs = []; window.addEventListener("error", (e) => window.__errs.push(String((e.error && e.error.stack) || e.message)));
 const $ = (id) => document.getElementById(id);
@@ -23,15 +130,15 @@ async function refresh() {
   $("proj").textContent = S.name + " / " + SEQ.name;
   const q = ($("q").value || "").toLowerCase();
   const shown = q ? S.media.filter(m => (m.name + " " + m.kind).toLowerCase().includes(q)) : S.media;
-  $("media").innerHTML = shown.map(m => "<div>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + " width=80>") + " " + m.name + " <small>(" + m.kind + ")</small></div>").join("");
+  $("media").innerHTML = shown.map(m => "<div class=mi>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + ">") + "<div class=minfo><div class=mname>" + m.name + "</div><span class=kbadge>" + m.kind + "</span></div></div>").join("");
   for (const im of document.querySelectorAll("img[data-th]")) { window.palmier.thumb(im.dataset.th).then(p => { im.src = "file:///" + p.replace(/\\/g, "/"); }).catch(() => {}); }
   $("hits").textContent = q ? shown.length + " of " + S.media.length : "";
   const dur = DUR();
   $("seek").max = dur;
   const tl = $("tl");
-  tl.innerHTML = SEQ.clips.map(c => {
+  const durR = DUR(); const stepR = durR > 900 ? 240 : durR > 360 ? 120 : durR > 120 ? 60 : durR > 60 ? 30 : 15; let rulerH = ''; for (let tf = 0; tf <= durR; tf += stepR) { const mmR = Math.floor(tf / FPS / 60), ssR = Math.floor(tf / FPS % 60); rulerH += '<span style=left:' + (tf / durR * 100) + '%>' + mmR + ':' + String(ssR).padStart(2, '0') + '</span>'; } document.getElementById('ruler').innerHTML = rulerH; tl.innerHTML = SEQ.clips.map(c => {
     const l = c.startFrame / dur * 100, w = c.durationFrames / dur * 100;
-    return "<div class=clip data-id='" + c.id + "' style=left:" + l + "%;width:" + w + "%;top:" + trackTop(SEQ.tracks.find(t => t.id === c.trackId) || SEQ.tracks[0]) + "px>" + (c.kind === "audio" ? "<canvas class=wv data-asset='" + (c.assetId || "") + "'></canvas>" : "") + "<span class=h hl data-e=l></span>" + c.name + "<span class=h hr data-e=r></span></div>";
+    return "<div class='clip k-" + c.kind + "' data-id='" + c.id + "' style=left:" + l + "%;width:" + w + "%;top:" + trackTop(SEQ.tracks.find(t => t.id === c.trackId) || SEQ.tracks[0]) + "px>" + (c.kind === "audio" ? "<canvas class=wv data-asset='" + (c.assetId || "") + "'></canvas>" : "") + "<span class=h hl data-e=l></span>" + c.name + "<span class=h hr data-e=r></span></div>";
   }).join("") + (SEQ.markers || []).map(m => "<div class=mk data-id=" + m.id + " title=" + m.name + " style=left:" + (m.startFrame / dur * 100) + "%></div>").join("") + "<div class=ph id=ph></div>";
   paintTracks();
   bindClips();
@@ -62,9 +169,9 @@ async function renderInspector() {
   if (selKey() === renderInspector.sel) return; renderInspector.sel = selKey();
   const box = document.querySelector("#insp"); const c = SEQ && SEQ.clips.find(x => x.id === sel0());
   if (!c) { box.textContent = "select a clip"; return; }
-  box.innerHTML = "clip " + c.name + " <small>at playhead op/vol: <span id=iLive></span></small>";
+  box.innerHTML = "<div class=fsec><div class=fsec-t>Clip</div><div class=frow><span>" + c.name + "</span><span id=iLive class=mut></span></div></div>";
   window.palmier.evalKeys(SEQ.id, c.id, FRAME).then(r => { const el = document.querySelector("#iLive"); if (el) el.textContent = Number(r.op).toFixed(2) + "/" + Number(r.vol).toFixed(2); }).catch(() => {});
-  box.innerHTML += "<br>x <input id=iX size=5> y <input id=iY size=5> sc <input id=iS size=5> rot <input id=iR size=5> op <input id=iO size=5> vol <input id=iV size=5> fi <input id=iFi size=4> fo <input id=iFo size=4> tr <input id=iTr size=4> sp <input id=iSp size=4> cr <input id=iCr size=9 placeholder='l,t,r,b'> al <select id=iAl><option>left</option><option selected>center</option><option>right</option></select> bg <input type='checkbox' id=iBg> bl <select id=iBl><option>normal</option><option>screen</option><option>multiply</option><option>overlay</option></select> ff <select id=iFf><option>sans</option><option>serif</option><option>mono</option><option>arial</option><option>times</option><option>courier</option><option>verdana</option></select> B <input type='checkbox' id=iBo> I <input type='checkbox' id=iIt> an <select id=iAn><option>none</option><option>popIn</option><option>slideUp</option></select> <button id=iApply>Apply</button><br><button id=iKeyOp>key op @playhead</button><button id=iKeyVol>key vol @playhead</button><div id=iKeys style=font-size:11px></div>";
+  box.innerHTML += "<div class=fsec><div class=fsec-t>Transform</div><div class=fgrid><label>x<input id=iX size=5></label><label>y<input id=iY size=5></label><label>scale<input id=iS size=5></label><label>rot<input id=iR size=5></label><label>opacity<input id=iO size=5></label><label>volume<input id=iV size=5></label></div></div><div class=fsec><div class=fsec-t>Timing</div><div class=fgrid><label>fade in s<input id=iFi size=4></label><label>fade out s<input id=iFo size=4></label><label>trans s<input id=iTr size=4></label><label>speed<input id=iSp size=4></label></div></div><div class=fsec><div class=fsec-t>Frame</div><div class=fgrid><label>crop<input id=iCr size=9 placeholder='l,t,r,b'></label><label>blend<select id=iBl><option>normal</option><option>screen</option><option>multiply</option><option>overlay</option></select></label></div></div><div class=fsec><div class=fsec-t>Text</div><div class=fgrid><label>align<select id=iAl><option>left</option><option selected>center</option><option>right</option></select></label><label class=chk>bg box<input type='checkbox' id=iBg></label><label>font<select id=iFf><option>sans</option><option>serif</option><option>mono</option><option>arial</option><option>times</option><option>courier</option><option>verdana</option></select></label><label>anim<select id=iAn><option>none</option><option>popIn</option><option>slideUp</option></select></label><label class=chk>B<input type='checkbox' id=iBo></label><label class=chk>I<input type='checkbox' id=iIt></label></div></div><button id=iApply class=primary>Apply</button><div class=fsec><div class=fsec-t>Keys at playhead</div><button id=iKeyOp>key opacity</button> <button id=iKeyVol>key volume</button><div id=iKeys></div></div>";
   const set = (id, v) => { document.querySelector(id).value = v; };
   set("#iX", c.transform.x); set("#iY", c.transform.y); set("#iS", c.transform.scaleX); set("#iR", c.transform.rotationDeg || 0); set("#iO", c.opacity); set("#iV", c.volume); set("#iSp", c.speed || 1); document.querySelector("#iBl").value = c.blend || "normal"; document.querySelector("#iFf").value = c.fontFamily || "sans"; document.querySelector("#iBo").checked = !!c.fontBold; document.querySelector("#iIt").checked = !!c.fontItalic; document.querySelector("#iAn").value = c.textAnim || "none";
   const keyList = () => { const el = document.querySelector("#iKeys"); if (!el) return; const c2 = SEQ.clips.find(x => x.id === SEL); el.innerHTML = "op:" + (c2.opacityKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=op:" + k.frame + ">x</a></span>").join(" ") + " vol:" + (c2.volumeKeys || []).map(k => "<span>" + k.frame + "=" + k.value + " <a href=# data-k=vol:" + k.frame + ">x</a></span>").join(" "); el.querySelectorAll("a[data-k]").forEach(a => a.addEventListener("click", async (e) => { e.preventDefault(); const [tr, fr] = a.dataset.k.split(":"); await window.palmier.op("removeKeyframe", [SEQ.id, sel0(), tr, Number(fr)]); renderInspector.sel = ""; await refresh(); await renderInspector(); })); };
@@ -113,7 +220,7 @@ async function markActive() {
     el.classList.toggle("sel", SEL.has(el.dataset.id));
   });
   renderInspector();
-  const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
+  const tc = document.getElementById('tc'); if (tc && SEQ) { var fr = Math.max(FRAME, 0); var ff = Math.floor(fr % FPS); var stt = Math.floor(fr / FPS); tc.textContent = String(Math.floor(stt / 60)).padStart(2, '0') + ':' + String(stt % 60).padStart(2, '0') + ':' + String(ff).padStart(2, '0'); } const ph = $("ph"); if (ph) ph.style.left = ($("seek").value / $("seek").max * 100) + "%";
   // Timeline->source mapping: preview shows the edit, not the raw file position.
   const v = $("pv");
   if (v && hit && hit.assetId) {
@@ -166,7 +273,7 @@ function bindKeyDrag(el, c, d, k, rng) {
       curF = Math.min(Math.max(Math.round(c.startFrame + (ev.clientX - rect.left) / rect.width * c.durationFrames), c.startFrame), c.startFrame + c.durationFrames);
       curV = Math.min(Math.max(Math.round((1 - (ev.clientY - rect.top) / rect.height) * rng * 1000) / 1000, 0), rng);
       d.style.left = ((curF - c.startFrame) / c.durationFrames * 100) + '%';
-      d.style.top = 'calc(' + ((1 - curV / rng) * 100) + '% - 3px)';
+      d.style.top = 'calc(' + ((1 - curV / rng) * 100) + '% - 3.5px)';
     };
     const up = async () => {
       document.removeEventListener('mousemove', move);
@@ -188,7 +295,7 @@ function paintKeys() {
       const d = document.createElement("div"); d.className = "kd"; d.title = k.k + "@" + k.f;
       d.style.left = ((k.f - c.startFrame) / c.durationFrames * 100) + "%";
       const rng = k.k === "v" ? 4 : 1;
-      d.style.top = "calc(" + ((1 - Math.min(Math.max(k.v, 0), rng) / rng) * 100) + "% - 3px)";
+      d.style.top = "calc(" + ((1 - Math.min(Math.max(k.v, 0), rng) / rng) * 100) + "% - 3.5px)";
       d.dataset.tr = k.k; d.dataset.f = k.f;
       bindKeyDrag(el, c, d, k, rng);
       el.appendChild(d);
@@ -198,14 +305,14 @@ function paintKeys() {
 function paintTracks() {
   const box = document.querySelector("#tracks"); box.innerHTML = "";
   SEQ.tracks.forEach((tr) => {
-    const d = document.createElement("div");
-    const nm = document.createElement("span"); nm.textContent = tr.name + " "; box.appendChild(nm);
+    const d = document.createElement("div"); d.className = "trk";
+    const nm = document.createElement("span"); nm.className = "trkn"; nm.textContent = tr.name; d.appendChild(nm);
     [["M", "muted"], ["H", "hidden"], ["L", "locked"]].forEach(([lb, fl]) => {
       const b = document.createElement("button"); b.textContent = (tr[fl] ? "[" + lb + "]" : lb); b.style.borderColor = tr[fl] ? "var(--warn)" : "";
       b.addEventListener("click", async () => { const p = {}; p[fl] = !tr[fl]; await window.palmier.op("setTrackFlags", [SEQ.id, tr.id, p]); await refresh(); });
-      box.appendChild(b);
+      d.appendChild(b);
     });
-    box.appendChild(d); d.appendChild(nm);
+    box.appendChild(d);
   });
 }
 function bindClips() {
