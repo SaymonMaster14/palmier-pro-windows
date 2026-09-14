@@ -87,6 +87,16 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "renameClip" };
     });
   }
+  removeSequence(seqId: string): Receipt {
+    return this.exec("removeSequence", (p) => {
+      const i = p.sequences.findIndex((x) => x.id === seqId);
+      if (i < 0) throw new Error("sequence not found");
+      if (p.sequences.length <= 1) throw new Error("cannot delete the last sequence");
+      const gone = p.sequences.splice(i, 1)[0];
+      if (p.activeSequenceId === seqId) p.activeSequenceId = p.sequences[Math.min(i, p.sequences.length - 1)].id;
+      return { ok: true, ids: [gone.id], warnings: [], label: "removeSequence" };
+    });
+  }
   renameSequence(seqId: string, name: string): Receipt {
     return this.exec("renameSequence", (p) => {
       const q = p.sequences.find((x) => x.id === seqId); if (!q) throw new Error("sequence not found");

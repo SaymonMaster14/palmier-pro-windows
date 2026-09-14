@@ -24,3 +24,18 @@ test('sequences add/rename/switch with undo', () => {
   assert.ok(st.undo());
   assert.equal(st.project.activeSequenceId, r2.ids[0]);
 });
+
+test('sequences remove with active fallback', () => {
+  const st = new EditorStore(createProject('sqd'));
+  const a = st.addSequence('A');
+  assert.ok(!st.removeSequence(a.ids[0]).ok);
+  const b = st.addSequence('B');
+  assert.equal(st.project.activeSequenceId, b.ids[0]);
+  assert.ok(st.removeSequence(a.ids[0]).ok);
+  assert.equal(st.project.sequences.length, 1);
+  assert.equal(st.project.activeSequenceId, b.ids[0]);
+  assert.ok(!st.removeSequence(b.ids[0]).ok);
+  assert.ok(!st.removeSequence('nope').ok);
+  assert.ok(st.undo());
+  assert.equal(st.project.sequences.length, 2);
+});

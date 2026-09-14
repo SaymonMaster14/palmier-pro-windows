@@ -697,3 +697,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged cache-controls tree: portable exe fresh 85312893b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 97 evidence (sequence delete)
+
+- Completed the tabs lifecycle: right-click a sequence tab offers Delete (hidden for the last sequence); new undoable removeSequence core op with active-tab fallback, threaded through MCP and the IPC allowlist.
+- Proof: sequences test extended, suite 55/55, live SEQDEL-PROBE add=true menu=true del=true tabs=1 errs=0 via real tab menu, full smoke142 BOOT-OK DONE-0.
