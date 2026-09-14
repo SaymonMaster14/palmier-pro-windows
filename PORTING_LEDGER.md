@@ -462,3 +462,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 - ExportQuality draft/balanced/high threaded end to end: core qualityArgs (draft veryfast+crf28, high slow+crf18, balanced byte-identical default), validated in buildFfmpegArgs, ExportOpts passthrough, main IPC (queue + direct), preload, MCP export, header quality select wired into the Export button. Default path unchanged by construction.
 - Proof: unit suite 47/47 (new test: per-quality flags in args, bad-quality rejection, all three export+validate, draft<high bytes); live SMOKE-IO-EXPORT done via the draft queue path; full smoke green with BOOT-OK.
 - Flake honesty, second data point: one run showed the known ffmpeg exit 3199971767 at 11.5% (turn-57 signature); identical retry passed. Unit exports with the same draft flags pass, so the new flags are exonerated; environmental.
+
+## 2026-09-13 turn 72 packaging
+
+- Repackaged export-quality tree: portable exe fresh 85299117b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
