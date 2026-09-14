@@ -477,3 +477,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Surface-only restyle of renderer/index.html (19 CSS rules, zero JS/HTML/geometry changes): Inter-first type stack with tight tracking, inset-highlight buttons + glowing emerald primary, flatter OpenReel-style clip fills with top sheen per Palmier clip hue, refined media thumbs, sunken inputs, glowing timecode pill, card/context-menu depth. All smoke-touchable ids/classes and drop geometry preserved.
 - Proof: renderer JS vm-parse OK, unit suite 47/47, smoke102 BOOT-OK DONE-0 with SMOKE-VISUAL kinds intact. Track/media count variance vs smoke100b traced to persisted dev userData, CSS exonerated by construction (diff is style-block only).
+
+## 2026-09-13 turn 74 packaging
+
+- Repackaged UI-polish tree: portable exe fresh 85299548b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
