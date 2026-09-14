@@ -647,3 +647,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Composition guides overlay on the preview (thirds grid + title-safe rect, button/tecla G toggle, persisted) and a configurable export folder in Settings (created if missing, used as the default export destination, empty keeps prior behavior). First probe caught a real bug: the G-key handler was nested inside the V/C/T tool branch (dead code from anchor placement); fixed and re-proven.
 - Proof: renderer JS vm-parse OK, unit suite 51/51, live GUIDESEXP-PROBE guides/persist/dirsaved/usedir/done errs=0 with a full draft export landing in the custom folder, GKEY-PROBE on=block off=none errs=0, full smoke132 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 91 packaging
+
+- Repackaged guides-export tree: portable exe fresh 85310722b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
