@@ -672,3 +672,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged speed-menu tree: portable exe fresh 85308224b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 94 evidence (track and clip rename)
+
+- Rename parity: double-click a track header renames inline; clip context menu gained Rename with a floating editor (Enter commits, Esc cancels); new undoable renameTrack/renameClip core ops with validation threaded through MCP and the IPC allowlist. First probe caught the missing allowlist entries (unknown op); fixed and re-proven.
+- Proof: rename.test.ts added, suite 52/52, live RENAME-PROBE track=Rhythm clip=Lead emptykept=Lead errs=0 via real UI paths with names restored after.

@@ -53,6 +53,8 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'addTrack': return store.addTrack(seqId as string, q['kind'] as 'video' | 'audio', q['name'] as string);
     case 'addSequence': return store.addSequence(q['name'] as string | undefined);
     case 'setActiveSequence': return store.setActiveSequence(seqId as string);
+    case 'renameTrack': return store.renameTrack(seqId as string, q['trackId'] as string, q['name'] as string);
+    case 'renameClip': return store.renameClip(seqId as string, q['clipId'] as string, q['name'] as string);
     case 'renameSequence': return store.renameSequence(seqId as string, q['name'] as string);
     case 'overwritePlace': return store.overwritePlace(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);

@@ -174,6 +174,8 @@ button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outli
 .vsplit:hover{background:var(--accsoft)}
 #tlsplit{height:5px;margin:-2px 0;cursor:row-resize;flex:none;z-index:5}
 #tlsplit:hover{background:var(--accsoft)}
+#tracks .trkn input{background:var(--bg1);color:var(--fg);border:1px solid var(--acc);border-radius:4px;font-size:11.5px;padding:0 4px;max-width:110px}
+#clipren{position:fixed;z-index:320;background:var(--bg1);color:var(--fg);border:1px solid var(--acc);border-radius:6px;font-size:12px;padding:4px 8px;box-shadow:0 12px 32px rgba(0,0,0,.55)}
 .trks{width:3px;align-self:stretch;border-radius:2px;margin-right:8px;flex:none}
 button.on{border-color:var(--acc);background:var(--accsoft)}
 .tgroup button.on{border-color:var(--acc);background:var(--accsoft);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px var(--accsoft)}
@@ -450,7 +452,7 @@ function paintTracks() {
   const box = document.querySelector("#tracks"); box.innerHTML = "";
   SEQ.tracks.forEach((tr) => {
     const d = document.createElement("div"); d.className = "trk";
-    const st = document.createElement("span"); st.className = "trks"; st.style.background = tr.kind === "audio" ? "#7fe0b8" : "#7fd4f7"; d.appendChild(st); const nm = document.createElement("span"); nm.className = "trkn"; nm.textContent = (tr.kind === "audio" ? "A" : "V") + " · " + tr.name; d.appendChild(nm);
+    const st = document.createElement("span"); st.className = "trks"; st.style.background = tr.kind === "audio" ? "#7fe0b8" : "#7fd4f7"; d.appendChild(st); const nm = document.createElement("span"); nm.className = "trkn"; nm.dataset.track = tr.id; nm.title = "Double-click to rename"; nm.textContent = (tr.kind === "audio" ? "A" : "V") + " · " + tr.name; d.appendChild(nm);
     [["M", "muted"], ["H", "hidden"], ["L", "locked"]].forEach(([lb, fl]) => {
       const b = document.createElement("button"); b.textContent = (tr[fl] ? "[" + lb + "]" : lb); b.style.borderColor = tr[fl] ? "var(--warn)" : "";
       b.addEventListener("click", async () => { const p = {}; p[fl] = !tr[fl]; await window.palmier.op("setTrackFlags", [SEQ.id, tr.id, p]); await refresh(); });
@@ -487,6 +489,7 @@ function bindClips() {
         { label: 'Split here', act: 'split', run: async () => { const r = await window.palmier.op('splitClip', [SEQ.id, cc.id, Math.min(Math.max(f0, cc.startFrame + 1), cc.startFrame + cc.durationFrames - 1)]); log('split: ' + JSON.stringify(r)); await refresh(); } },
         { label: 'Duplicate', act: 'dup', run: async () => { const r = await window.palmier.op('duplicateClips', [SEQ.id, [cc.id]]); log('duplicate: ' + JSON.stringify(r)); await refresh(); } },
         { label: 'Delete', act: 'delete', run: async () => { const r = await window.palmier.op('deleteClip', [SEQ.id, cc.id]); log('delete: ' + JSON.stringify(r)); SEL = new Set(); await refresh(); } }, ...(((cc.kind === 'video' || cc.kind === 'audio')) ? [{ label: 'Speed 0.5x', act: 'sp05', run: async () => { const r = await window.palmier.op('setSpeed', [SEQ.id, cc.id, 0.5]); log('speed: ' + JSON.stringify(r)); await refresh(); } }, { label: 'Speed 1x', act: 'sp10', run: async () => { const r = await window.palmier.op('setSpeed', [SEQ.id, cc.id, 1]); log('speed: ' + JSON.stringify(r)); await refresh(); } }, { label: 'Speed 2x', act: 'sp20', run: async () => { const r = await window.palmier.op('setSpeed', [SEQ.id, cc.id, 2]); log('speed: ' + JSON.stringify(r)); await refresh(); } }] : []),
+        { label: 'Rename', act: 'rename', run: async () => { openClipRename(cc.id); } },
         { label: 'Ripple delete', act: 'ripple', run: async () => { const r = await window.palmier.op('rippleDelete', [SEQ.id, cc.id]); log('ripple: ' + JSON.stringify(r)); SEL = new Set(); await refresh(); } },
         { label: 'Add marker here', act: 'marker', run: async () => { const r = await window.palmier.op('addMarker', [SEQ.id, { name: 'M' + f0, startFrame: Math.max(f0, 0) }]); log('marker: ' + JSON.stringify(r)); await refresh(); } },
       ], e.clientX, e.clientY);
@@ -579,7 +582,7 @@ document.addEventListener('keydown', async (e) => {
   if ((e.key === 'Home' || e.key === 'End') && !fld && SEQ) { FRAME = e.key === 'Home' ? 0 : DUR(); $('seek').value = FRAME; await markActive(); return; }
   if ((e.ctrlKey || e.metaKey) && !fld && (e.key === "1" || e.key === "2" || e.key === "3")) { setPreset(e.key === "1" ? "default" : e.key === "2" ? "media" : "vertical"); return; }
   if (e.key === "?" && !fld) { toggleKeys(); return; }
-  if (e.key === "Escape") { toggleKeys(false); toggleExp(false); hideMkPop(); }
+  if (e.key === "Escape") { toggleKeys(false); toggleExp(false); hideMkPop(); hideClipRename(); }
   if ((e.key === "g" || e.key === "G") && !fld && !e.ctrlKey && !e.metaKey) { const gd = document.querySelector("#guides"); setGuides(!gd || gd.style.display !== "block"); return; }
   if (((e.key === 'v' || e.key === 'V') || (e.key === 'c' || e.key === 'C') || (e.key === 't' || e.key === 'T')) && !fld && !e.ctrlKey && !e.metaKey) { setTool((e.key === 'v' || e.key === 'V') ? 'pointer' : (e.key === 'c' || e.key === 'C') ? 'razor' : 'trim'); return; }
 });
@@ -606,6 +609,9 @@ function setPreset(pr) { if (!LAYPRE[pr]) return; LAY = { preset: pr, mw: LAYPRE
 function bindSplit(id, fn) { const el = document.querySelector(id); if (!el) return; el.addEventListener("mousedown", (e) => { e.preventDefault(); const x0 = e.clientX, y0 = e.clientY; const mv = (ev) => { fn(ev.clientX - x0, ev.clientY - y0); applyLayout(); }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); LAY.preset = "custom"; saveLayout(); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); el.addEventListener("dblclick", () => { setPreset("default"); }); }
 function initLayout() { applyLayout(); bindSplit("#spL", (dx) => { LAY.mw = clampN(LAY.mw + dx, 220, 640, 300); }); bindSplit("#spR", (dx) => { LAY.iw = clampN(LAY.iw - dx, 260, 560, 344); }); bindSplit("#tlsplit", (dx, dy) => { LAY.tl = clampN(LAY.tl - dy, 160, 640, 284); }); }
 initLayout();
+document.querySelector("#tracks").addEventListener("dblclick", (e) => { const nm = e.target.closest ? e.target.closest(".trkn") : null; if (!nm || !nm.dataset.track || !SEQ) return; const id = nm.dataset.track; const tr = SEQ.tracks.find((x) => x.id === id); if (!tr) return; const inp = document.createElement("input"); inp.value = tr.name; inp.size = Math.max(tr.name.length, 6); nm.textContent = ""; nm.appendChild(inp); inp.focus(); inp.select(); let done = false; const commit = async (ok) => { if (done) return; done = true; if (ok) { const r = await window.palmier.op("renameTrack", [SEQ.id, id, inp.value]); log("track: " + JSON.stringify(r)); } await refresh(); }; inp.addEventListener("keydown", (ev) => { ev.stopPropagation(); if (ev.key === "Enter") commit(true); if (ev.key === "Escape") commit(false); }); inp.addEventListener("blur", () => commit(true)); });
+function hideClipRename() { const o = document.querySelector("#clipren"); if (o) o.remove(); }
+function openClipRename(id) { const c = (SEQ.clips || []).find((x) => x.id === id); if (!c) return; let box = null; document.querySelectorAll(".clip").forEach((el) => { if (!box && el.dataset && el.dataset.id === id) box = el; }); if (!box) return; hideClipRename(); const r = box.getBoundingClientRect(); const inp = document.createElement("input"); inp.id = "clipren"; inp.value = c.name; inp.style.left = Math.min(r.left, window.innerWidth - 200) + "px"; inp.style.top = Math.max(r.top - 4, 0) + "px"; inp.style.width = Math.max(r.width, 120) + "px"; document.body.appendChild(inp); inp.focus(); inp.select(); let done = false; const commit = async (ok) => { if (done) return; done = true; if (ok) { const rr = await window.palmier.op("renameClip", [SEQ.id, id, inp.value]); log("rename: " + JSON.stringify(rr)); } hideClipRename(); await refresh(); }; inp.addEventListener("keydown", (ev) => { ev.stopPropagation(); if (ev.key === "Enter") commit(true); if (ev.key === "Escape") commit(false); }); inp.addEventListener("blur", () => commit(true)); }
 function setTheme(t) { document.documentElement.dataset.theme = t === "light" ? "light" : "dark"; }
 (async () => { try { const gs = await window.palmier.getSettings(); if (gs && gs.theme === "light") setTheme("light"); } catch (e) {} })();
 function setGuides(on) { const g = document.querySelector("#guides"); if (g) g.style.display = on ? "block" : "none"; const b = document.querySelector("#tGuides"); if (b) b.classList.toggle("on", !!on); try { localStorage.setItem("palmGuides", on ? "1" : "0"); } catch (e) {} }

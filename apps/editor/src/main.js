@@ -15,7 +15,7 @@ let notify = () => {};
   const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
   const readSettings = () => { let s = {}; try { s = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) {} return { mcpPort: 19789, exportDir: "", ...s }; };
 
-const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "slipClip", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "addSequence", "setActiveSequence", "renameSequence", "rippleDelete", "addMarker", "removeMarker", "updateMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags", "deleteClips", "moveClips", "setTextStyle", "setTextAnim", "moveKeyframe", "duplicateClips", "linkClips", "unlinkClips"];
+const OPS = ["placeClip", "moveClip", "trimEnd", "trimStart", "slipClip", "splitClip", "deleteClip", "setText", "setVolume", "setTransform", "setOpacity", "addTrack", "addSequence", "setActiveSequence", "renameSequence", "renameTrack", "renameClip", "rippleDelete", "addMarker", "removeMarker", "updateMarker", "setFade", "overwritePlace", "setKeyframe", "removeKeyframe", "setTransition", "setSpeed", "setCrop", "setBlend", "setTrackFlags", "deleteClips", "moveClips", "setTextStyle", "setTextAnim", "moveKeyframe", "duplicateClips", "linkClips", "unlinkClips"];
 
 async function loadDemo() {
   try {

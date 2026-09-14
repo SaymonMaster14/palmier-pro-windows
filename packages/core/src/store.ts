@@ -66,6 +66,27 @@ export class EditorStore {
       return { ok: true, ids: [seqId], warnings: [], label: "setActiveSequence" };
     });
   }
+  renameTrack(seqId: string, trackId: string, name: string): Receipt {
+    return this.exec("renameTrack", (p) => {
+      const s = req_seq(p, seqId);
+      const t = s.tracks.find((x) => x.id === trackId); if (!t) throw new Error("track not found");
+      const nm = ((name ?? "") + "").trim().slice(0, 120);
+      if (!nm) throw new Error("track name required");
+      if (t.name === nm) return { noop: true };
+      t.name = nm;
+      return { ok: true, ids: [t.id], warnings: [], label: "renameTrack" };
+    });
+  }
+  renameClip(seqId: string, clipId: string, name: string): Receipt {
+    return this.exec("renameClip", (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      const nm = ((name ?? "") + "").trim().slice(0, 120);
+      if (!nm) throw new Error("clip name required");
+      if (c.name === nm) return { noop: true };
+      c.name = nm;
+      return { ok: true, ids: [c.id], warnings: [], label: "renameClip" };
+    });
+  }
   renameSequence(seqId: string, name: string): Receipt {
     return this.exec("renameSequence", (p) => {
       const q = p.sequences.find((x) => x.id === seqId); if (!q) throw new Error("sequence not found");
