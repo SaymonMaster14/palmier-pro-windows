@@ -61,16 +61,16 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 .zctl{display:flex;align-items:center;gap:4px;margin-left:auto}
 .zctl button{font-size:11px;padding:2px 9px}
 #zlab{font-size:11px;color:var(--fg3);min-width:40px;text-transform:none;letter-spacing:0}
-#tlwrap{display:grid;grid-template-columns:172px minmax(0,1fr);min-height:0;overflow-y:auto}
+#tlwrap{display:grid;grid-template-columns:196px minmax(0,1fr);min-height:0;overflow-y:auto}
 #tracks{border-right:1px solid var(--line);overflow:hidden;padding-top:12px;background:var(--bg1)}
-#tracks .trk{height:44px;display:flex;align-items:center;gap:3px;padding:0 8px;border-bottom:1px solid var(--line);box-sizing:border-box}
+#tracks .trk{height:56px;display:flex;align-items:center;gap:3px;padding:0 8px;border-bottom:1px solid var(--line);box-sizing:border-box}
 #tracks .trkn{font-size:11.5px;font-weight:600;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 #tracks .trk button{font-size:10px;font-weight:700;padding:2px 6px;margin:0;color:var(--fg3)}
 #tlcol{display:flex;flex-direction:column;min-width:0}
 #ruler{position:relative;flex:none;height:30px;border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
 #ruler span{position:absolute;top:0;height:100%;border-left:1px solid var(--linestrong);padding:3px 0 0 4px;font:10px ui-monospace,Consolas,monospace;color:var(--fg3);pointer-events:none}
 #tl{position:relative;flex:1;background:#0c0c10;border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.025) 79px 80px)}
-.clip{position:absolute;height:34px;border-radius:7px;font-size:11.5px;font-weight:500;line-height:34px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.10);border-left-width:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.clip{position:absolute;height:44px;border-radius:7px;font-size:11.5px;font-weight:500;line-height:44px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.10);border-left-width:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .clip.k-video{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-video);border-left-color:#7fd4f7}
 .clip.k-audio{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-audio);border-left-color:#7fe0b8}
 .clip.k-image{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-image);border-left-color:#c9a8f2}
@@ -80,10 +80,10 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 .clip .h{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;border-radius:6px}
 .clip .h:hover{background:var(--accsoft)}
 .clip .hl{left:0}.clip .hr{right:0}
-.strip{height:12px;opacity:.9;vertical-align:bottom;border-radius:2px}
+.strip{height:16px;opacity:.9;vertical-align:bottom;border-radius:2px}
 .kd{position:absolute;top:2px;width:7px;height:7px;margin-left:-3px;box-sizing:border-box;background:var(--warn);border:1px solid #fff;transform:rotate(45deg);border-radius:1px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 .kd:hover{background:#fff}
-.wv{position:absolute;left:0;right:0;bottom:0;height:14px;width:100%;opacity:.85}
+.wv{position:absolute;left:0;right:0;bottom:0;height:18px;width:100%;opacity:.85}
 .mk{position:absolute;top:0;width:3px;height:10px;background:var(--mark);border-radius:1px;box-shadow:0 0 6px var(--mark)}
 .ph{position:absolute;top:0;bottom:0;width:2px;background:#ff524d;pointer-events:none;box-shadow:0 0 8px rgba(255,82,77,.8)}
 #expq{font-size:11.5px;color:var(--fg2)}
@@ -160,7 +160,7 @@ function zoomLabel() { const el = document.querySelector("#zlab"); if (el && SEQ
 const sel0 = () => [...SEL][0] || null;
 const selKey = () => [...SEL].sort().join(",");
 const DUR = () => SEQ.clips.reduce((m, c) => Math.max(m, c.startFrame + c.durationFrames), 0) || 90;
-const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 44;
+const trackTop = (t) => 12 + SEQ.tracks.indexOf(t) * 56;
 async function refresh() {
   try { const t0 = document.getElementById('textov'); if (t0) t0.style.display = 'none'; } catch (e) {}
   S = await window.palmier.state();
@@ -195,7 +195,7 @@ async function paintStrips() {
       const at = (c.sourceInFrame + ((k + 0.5) / n) * c.durationFrames * (c.speed || 1)) / fps;
       const im = document.createElement('img');
       im.className = 'strip';
-      im.style.cssText = 'height:12px;opacity:.85;';
+      im.style.cssText = 'height:16px;opacity:.85;';
       el.appendChild(im);
       window.palmier.thumbAt(c.assetId, at).then(p => { im.src = 'file:///' + p.replace(/\\/g, '/'); }).catch(() => {});
     }
