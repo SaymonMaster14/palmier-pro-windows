@@ -159,6 +159,7 @@ async function boot() {
   });
   win.on("closed", () => { win = null; });
   await win.loadFile(path.join(__dirname, "..", "renderer", "index.html"));
+  if (process.env.PALM_PROBE_JS) { await new Promise((r) => setTimeout(r, 2500)); try { console.log(await win.webContents.executeJavaScript(fs.readFileSync(process.env.PALM_PROBE_JS, "utf8"))); } catch (e) { console.log("PROBE-FAIL " + e.message); } app.quit(); }
 
   if (process.env.PALM_SMOKE) {
     const n = await win.webContents.executeJavaScript("window.palmier.state().then(s => s.sequences.length)");

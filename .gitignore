@@ -20,3 +20,11 @@ build*.log
 pkg*.log
 probe*.log
 final*.log
+
+# probe/turn scaffolding anywhere
+run-*.cjs
+check-*.cjs
+tmp-*.cjs
+*-probe.js
+*-run.log
+*-run.err.log
