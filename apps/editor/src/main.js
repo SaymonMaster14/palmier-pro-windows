@@ -67,7 +67,7 @@ function registerIpc() {
   });
   const expJobs = new Map();
   let expN = 0;
-  ipcMain.handle("exportStart", async (_e, outPath, quality) => {
+  ipcMain.handle("exportStart", async (_e, outPath, quality, scale) => {
     const seq = store.project.sequences.find((x) => x.id === store.project.activeSequenceId) || store.project.sequences[0];
     if (!seq) throw new Error("no sequence");
     const fp = outPath || defaultExportPath();
@@ -77,7 +77,7 @@ function registerIpc() {
     job.ctrl = ctrl;
     expJobs.set(id, job);
     const say = () => { try { if (win) win.webContents.send("export-progress", { id, status: job.status, progress: job.progress }); } catch (e) {} };
-    core.exportSequence(store.project, seq.id, fp, ctrl.signal, { onProgress: (fr) => { job.progress = fr; say(); }, quality })
+    core.exportSequence(store.project, seq.id, fp, ctrl.signal, { onProgress: (fr) => { job.progress = fr; say(); }, quality, scale })
       .then(async (r) => { const v = await core.validateExport(fp, r.durationSec, true).catch((e) => ({ ok: false, details: String(e) })); Object.assign(job, { status: v.ok ? "done" : "error", progress: 1, result: { ...r, validation: v } }); say(); })
       .catch((e) => { Object.assign(job, { status: ctrl.signal.aborted ? "cancelled" : "error", error: String((e && e.message) || e) }); say(); });
     return { id, outPath: fp };
@@ -88,11 +88,11 @@ function registerIpc() {
   ipcMain.handle("cacheInfo", async () => ({ thumbs: dirSize(thumbDir()) }));
   ipcMain.handle("cacheClear", async () => { const d = thumbDir(); let n = 0; try { for (const f of fs.readdirSync(d)) { try { fs.rmSync(path.join(d, f), { force: true }); n++; } catch (e) {} } } catch (e) {} return { cleared: n }; });
   ipcMain.handle("exportCancel", async (_e, id) => { const j = expJobs.get(id); if (!j) throw new Error("unknown job"); try { j.ctrl.abort(); } catch (e) {} return { cancelled: id }; });
-  ipcMain.handle("exportActive", async (_e, outPath, quality) => {
+  ipcMain.handle("exportActive", async (_e, outPath, quality, scale) => {
     const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
     if (!seq) throw new Error("no sequence");
     const fp = outPath || defaultExportPath();
-    const r = await core.exportSequence(store.project, seq.id, fp, undefined, { quality });
+    const r = await core.exportSequence(store.project, seq.id, fp, undefined, { quality, scale });
     let v = await core.validateExport(fp, r.durationSec, true).catch((e) => ({ ok: false, details: String((e && e.message) || e) }));
     if (!v.ok && /no audio stream/.test(v.details)) v = { ...(await core.validateExport(fp, r.durationSec, false)), audioNote: "timeline sources carry no audio" };
     return { ...r, validation: v };

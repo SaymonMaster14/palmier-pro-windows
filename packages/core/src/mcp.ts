@@ -2,7 +2,7 @@
 import { EditorStore } from './store.js';
 import { activeSequence, sequenceDurationFrames, type Project } from './model.js';
 import { saveProject } from './persistence.js';
-import { exportSequence, validateExport, type ExportQuality } from './export.js';
+import { exportSequence, validateExport, type ExportQuality, type ExportScale } from './export.js';
 import { importAndPlace } from './library.js';
 import { importSubtitles } from './subs.js';
 import { searchProject } from './search.js';
@@ -96,7 +96,7 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'saveProject': await saveProject(p, q['path'] as string); return { saved: q['path'] };
     case 'export': {
       const out = q['outPath'] as string;
-      const r = await exportSequence(p, seqId as string, out, undefined, { quality: q['quality'] as ExportQuality | undefined });
+      const r = await exportSequence(p, seqId as string, out, undefined, { quality: q['quality'] as ExportQuality | undefined, scale: q['scale'] as ExportScale | undefined });
       const v = await validateExport(out, r.durationSec, true).catch(() => ({ ok: true as const, details: 'unvalidated' }));
       return { ...r, validation: v };
     }

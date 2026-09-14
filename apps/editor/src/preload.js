@@ -14,7 +14,8 @@ contextBridge.exposeInMainWorld("palmier", {
   agentRun: (text, ctx) => ipcRenderer.invoke("agentRun", text, ctx),
   getSettings: () => ipcRenderer.invoke("getSettings"),
   setSettings: (patch) => ipcRenderer.invoke("setSettings", patch),
-  exportStart: (outPath, quality) => ipcRenderer.invoke("exportStart", outPath, quality),
+  exportStart: (outPath, quality, scale) => ipcRenderer.invoke("exportStart", outPath, quality, scale),
+  exportActive: (outPath, quality, scale) => ipcRenderer.invoke("exportActive", outPath, quality, scale),
   exportStatus: (id) => ipcRenderer.invoke("exportStatus", id),
   exportCancel: (id) => ipcRenderer.invoke("exportCancel", id),
   onExportProgress: (cb) => ipcRenderer.on("export-progress", (_e, j) => cb(j)),
@@ -24,7 +25,7 @@ contextBridge.exposeInMainWorld("palmier", {
   newProject: (name) => ipcRenderer.invoke("newProject", name),
   listRecents: () => ipcRenderer.invoke("listRecents"),
   importMedia: (paths) => ipcRenderer.invoke("importMedia", paths),
-  exportActive: (outPath, quality) => ipcRenderer.invoke("exportActive", outPath, quality),
+  
   cacheInfo: () => ipcRenderer.invoke("cacheInfo"),
   cacheClear: () => ipcRenderer.invoke("cacheClear"),
   transcribe: (assetId) => ipcRenderer.invoke("transcribe", assetId),
