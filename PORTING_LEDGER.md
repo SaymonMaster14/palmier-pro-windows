@@ -652,3 +652,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged guides-export tree: portable exe fresh 85310722b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 92 evidence (light theme)
+
+- Palmier Appearance parity: full light theme with the upstream light values (base/surface/raised/prominent, text ramp, borders, danger, timecode, playhead) while the preview stage stays cinema-black like the original; new theme variables (tc/ph/tlbg/tlgrid/btnh) with dark defaults so default rendering is byte-identical in intent; theme select in Settings persisted via settings.json and applied at startup.
+- Proof: renderer JS vm-parse OK, unit suite 51/51, live THEME-PROBE dark=#18191c light=#f1f0ed clips=1 tl adapted back=#18191c saved=dark errs=0 (profile left dark), full smoke134 BOOT-OK DONE-0.

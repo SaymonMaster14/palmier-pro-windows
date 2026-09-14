@@ -1,5 +1,5 @@
 ﻿<!doctype html><html><head><meta charset="utf-8"><title>Palmier Pro Windows (community port)</title><style>:root{
---bg:#18191c;--bg1:#1e1f23;--bg2:#26272c;--bgelev:#303137;
+--bg:#18191c;--bg1:#1e1f23;--bg2:#26272c;--bgelev:#303137;--tc:#f29933;--ph:#ff524d;--phglow:rgba(255,82,77,.8);--tlbg:#0c0c10;--tlgrid:rgba(255,255,255,.025);--btnh:#2b2c33;
 --line:#2a2a35;--linestrong:#3b3b4a;
 --fg:#f2f2f6;--fg2:#c4c4cf;--fg3:#8f8f9b;--mut:#6e6e7a;
 --acc:#10b981;--accstrong:#059669;--accsoft:rgba(16,185,129,.15);--accglow:rgba(16,185,129,.45);
@@ -21,7 +21,7 @@ section.panel:last-child{border-right:none}
 .ptitle{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;margin:0;padding:10px 12px 8px;background:linear-gradient(var(--bg1) 85%,transparent);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3)}
 .ptitle::after{content:"";flex:1;height:1px;background:var(--line)}
 button{background:var(--bg2);color:var(--fg);border:1px solid var(--linestrong);border-radius:var(--rs);padding:5px 10px;margin:1px;font-size:12px;font-weight:500;cursor:pointer;transition:border-color .12s,background .12s,box-shadow .12s;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-button:hover{border-color:var(--acc);background:#2b2c33;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px var(--accsoft)}
+button:hover{border-color:var(--acc);background:var(--btnh);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px var(--accsoft)}
 button.primary{background:linear-gradient(180deg,var(--acc),var(--accstrong));border-color:var(--accstrong);color:#fff;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 10px var(--accglow)}
 button.primary:hover{background:linear-gradient(180deg,#14c992,var(--accstrong))}
 button:disabled{opacity:.45;cursor:default}
@@ -52,7 +52,7 @@ details{margin:0 12px 6px}summary{cursor:pointer;color:var(--fg3);font-size:11.5
 #transport{display:flex;align-items:center;gap:10px;width:100%}
 #transport button{padding:5px 9px;flex:none}
 #seek{flex:1}
-#tc{font:600 11.5px ui-monospace,Consolas,monospace;color:#f29933;background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap;box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+#tc{font:600 11.5px ui-monospace,Consolas,monospace;color:var(--tc);background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:3px 8px;white-space:nowrap;box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
 #rate{flex:none}
 #meter{width:100%;height:8px;background:var(--bg2);border:1px solid var(--line);border-radius:99px}
 #tlhint{color:var(--fg3);font-size:11px}
@@ -81,7 +81,7 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 #tlcol{display:flex;flex-direction:column;min-width:0}
 #ruler{position:relative;flex:none;height:30px;border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
 #ruler span{position:absolute;top:0;height:100%;border-left:1px solid var(--linestrong);padding:3px 0 0 4px;font:10px ui-monospace,Consolas,monospace;color:var(--fg3);pointer-events:none}
-#tl{position:relative;flex:1;background:#0c0c10;border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.025) 79px 80px)}
+#tl{position:relative;flex:1;background:var(--tlbg);border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,var(--tlgrid) 79px 80px)}
 .clip{position:absolute;height:44px;border-radius:7px;font-size:11.5px;font-weight:500;line-height:44px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.10);border-left-width:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .clip.k-video{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-video);border-left-color:color-mix(in srgb,var(--c-video),white 55%)}
 .clip.k-audio{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-audio);border-left-color:color-mix(in srgb,var(--c-audio),white 55%)}
@@ -97,7 +97,7 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 .kd:hover{background:#fff}
 .wv{position:absolute;left:0;right:0;bottom:0;height:18px;width:100%;opacity:.85}
 .mk{position:absolute;top:0;width:3px;height:10px;background:var(--mark);border-radius:1px;box-shadow:0 0 6px var(--mark)}
-.ph{position:absolute;top:0;bottom:0;width:2px;background:#ff524d;pointer-events:none;box-shadow:0 0 8px rgba(255,82,77,.8)}
+.ph{position:absolute;top:0;bottom:0;width:2px;background:var(--ph);pointer-events:none;box-shadow:0 0 8px var(--phglow)}
 #expq{font-size:11.5px;color:var(--fg2)}
 #expq span{color:var(--fg3)}
 #insp{padding:0 12px}
@@ -121,6 +121,8 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 #aglog>div,#aglog{white-space:pre-wrap}
 #log{white-space:pre-wrap;color:var(--fg3);font:10.5px/1.5 ui-monospace,Consolas,monospace;padding:0 12px;max-height:220px;overflow:auto}
 #sets{font-size:12px;padding:0 12px}
+:root{color-scheme:dark}
+[data-theme="light"]{color-scheme:light;--bg:#f1f0ed;--bg1:#f5f4f1;--bg2:#e9e7e2;--bgelev:#ffffff;--line:rgba(0,0,0,.14);--linestrong:rgba(0,0,0,.22);--fg:rgba(0,0,0,.92);--fg2:rgba(0,0,0,.78);--fg3:rgba(0,0,0,.66);--mut:rgba(0,0,0,.46);--danger:#b3261e;--tc:#944a05;--ph:#ff2e2b;--phglow:rgba(255,46,43,.5);--tlbg:#e4e2de;--tlgrid:rgba(0,0,0,.05);--btnh:#e0ded9}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--linestrong);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
@@ -164,7 +166,7 @@ button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outli
 .hsec{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--fg3);margin:14px 0 6px}
 #hrec{display:flex;flex-direction:column;gap:2px;max-height:180px;overflow:auto}
 #hrec a{display:block;color:var(--fg);font-size:12px;font-weight:600;text-decoration:none;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:border-color .12s,background .12s}
-#hrec a:hover{border-color:var(--acc);background:#2b2c33;color:var(--fg)}
+#hrec a:hover{border-color:var(--acc);background:var(--btnh);color:var(--fg)}
 .hempty{color:var(--mut);font-size:12px;padding:4px 8px}
 #sets .crow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
 #sets input[type=color]{width:40px;height:22px;padding:0;border:1px solid var(--linestrong);border-radius:6px;background:var(--bg2)}
@@ -177,7 +179,7 @@ button.on{border-color:var(--acc);background:var(--accsoft)}
 .tgroup button.on{border-color:var(--acc);background:var(--accsoft);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px var(--accsoft)}
 body[data-tool=razor] .clip{cursor:crosshair}
 body[data-tool=trim] .clip{cursor:ew-resize}
-.ph::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:8px solid #ff524d}
+.ph::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:8px solid var(--ph)}
 </style></head><body>
 <header id="topbar"><span class="brand"></span><strong>Palmier Pro Windows</strong><span id="proj" style="color:var(--mut)"></span><div class="tgroup"><span class="tlabel">Project</span><button id="bNew">New</button><button id="bOpen">Open</button><button id="bSave" title="Save (Ctrl+S)">Save</button><button id="bImport">Import</button></div><div class="tgroup"><span class="tlabel">Tools</span><button id="bModePointer" title="Pointer (V)">➤</button><button id="bModeRazor" title="Razor (C)">✂</button><button id="bModeTrim" title="Trim (T)">⇔</button></div><div class="tgroup"><span class="tlabel">Edit</span><button id="bSplit" title="Split @ playhead">✂ Split</button><button id="bUndo" title="Undo (Ctrl+Z)">↺ Undo</button><button id="bRedo" title="Redo (Ctrl+Shift+Z)">↻ Redo</button></div><div class="tgroup"><span class="tlabel">Export</span><button id="bExport">Export</button><div id="expq" style="font-size:12px"></div></div><div class="tgroup"><span class="tlabel">Link</span><button id="bLink">Link</button><button id="bUnlink">Unlink</button></div></header>
 <main><section class="panel"><div class="ptitle">Media</div><details><summary>Recent</summary><div id="rec"></div></details><input id="q" placeholder="search media" style="width:100%"><div id="media"></div><div id="hits" style="font-size:12px;color:var(--mut)"></div><details><summary>Markers</summary><div id="midx"></div></details></section>
@@ -604,6 +606,8 @@ function setPreset(pr) { if (!LAYPRE[pr]) return; LAY = { preset: pr, mw: LAYPRE
 function bindSplit(id, fn) { const el = document.querySelector(id); if (!el) return; el.addEventListener("mousedown", (e) => { e.preventDefault(); const x0 = e.clientX, y0 = e.clientY; const mv = (ev) => { fn(ev.clientX - x0, ev.clientY - y0); applyLayout(); }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); LAY.preset = "custom"; saveLayout(); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); el.addEventListener("dblclick", () => { setPreset("default"); }); }
 function initLayout() { applyLayout(); bindSplit("#spL", (dx) => { LAY.mw = clampN(LAY.mw + dx, 220, 640, 300); }); bindSplit("#spR", (dx) => { LAY.iw = clampN(LAY.iw - dx, 260, 560, 344); }); bindSplit("#tlsplit", (dx, dy) => { LAY.tl = clampN(LAY.tl - dy, 160, 640, 284); }); }
 initLayout();
+function setTheme(t) { document.documentElement.dataset.theme = t === "light" ? "light" : "dark"; }
+(async () => { try { const gs = await window.palmier.getSettings(); if (gs && gs.theme === "light") setTheme("light"); } catch (e) {} })();
 function setGuides(on) { const g = document.querySelector("#guides"); if (g) g.style.display = on ? "block" : "none"; const b = document.querySelector("#tGuides"); if (b) b.classList.toggle("on", !!on); try { localStorage.setItem("palmGuides", on ? "1" : "0"); } catch (e) {} }
 document.querySelector("#tGuides").addEventListener("click", () => { const g = document.querySelector("#guides"); setGuides(!g || g.style.display !== "block"); });
 try { if (localStorage.getItem("palmGuides") === "1") setGuides(true); } catch (e) {}
@@ -669,6 +673,7 @@ async function paintSettings() { try { const s = await window.palmier.getSetting
   const lb = document.createElement("label"); lb.textContent = "mcp port "; const inp = document.createElement("input"); inp.size = 6; inp.value = s.mcpPort; const btn = document.createElement("button"); btn.textContent = "save";
   btn.addEventListener("click", async () => { try { const r = await window.palmier.setSettings({ mcpPort: Number(inp.value) }); log("settings: " + JSON.stringify(r)); } catch (e) { log("settings FAIL: " + e.message); } });
   lb.appendChild(inp); box.appendChild(lb); box.appendChild(btn);
+  (() => { const lb4 = document.createElement("label"); lb4.className = "crow"; lb4.textContent = "theme "; const ts = document.createElement("select"); ["dark", "light"].forEach((o) => { const op = document.createElement("option"); op.value = o; op.textContent = o; ts.appendChild(op); }); ts.value = (s.theme === "light" ? "light" : "dark"); const tb = document.createElement("button"); tb.textContent = "save"; tb.addEventListener("click", async () => { try { const r = await window.palmier.setSettings({ theme: ts.value }); setTheme(ts.value); log("settings: " + JSON.stringify(r)); } catch (e) { log("settings FAIL: " + e.message); } }); lb4.appendChild(ts); box.appendChild(lb4); box.appendChild(tb); })();
   (() => { const lb3 = document.createElement("label"); lb3.className = "crow"; lb3.textContent = "export dir "; const di = document.createElement("input"); di.id = "exDir"; di.size = 20; di.value = s.exportDir || ""; di.placeholder = "default folder"; const sb = document.createElement("button"); sb.id = "exDirSave"; sb.textContent = "save"; sb.addEventListener("click", async () => { try { const r = await window.palmier.setSettings({ exportDir: di.value }); log("settings: " + JSON.stringify(r)); } catch (e) { log("settings FAIL: " + e.message); } }); lb3.appendChild(di); box.appendChild(lb3); box.appendChild(sb); })();
   (() => { const kinds = [["video", "Video"], ["audio", "Audio"], ["image", "Image"], ["text", "Text"]]; const cur = readClipColors(); const wrap = document.createElement("div"); wrap.style.marginTop = "8px"; const t = document.createElement("div"); t.textContent = "Timeline colors"; t.style.fontWeight = "700"; wrap.appendChild(t); kinds.forEach((kk) => { const k = kk[0], label = kk[1]; const lb2 = document.createElement("label"); lb2.className = "crow"; lb2.textContent = label + " "; const ci = document.createElement("input"); ci.type = "color"; ci.value = cur[k]; ci.addEventListener("input", () => { const q2 = readClipColors(); q2[k] = ci.value; try { localStorage.setItem("palmClipColors", JSON.stringify(q2)); } catch (e) {} applyClipColors(); }); lb2.appendChild(ci); wrap.appendChild(lb2); }); const rs = document.createElement("button"); rs.textContent = "reset colors"; rs.addEventListener("click", async () => { try { localStorage.removeItem("palmClipColors"); } catch (e) {} applyClipColors(); paintSettings(); }); wrap.appendChild(rs); box.appendChild(wrap); })();
 } catch (e) {} }
