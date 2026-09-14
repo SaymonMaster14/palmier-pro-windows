@@ -11,9 +11,9 @@ apps/editor/dist/
 slice*.mp4
 
 # turn scaffolding (never commit)
-/patch-*.cjs
-/probe-*.cjs
-/append-*.cjs
+patch-*.cjs
+probe-*.cjs
+append-*.cjs
 smoke*.log
 test*.log
 build*.log
@@ -28,3 +28,5 @@ tmp-*.cjs
 *-probe.js
 *-run.log
 *-run.err.log
+
+fix-*.cjs

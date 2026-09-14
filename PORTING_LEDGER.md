@@ -682,3 +682,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Transcription via Groq (whisper-large-v3-turbo, free tier, OpenAI-compatible verbose_json): new core transcribe module (segmentsToCues + cuesToSrt reusing the subtitle import path), main transcribe IPC (key from Settings, 25MB guard, transcript .srt to userData, auto-import as text clips), Groq key field in Settings (never logged), per-item CC button for audio/video with busy state. First UI pass caught a quote-escaping syntax error; fixed and re-proven.
 - Proof: transcribe.test.ts 2/2, suite 54/54, live TRANSCRIBE-PROBE btn=true honest=true restored=true errs=0 (no-key path); full live Groq run pending a user key. Full smoke138 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 94+95 packaging
+
+- Repackaged rename + groq-transcription tree: portable exe fresh 85310737b, postpackage cleanup done. Also broadened .gitignore turn-scaffolding patterns to all levels.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
