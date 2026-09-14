@@ -5,6 +5,7 @@ const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
+if (process.env.PALM_HEADLESS) app.commandLine.appendSwitch("mute-audio");
 let win = null;
 let store = null;
 let core = null;

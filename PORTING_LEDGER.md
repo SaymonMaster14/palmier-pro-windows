@@ -467,3 +467,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged export-quality tree: portable exe fresh 85299117b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 73 evidence (headless mute)
+
+- Headless runs no longer touch host audio: main appends Chromium mute-audio whenever PALM_HEADLESS=1 (one guard at startup covers smoke, MCP, persist, final-e2e and ad-hoc probes; user-owned portable runs unaffected, sound normal).
+- Proof: node --check main+preload clean; live MUTE-BOOT-OK headless dev boot healthy with the switch.
