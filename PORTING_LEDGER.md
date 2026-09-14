@@ -617,3 +617,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier marker-index parity: Markers section in the Media panel listing all timeline markers sorted by frame (name + timecode), click seeks the playhead, per-row delete; empty state included. Refresh-driven like the media list; existing ops only.
 - Proof: renderer JS vm-parse OK, midx id present, unit suite 50/50, live MKIDX-PROBE rows=2 seek=15 del=1 clean=0 errs=0 via real clicks, full smoke126 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 88 packaging
+
+- Repackaged marker-index tree: portable exe fresh 85305234b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
