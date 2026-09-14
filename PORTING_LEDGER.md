@@ -497,3 +497,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier-basic shortcuts wired to existing buttons: Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z and Ctrl+Y redo, Ctrl/Cmd+S save; plain S still splits (guarded against ctrl/meta), shortcut hints added to button titles. No new ops, no geometry changes.
 - Proof: renderer JS vm-parse OK, unit suite 47/47, live KEYS-PROBE split=true undo=true redo=true save=true nosplit=true errs=0 through real keydown paths; temp probe hook reverted (main.js clean).
+
+## 2026-09-13 turn 76 packaging
+
+- Repackaged shortcuts tree: portable exe fresh 85299461b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
