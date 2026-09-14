@@ -507,3 +507,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Timeline lanes widened to OpenReel/Palmier-roomy density: 56px track rows, 44px clips, 196px header rail, 16px filmstrips, 18px waveforms. Drag math audited horizontal-only (no Y-track resolution), so the only coupled constant (trackTop 44->56) moved with the CSS; all smoke-touchable ids/classes unchanged.
 - Proof: renderer JS vm-parse OK, unit suite 47/47, smoke106 BOOT-OK DONE-0 at prior shape incl. KEYDRAG expF match, ZOOM, CTX through the new geometry.
+
+## 2026-09-13 turn 77 packaging
+
+- Repackaged roomier-lanes tree: portable exe fresh 85300733b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
