@@ -692,3 +692,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - StoragePane parity start: Settings shows thumbnail cache size (files + KB) with a clear button; new cacheInfo/cacheClear IPC (thumbs dir only, transcripts never touched).
 - Proof: renderer JS vm-parse OK, unit suite 54/54, live CACHE-PROBE made=true cleared=true empty=true errs=0 via real IPC, full smoke140 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 96 packaging
+
+- Repackaged cache-controls tree: portable exe fresh 85312893b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
