@@ -597,3 +597,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Structural fix for the turn-79/85 revert class: main.js now ships a permanent PALM_PROBE_JS hook (reads a probe JS file, executes it in the window, prints the result, quits; env-gated, inert otherwise). No more temporary main.js edits, so future reverts cannot silently drop real changes like the OPS allowlist. Turn scaffolding patterns also added to .gitignore.
 - Proof: node --check main.js, live PROBE-HOOK-OK open=flex shut=none clips=1 errs=0 through the committed hook, unit suite 49/49, full smoke122 BOOT-OK DONE-0; helper scripts deleted.
+
+## 2026-09-13 turn 86 packaging
+
+- Repackaged probe-hook tree: portable exe fresh 85308783b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
