@@ -602,3 +602,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged probe-hook tree: portable exe fresh 85308783b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 87 evidence (media-to-timeline placement)
+
+- Closed a real UX gap: media items were view-only. Now each item has an append (+) button and double-click appends it to the timeline end (kind-matched unlocked track, auto-created when missing, full media duration, existing ops only, no core change). First live probes through the permanent PALM_PROBE_JS hook (no main.js edits).
+- Proof: renderer JS vm-parse OK, unit suite 50/50, live PLACE-PROBE dbl=true added=video errs=0 and PLACEBTN-PROBE btn=true kind=video dur=180 errs=0 via real dblclick/click, full smoke124 BOOT-OK DONE-0.

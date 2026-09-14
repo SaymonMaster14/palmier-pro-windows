@@ -36,6 +36,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border:none;border-ra
 #media{padding:2px 10px}
 #media .mi{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid transparent;border-radius:var(--r);margin-bottom:4px;transition:background .12s,border-color .12s}
 #media .mi:hover{background:var(--bg2);border-color:var(--line)}
+#media .mi button{margin-left:auto;flex:none;font-size:12px;font-weight:700;padding:2px 9px}
 #media img{width:96px;height:54px;object-fit:cover;border-radius:5px;background:#000;flex:none;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.5)}
 #media .mname{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #media .kbadge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg2);background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:0 7px;margin-top:2px}
@@ -205,7 +206,7 @@ async function refresh() {
   $("proj").textContent = S.name + " / " + SEQ.name;
   const q = ($("q").value || "").toLowerCase();
   const shown = q ? S.media.filter(m => (m.name + " " + m.kind).toLowerCase().includes(q)) : S.media;
-  $("media").innerHTML = shown.map(m => "<div class=mi>" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + ">") + "<div class=minfo><div class=mname>" + m.name + "</div><span class=kbadge>" + m.kind + "</span></div></div>").join("") + (shown.length ? "" : "<div class=empty>No media yet — use Import to begin</div>");
+  $("media").innerHTML = shown.map(m => "<div class=mi data-asset=" + m.id + ">" + (m.kind === "audio" ? "" : "<img data-th=" + m.id + ">") + "<div class=minfo><div class=mname>" + m.name + "</div><span class=kbadge>" + m.kind + "</span></div><button data-add=" + m.id + " title=\"Append to timeline\">+</button></div>").join("") + (shown.length ? "" : "<div class=empty>No media yet — use Import to begin</div>");
   for (const im of document.querySelectorAll("img[data-th]")) { window.palmier.thumb(im.dataset.th).then(p => { im.src = "file:///" + p.replace(/\\/g, "/"); }).catch(() => {}); }
   $("hits").textContent = q ? shown.length + " of " + S.media.length : "";
   const dur = DUR();
@@ -531,6 +532,7 @@ document.querySelector("#tEnd").addEventListener("click", async () => { if (!SEQ
 document.querySelector("#zIn").addEventListener("click", async () => { const vd = viewDur(); const nd = Math.max(Math.round(vd / 1.5), 30); if (nd >= DUR()) { VIEW = null; } else { VIEW = { start: Math.min(Math.max(Math.round(FRAME - nd / 2), 0), Math.max(DUR() - nd, 0)), dur: Math.min(nd, DUR()) }; } await refresh(); zoomLabel(); });
 document.querySelector("#zOut").addEventListener("click", async () => { const vd = viewDur(); const nd = Math.round(vd * 1.5); if (nd >= DUR()) { VIEW = null; } else { const cc = VIEW ? VIEW.start + VIEW.dur / 2 : DUR() / 2; VIEW = { start: Math.min(Math.max(Math.round(cc - nd / 2), 0), Math.max(DUR() - nd, 0)), dur: nd }; } await refresh(); zoomLabel(); });
 document.querySelector("#zFit").addEventListener("click", async () => { VIEW = null; await refresh(); zoomLabel(); });
+async function placeMediaAtEnd(assetId) { if (!SEQ) return; const m = (S.media || []).find((x) => x.id === assetId); if (!m || (m.kind !== "video" && m.kind !== "audio" && m.kind !== "image")) return; const tk = m.kind === "audio" ? "audio" : "video"; let tr = SEQ.tracks.find((t) => t.kind === tk && !t.locked); if (!tr) { const ra = await window.palmier.op("addTrack", [SEQ.id, tk, (tk === "audio" ? "A" : "V") + (SEQ.tracks.filter((t) => t.kind === tk).length + 1)]); log("addTrack: " + JSON.stringify(ra)); await refresh(); tr = SEQ.tracks.find((t) => t.kind === tk && !t.locked); if (!tr) return; } const start = SEQ.clips.filter((c) => c.trackId === tr.id).reduce((a, c) => Math.max(a, c.startFrame + c.durationFrames), 0); const ck = m.kind === "audio" ? "audio" : m.kind === "image" ? "image" : "video"; const r2 = await window.palmier.op("placeClip", [SEQ.id, tr.id, { kind: ck, assetId: m.id, startFrame: start, durationFrames: Math.max(m.durationFrames || 90, 1), name: m.name }]); log("place: " + JSON.stringify(r2)); await refresh(); }
 async function addTrackKind(kind) {
   if (!SEQ) return;
   const n = SEQ.tracks.filter((t) => t.kind === kind).length + 1;
@@ -586,6 +588,8 @@ function setPreset(pr) { if (!LAYPRE[pr]) return; LAY = { preset: pr, mw: LAYPRE
 function bindSplit(id, fn) { const el = document.querySelector(id); if (!el) return; el.addEventListener("mousedown", (e) => { e.preventDefault(); const x0 = e.clientX, y0 = e.clientY; const mv = (ev) => { fn(ev.clientX - x0, ev.clientY - y0); applyLayout(); }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); LAY.preset = "custom"; saveLayout(); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); el.addEventListener("dblclick", () => { setPreset("default"); }); }
 function initLayout() { applyLayout(); bindSplit("#spL", (dx) => { LAY.mw = clampN(LAY.mw + dx, 220, 640, 300); }); bindSplit("#spR", (dx) => { LAY.iw = clampN(LAY.iw - dx, 260, 560, 344); }); bindSplit("#tlsplit", (dx, dy) => { LAY.tl = clampN(LAY.tl - dy, 160, 640, 284); }); }
 initLayout();
+document.querySelector("#media").addEventListener("click", (e) => { const b = e.target.closest ? e.target.closest("[data-add]") : null; if (b && b.dataset.add) placeMediaAtEnd(b.dataset.add); });
+document.querySelector("#media").addEventListener("dblclick", (e) => { if (e.target.closest && e.target.closest("[data-add]")) return; const mi = e.target.closest ? e.target.closest(".mi") : null; if (mi && mi.dataset.asset) placeMediaAtEnd(mi.dataset.asset); });
 let MKPOP = null;
 const MKCOLORS = ["#4094FF", "#40BF5C", "#F2C72E", "#FF8C26", "#E64040", "#A666F2"];
 function hexToRgb(h) { return { r: parseInt(h.slice(1, 3), 16) / 255, g: parseInt(h.slice(3, 5), 16) / 255, b: parseInt(h.slice(5, 7), 16) / 255, a: 1 }; }
