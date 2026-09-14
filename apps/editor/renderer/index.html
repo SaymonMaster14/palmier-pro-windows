@@ -72,10 +72,10 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 #ruler span{position:absolute;top:0;height:100%;border-left:1px solid var(--linestrong);padding:3px 0 0 4px;font:10px ui-monospace,Consolas,monospace;color:var(--fg3);pointer-events:none}
 #tl{position:relative;flex:1;background:#0c0c10;border-radius:0;overflow:hidden;user-select:none;background-image:repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.025) 79px 80px)}
 .clip{position:absolute;height:44px;border-radius:7px;font-size:11.5px;font-weight:500;line-height:44px;padding:0 8px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid rgba(255,255,255,.10);border-left-width:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 8px rgba(0,0,0,.45);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-.clip.k-video{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-video);border-left-color:#7fd4f7}
-.clip.k-audio{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-audio);border-left-color:#7fe0b8}
-.clip.k-image{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-image);border-left-color:#c9a8f2}
-.clip.k-text{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-text);border-left-color:#ffe1a8}
+.clip.k-video{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-video);border-left-color:color-mix(in srgb,var(--c-video),white 55%)}
+.clip.k-audio{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-audio);border-left-color:color-mix(in srgb,var(--c-audio),white 55%)}
+.clip.k-image{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-image);border-left-color:color-mix(in srgb,var(--c-image),white 55%)}
+.clip.k-text{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 46%),var(--c-text);border-left-color:color-mix(in srgb,var(--c-text),white 55%)}
 .clip.sel{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 3px rgba(255,255,255,.16),0 2px 8px rgba(0,0,0,.45)}
 .clip.active{box-shadow:0 0 0 2px var(--warn) inset,0 2px 8px rgba(0,0,0,.45)}
 .clip .h{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;border-radius:6px}
@@ -147,6 +147,8 @@ button:focus-visible,input:focus,select:focus{outline:1px solid var(--acc);outli
 #hrec a{display:block;color:var(--fg);font-size:12px;font-weight:600;text-decoration:none;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:border-color .12s,background .12s}
 #hrec a:hover{border-color:var(--acc);background:#2b2c33;color:var(--fg)}
 .hempty{color:var(--mut);font-size:12px;padding:4px 8px}
+#sets .crow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+#sets input[type=color]{width:40px;height:22px;padding:0;border:1px solid var(--linestrong);border-radius:6px;background:var(--bg2)}
 .vsplit{width:5px;margin:0 -2px;cursor:col-resize;flex:none;z-index:5;border-radius:3px}
 .vsplit:hover{background:var(--accsoft)}
 #tlsplit{height:5px;margin:-2px 0;cursor:row-resize;flex:none;z-index:5}
@@ -577,6 +579,10 @@ function setPreset(pr) { if (!LAYPRE[pr]) return; LAY = { preset: pr, mw: LAYPRE
 function bindSplit(id, fn) { const el = document.querySelector(id); if (!el) return; el.addEventListener("mousedown", (e) => { e.preventDefault(); const x0 = e.clientX, y0 = e.clientY; const mv = (ev) => { fn(ev.clientX - x0, ev.clientY - y0); applyLayout(); }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); LAY.preset = "custom"; saveLayout(); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); el.addEventListener("dblclick", () => { setPreset("default"); }); }
 function initLayout() { applyLayout(); bindSplit("#spL", (dx) => { LAY.mw = clampN(LAY.mw + dx, 220, 640, 300); }); bindSplit("#spR", (dx) => { LAY.iw = clampN(LAY.iw - dx, 260, 560, 344); }); bindSplit("#tlsplit", (dx, dy) => { LAY.tl = clampN(LAY.tl - dy, 160, 640, 284); }); }
 initLayout();
+const CLIPCOLORDEF = { video: "#2a6b8a", audio: "#2f7d68", image: "#715486", text: "#bd8a3c" };
+function readClipColors() { try { const raw = localStorage.getItem("palmClipColors"); if (raw) { const q = JSON.parse(raw); const out = {}; for (const k in CLIPCOLORDEF) out[k] = /^#[0-9a-fA-F]{6}$/.test(q[k] || "") ? q[k] : CLIPCOLORDEF[k]; return out; } } catch (e) {} return { video: CLIPCOLORDEF.video, audio: CLIPCOLORDEF.audio, image: CLIPCOLORDEF.image, text: CLIPCOLORDEF.text }; }
+function applyClipColors() { const q = readClipColors(); const kinds = { video: "--c-video", audio: "--c-audio", image: "--c-image", text: "--c-text" }; for (const k in kinds) document.documentElement.style.setProperty(kinds[k], q[k]); return q; }
+applyClipColors();
 function toggleExp(force) { const o = document.querySelector("#expov"); if (!o) return; const show = force !== undefined ? force : o.style.display !== "flex"; o.style.display = show ? "flex" : "none"; }
 document.querySelector("#exClose").addEventListener("click", () => toggleExp(false));
 document.querySelector("#expov").addEventListener("click", (e) => { if (e.target.id === "expov") toggleExp(false); });
@@ -613,6 +619,7 @@ async function paintSettings() { try { const s = await window.palmier.getSetting
   const lb = document.createElement("label"); lb.textContent = "mcp port "; const inp = document.createElement("input"); inp.size = 6; inp.value = s.mcpPort; const btn = document.createElement("button"); btn.textContent = "save";
   btn.addEventListener("click", async () => { try { const r = await window.palmier.setSettings({ mcpPort: Number(inp.value) }); log("settings: " + JSON.stringify(r)); } catch (e) { log("settings FAIL: " + e.message); } });
   lb.appendChild(inp); box.appendChild(lb); box.appendChild(btn);
+  (() => { const kinds = [["video", "Video"], ["audio", "Audio"], ["image", "Image"], ["text", "Text"]]; const cur = readClipColors(); const wrap = document.createElement("div"); wrap.style.marginTop = "8px"; const t = document.createElement("div"); t.textContent = "Timeline colors"; t.style.fontWeight = "700"; wrap.appendChild(t); kinds.forEach((kk) => { const k = kk[0], label = kk[1]; const lb2 = document.createElement("label"); lb2.className = "crow"; lb2.textContent = label + " "; const ci = document.createElement("input"); ci.type = "color"; ci.value = cur[k]; ci.addEventListener("input", () => { const q2 = readClipColors(); q2[k] = ci.value; try { localStorage.setItem("palmClipColors", JSON.stringify(q2)); } catch (e) {} applyClipColors(); }); lb2.appendChild(ci); wrap.appendChild(lb2); }); const rs = document.createElement("button"); rs.textContent = "reset colors"; rs.addEventListener("click", async () => { try { localStorage.removeItem("palmClipColors"); } catch (e) {} applyClipColors(); paintSettings(); }); wrap.appendChild(rs); box.appendChild(wrap); })();
 } catch (e) {} }
 paintSettings();
 hookMeter();

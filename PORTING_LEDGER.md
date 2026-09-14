@@ -572,3 +572,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged export-sheet tree: portable exe fresh 85301463b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 84 evidence (timeline colors settings)
+
+- Palmier TimelineColorsPane parity: per-kind clip color pickers (video/audio/image/text) in Settings with live apply, localStorage persistence with hex validation, reset-to-default; clip edge spines now derive from the kind color via color-mix so custom palettes stay coherent.
+- Proof: renderer JS vm-parse OK, unit suite 49/49, live COLORS-PROBE def=#2a6b8a n=4 set=#ff0000 key=true reset=#2a6b8a gone=true errs=0 (profile left clean), full smoke118 BOOT-OK DONE-0; temp probe hook reverted.
