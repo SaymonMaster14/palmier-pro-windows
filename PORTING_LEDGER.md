@@ -732,3 +732,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier export-settings parity: Original/720p/1080p scale select in the export sheet, threaded from UI through IPC/MCP into a validated ExportScale core option that appends a final output scaler; default path byte-identical by construction (scaler only when set).
 - Proof: scale.test.ts (args incl. bad-scale rejection), suite 57/57, real draft 720p render bytes=88055 valid h=720 w=1280, live SCALEUI-PROBE open=flex scale=720p done=done errs=0 through the sheet, full smoke148 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 100 packaging
+
+- Repackaged export-scale tree: portable exe fresh 85314034b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
