@@ -70,7 +70,7 @@ function registerIpc() {
   ipcMain.handle("exportStart", async (_e, outPath, quality) => {
     const seq = store.project.sequences.find((x) => x.id === store.project.activeSequenceId) || store.project.sequences[0];
     if (!seq) throw new Error("no sequence");
-    const fp = outPath || path.join(app.getPath("userData"), "export.mp4");
+    const fp = outPath || defaultExportPath();
     const id = "exp" + (++expN);
     const ctrl = new AbortController();
     const job = { id, outPath: fp, status: "running", progress: 0 };
@@ -87,7 +87,7 @@ function registerIpc() {
   ipcMain.handle("exportActive", async (_e, outPath, quality) => {
     const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];
     if (!seq) throw new Error("no sequence");
-    const fp = outPath || path.join(app.getPath("userData"), "export.mp4");
+    const fp = outPath || defaultExportPath();
     const r = await core.exportSequence(store.project, seq.id, fp, undefined, { quality });
     let v = await core.validateExport(fp, r.durationSec, true).catch((e) => ({ ok: false, details: String((e && e.message) || e) }));
     if (!v.ok && /no audio stream/.test(v.details)) v = { ...(await core.validateExport(fp, r.durationSec, false)), audioNote: "timeline sources carry no audio" };
@@ -119,6 +119,7 @@ function registerIpc() {
   });
 }
 
+function defaultExportPath() { try { const d = readSettings().exportDir; if (d && typeof d === "string" && d.trim()) { try { fs.mkdirSync(d.trim(), { recursive: true }); } catch (e) {} return path.join(d.trim(), "export.mp4"); } } catch (e) {} return path.join(app.getPath("userData"), "export.mp4"); }
 function checkDeps() {
   const out = {};
   for (const bin of ["ffmpeg", "ffprobe"]) {
