@@ -552,3 +552,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged scrub-fields tree: portable exe fresh 85301310b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 82 evidence (shortcuts overlay + home cards)
+
+- Shortcuts overlay (? button in timeline bar, ? toggles, Esc/backdrop closes) listing all 12 bindings in a pill grid; Home recents restyled as cards (title tooltip, accent hover) with anchors/counts unchanged for SMOKE-HOME.
+- Proof: renderer JS vm-parse OK, overlay ids present, unit suite 49/49, live KEYSOV-PROBE open=flex rows=24 qclose=none qopen=flex escclose=none errs=0 via real clicks/keys, full smoke114 BOOT-OK DONE-0; temp probe hook reverted.
