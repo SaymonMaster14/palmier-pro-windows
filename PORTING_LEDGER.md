@@ -637,3 +637,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier TimelineTabBar parity: tab row above the timeline (active highlight, + for new with V1/A1, double-click inline rename), switching resets selection/playhead/zoom; new undoable addSequence/setActiveSequence/renameSequence core ops threaded through MCP and the IPC allowlist (in the same commit as the UI, with readback).
 - Proof: sequences.test.ts added, suite 51/51, live SEQ-PROBE tabs=1 add=true activeNew=true rename=Cut back=true proj=true errs=0 via real clicks, full smoke130 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 90 packaging
+
+- Repackaged sequence-tabs tree: portable exe fresh 85307403b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
