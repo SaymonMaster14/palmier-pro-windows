@@ -627,3 +627,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Agent input learned pro-console manners: clickable example chips (run through the real Enter path), Up/Down command history, empty commands ignored, and multi-line agent output (fixed a literal backslash-n quirk in the log formatter). SMOKE-AGENT output verified byte-identical to the two prior baselines.
 - Proof: renderer JS vm-parse OK, agchips id present, unit suite 50/50, live AGENTUX-PROBE chips=4 ran=true logged=true hist=marker intro errs=0 via real chip click + history key, full smoke128 BOOT-OK DONE-0.
+
+## 2026-09-13 turn 89 packaging
+
+- Repackaged agent-UX tree: portable exe fresh 85305557b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
