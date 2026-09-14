@@ -737,3 +737,7 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged export-scale tree: portable exe fresh 85314034b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 close-out (user rescoped)
+
+- User dropped nesting/multicam and AI generation from scope; transcription live-Groq run still pending a user API key (plumbing + error path verified, key never committed). UI/UX parity work delivered as above; packaged portable verified FINAL-E2E-PASS.
