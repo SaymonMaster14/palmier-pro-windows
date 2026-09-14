@@ -667,3 +667,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Clip context menu gained Speed 0.5x/1x/2x for video+audio clips (existing setSpeed op, 0.25-4 validation untouched); text/image clips keep the lean menu via conditional spread.
 - Proof: renderer JS vm-parse OK, unit suite 51/51, live SPEEDMENU-PROBE menu=true hasbtn=true speed=2 errs=0 via real right-click (speed reset after), full smoke136 BOOT-OK DONE-0 with the stock split path intact.
+
+## 2026-09-13 turn 93 packaging
+
+- Repackaged speed-menu tree: portable exe fresh 85308224b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
