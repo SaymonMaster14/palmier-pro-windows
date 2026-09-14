@@ -18,4 +18,5 @@ export * from './agent.js';
 export * from './keyexpr.js';
 
 export * from './subs.js';
+export * from './transcribe.js';
 

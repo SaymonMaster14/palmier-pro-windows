@@ -93,6 +93,31 @@ function registerIpc() {
     if (!v.ok && /no audio stream/.test(v.details)) v = { ...(await core.validateExport(fp, r.durationSec, false)), audioNote: "timeline sources carry no audio" };
     return { ...r, validation: v };
   });
+  ipcMain.handle("transcribe", async (_e, assetId) => {
+    const m = store.project.media.find((x) => x.id === assetId);
+    if (!m) throw new Error("media not found");
+    if (m.kind !== "audio" && m.kind !== "video") throw new Error("transcribe needs audio or video");
+    const key = readSettings().groqKey;
+    if (!key || typeof key !== "string" || !key.trim()) throw new Error("groq key missing: set it in Settings");
+    const st = fs.statSync(m.path);
+    if (st.size > 25 * 1024 * 1024) throw new Error("file over 25MB groq limit; split it first");
+    const buf = fs.readFileSync(m.path);
+    const ext = ((m.path.split(".").pop() || "wav").toLowerCase());
+    const form = new FormData();
+    form.append("file", new Blob([buf], { type: "audio/" + ext }), "audio." + ext);
+    form.append("model", "whisper-large-v3-turbo");
+    form.append("response_format", "verbose_json");
+    const r = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { Authorization: "Bearer " + key.trim() }, body: form });
+    if (!r.ok) throw new Error("groq " + r.status + ": " + (await r.text()).slice(0, 200));
+    const cues = core.segmentsToCues(await r.json());
+    if (!cues.length) throw new Error("groq returned no segments");
+    const dir = path.join(app.getPath("userData"), "transcripts");
+    fs.mkdirSync(dir, { recursive: true });
+    const fp = path.join(dir, assetId + ".srt");
+    fs.writeFileSync(fp, core.cuesToSrt(cues));
+    const ids = await core.importSubtitles(store, fp);
+    return { assetId, srtPath: fp, cueCount: cues.length, clipIds: ids };
+  });
   ipcMain.handle("agentRun", async (_e, text, ctx) => {
     try {
       const it = core.parseAgentCommand(store.project, ctx, String(text));

@@ -677,3 +677,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Rename parity: double-click a track header renames inline; clip context menu gained Rename with a floating editor (Enter commits, Esc cancels); new undoable renameTrack/renameClip core ops with validation threaded through MCP and the IPC allowlist. First probe caught the missing allowlist entries (unknown op); fixed and re-proven.
 - Proof: rename.test.ts added, suite 52/52, live RENAME-PROBE track=Rhythm clip=Lead emptykept=Lead errs=0 via real UI paths with names restored after.
+
+## 2026-09-13 turn 95 evidence (groq transcription)
+
+- Transcription via Groq (whisper-large-v3-turbo, free tier, OpenAI-compatible verbose_json): new core transcribe module (segmentsToCues + cuesToSrt reusing the subtitle import path), main transcribe IPC (key from Settings, 25MB guard, transcript .srt to userData, auto-import as text clips), Groq key field in Settings (never logged), per-item CC button for audio/video with busy state. First UI pass caught a quote-escaping syntax error; fixed and re-proven.
+- Proof: transcribe.test.ts 2/2, suite 54/54, live TRANSCRIBE-PROBE btn=true honest=true restored=true errs=0 (no-key path); full live Groq run pending a user key. Full smoke138 BOOT-OK DONE-0.
