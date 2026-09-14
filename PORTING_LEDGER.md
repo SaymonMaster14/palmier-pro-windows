@@ -582,3 +582,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged clip-colors tree: portable exe fresh 85303395b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 85 evidence (marker editor + OPS repair)
+
+- Palmier MarkerEditor parity: click a timeline marker opens an editor popover (name/frame/comment/status/color presets, Save/Delete, Esc closes); new undoable updateMarker core op with validation threaded through MCP and IPC; marker nodes got quoted attrs and per-marker colors. Also repaired a self-inflicted regression: the turn-79 temp-hook revert had dropped slipClip from the main-process OPS allowlist, breaking trim-drag over IPC (store/MCP were intact); allowlist now carries slipClip + updateMarker, re-proven live.
+- Proof: updateMarker unit test, suite 50/50, live MK-PROBE open=block pre-ok saved=true delleft=1 slip=true errs=0 via real clicks (incl. trim-drag IPC re-verify), full smoke120 BOOT-OK DONE-0; temp probe hook reverted and OPS re-applied after revert with readback.

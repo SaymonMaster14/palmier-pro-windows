@@ -63,6 +63,7 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'rippleDelete': return store.rippleDelete(seqId as string, q['clipId'] as string);
     case 'addMarker': return store.addMarker(seqId as string, q['marker'] as never);
     case 'removeMarker': return store.removeMarker(seqId as string, q['markerId'] as string);
+    case 'updateMarker': return store.updateMarker(seqId as string, q['markerId'] as string, q['patch'] as never);
     case 'listMarkers': { if (!seq) throw new Error('sequence not found'); return seq.markers ?? []; }
     case 'setFade': return store.setFade(seqId as string, q['clipId'] as string, q['fadeInFrames'] as number, q['fadeOutFrames'] as number);
     case 'setKeyframe': return store.setKeyframe(seqId as string, q['clipId'] as string, q['track'] as 'opacity' | 'volume', q['kf'] as never);

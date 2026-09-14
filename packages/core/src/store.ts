@@ -151,6 +151,23 @@ export class EditorStore {
       return { ok: true, ids: [m.id], warnings: [], label: "removeMarker" };
     });
   }
+  updateMarker(seqId: string, markerId: string, patch: { name?: string; startFrame?: number; comment?: string; status?: 'open' | 'review' | 'resolved'; color?: { r: number; g: number; b: number; a: number } }): Receipt {
+    return this.exec('updateMarker', (p) => {
+      const s = req_seq(p, seqId); s.markers ??= [];
+      const m = s.markers.find(x => x.id === markerId); if (!m) throw new Error('marker not found');
+      if (patch.name !== undefined || patch.comment !== undefined || patch.startFrame !== undefined) validateMarker({ name: patch.name ?? m.name, startFrame: patch.startFrame ?? m.startFrame, comment: patch.comment ?? m.comment });
+      if (patch.status !== undefined && patch.status !== 'open' && patch.status !== 'review' && patch.status !== 'resolved') throw new Error('bad marker status');
+      if (patch.color !== undefined) { const cc = patch.color; if (!Number.isFinite(cc.r) || !Number.isFinite(cc.g) || !Number.isFinite(cc.b) || !Number.isFinite(cc.a) || cc.r < 0 || cc.g < 0 || cc.b < 0 || cc.a < 0 || cc.r > 1 || cc.g > 1 || cc.b > 1 || cc.a > 1) throw new Error('bad marker color'); }
+      let touched = false;
+      if (patch.name !== undefined && patch.name !== m.name) { m.name = patch.name; touched = true; }
+      if (patch.startFrame !== undefined && patch.startFrame !== m.startFrame) { m.startFrame = patch.startFrame; touched = true; }
+      if (patch.comment !== undefined && patch.comment !== m.comment) { m.comment = patch.comment ?? ''; touched = true; }
+      if (patch.status !== undefined && patch.status !== m.status) { m.status = patch.status; touched = true; }
+      if (patch.color !== undefined) { m.color = { r: patch.color.r, g: patch.color.g, b: patch.color.b, a: patch.color.a }; touched = true; }
+      if (!touched) return { noop: true };
+      return { ok: true, ids: [m.id], warnings: [], label: 'updateMarker' };
+    });
+  }
   rippleDelete(seqId: string, clipId: string): Receipt {
 ﻿    return this.exec('rippleDelete', (p) => {
       const s = req_seq(p, seqId); const c = req_clip(s, clipId);
