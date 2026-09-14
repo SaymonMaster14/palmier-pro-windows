@@ -567,3 +567,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier-style Export sheet: bExport opens a modal (quality select moved in from the topbar, Start/Close, queue list with progress bars + per-status colors + cancel per job, Esc/backdrop close). Progress rows now render into the sheet queue (single cleanup loop, exrow class). First probe caught a missing row class (rows invisible to UI queries); fixed and re-proven.
 - Proof: renderer JS vm-parse OK, sheet ids unique, unit suite 49/49, live EXP-PROBE open=flex prog=100 stop=done close=none errs=0 (full draft export through the sheet UI); cancel path unchanged pre-existing code covered by SMOKE-QCANCEL; full smoke116 BOOT-OK DONE-0; temp probe hook reverted.
+
+## 2026-09-13 turn 83 packaging
+
+- Repackaged export-sheet tree: portable exe fresh 85301463b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
