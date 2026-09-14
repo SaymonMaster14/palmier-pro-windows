@@ -83,6 +83,10 @@ function registerIpc() {
     return { id, outPath: fp };
   });
   ipcMain.handle("exportStatus", async (_e, id) => { const j = expJobs.get(id); if (!j) throw new Error("unknown job"); const { ctrl, ...rest } = j; return rest; });
+  const thumbDir = () => path.join(app.getPath("userData"), "thumbs");
+  const dirSize = (d) => { let n = 0, c = 0; try { for (const f of fs.readdirSync(d)) { try { const st = fs.statSync(path.join(d, f)); if (st.isFile()) { n += st.size; c++; } } catch (e) {} } } catch (e) {} return { bytes: n, files: c }; };
+  ipcMain.handle("cacheInfo", async () => ({ thumbs: dirSize(thumbDir()) }));
+  ipcMain.handle("cacheClear", async () => { const d = thumbDir(); let n = 0; try { for (const f of fs.readdirSync(d)) { try { fs.rmSync(path.join(d, f), { force: true }); n++; } catch (e) {} } } catch (e) {} return { cleared: n }; });
   ipcMain.handle("exportCancel", async (_e, id) => { const j = expJobs.get(id); if (!j) throw new Error("unknown job"); try { j.ctrl.abort(); } catch (e) {} return { cancelled: id }; });
   ipcMain.handle("exportActive", async (_e, outPath, quality) => {
     const seq = store.project.sequences.find((s) => s.id === store.project.activeSequenceId) || store.project.sequences[0];

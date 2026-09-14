@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld("palmier", {
   listRecents: () => ipcRenderer.invoke("listRecents"),
   importMedia: (paths) => ipcRenderer.invoke("importMedia", paths),
   exportActive: (outPath, quality) => ipcRenderer.invoke("exportActive", outPath, quality),
+  cacheInfo: () => ipcRenderer.invoke("cacheInfo"),
+  cacheClear: () => ipcRenderer.invoke("cacheClear"),
   transcribe: (assetId) => ipcRenderer.invoke("transcribe", assetId),
   geom: () => ({
     pxToFrame: (...a) => ipcRenderer.sendSync("geomSync", "pxToFrame", a),
