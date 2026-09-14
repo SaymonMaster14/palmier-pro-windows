@@ -707,3 +707,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged sequence-delete tree: portable exe fresh 85313048b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 98 evidence (guided tour)
+
+- Onboarding parity: 5-step spotlight tour (toolbar, media, preview, timeline, export) with highlight ring, positioned cards, Back/Next/Done, Esc closes; entry via timeline Tour button and the Home card.
+- Proof: renderer JS vm-parse OK, all 11 tour ids present, unit suite 55/55, live TOUR-PROBE open=block steps=1..5 hl=block back ok shut=none errs=0 via real clicks, full smoke144 BOOT-OK DONE-0.
