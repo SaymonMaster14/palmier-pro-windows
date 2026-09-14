@@ -482,3 +482,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged UI-polish tree: portable exe fresh 85299548b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 75 evidence (Palmier toolbar groups, track strips)
+
+- Topbar regrouped into the Palmier toolbar anatomy (Project | Edit | Export | Link) with labeled hairline-divider groups; every control kept id, label and order. Timeline track headers gained the Palmier 3px kind color strip; playhead gained a red knob marker. DOM/geometry for all smoke-touchable nodes unchanged.
+- Proof: renderer JS vm-parse OK, topbar divs balanced 5/5 with all 12 ids present, unit suite 47/47, smoke104 BOOT-OK DONE-0 at smoke102 shape.
