@@ -717,3 +717,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged tour tree: portable exe fresh 85313297b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 99 evidence (sequence duplicate)
+
+- Tabs lifecycle complete: right-click menu offers Duplicate always and Delete when 2+ sequences; new undoable duplicateSequence core op (fresh ids, track remap, markers carried, active switched) threaded through MCP and IPC. First probe caught a real bug: the menu was suppressed with a single sequence; fixed (conditional items) and both menu states re-proven.
+- Proof: sequences test extended, suite 56/56, live SEQDUP-PROBE dup=true active=true clips=true clean=true and SEQCTX-PROBE dup=true del=true errs=0 via real tab menus, full smoke146 BOOT-OK DONE-0.

@@ -39,3 +39,26 @@ test('sequences remove with active fallback', () => {
   assert.ok(st.undo());
   assert.equal(st.project.sequences.length, 2);
 });
+
+test('sequences duplicate carries tracks clips and markers', () => {
+  const st = new EditorStore(createProject('sqc'));
+  const a = st.addSequence('A');
+  const q = st.project.sequences[0];
+  st.addMedia({ path: 'v.mp4', kind: 'video', name: 'v', durationFrames: 180, fps: q.fps });
+  st.placeClip(q.id, q.tracks[0].id, { kind: 'video', assetId: st.project.media[0].id, startFrame: 0, durationFrames: 90, sourceInFrame: 0, name: 'v' });
+  st.addMarker(q.id, { name: 'm', startFrame: 10 });
+  const d = st.addSequence;
+  const r = st.duplicateSequence(a.ids[0]);
+  assert.ok(r.ok);
+  assert.equal(st.project.sequences.length, 2);
+  const cp = st.project.sequences[1];
+  assert.equal(cp.name, 'A copy');
+  assert.equal(cp.clips.length, 1);
+  assert.equal(cp.markers.length, 1);
+  assert.ok(cp.id !== a.ids[0] && cp.tracks[0].id !== q.tracks[0].id && cp.clips[0].id !== st.project.sequences[0].clips[0].id);
+  assert.equal(cp.clips[0].trackId, cp.tracks[0].id);
+  assert.equal(st.project.activeSequenceId, cp.id);
+  assert.ok(!st.duplicateSequence('nope').ok);
+  assert.ok(st.undo());
+  assert.equal(st.project.sequences.length, 1);
+});

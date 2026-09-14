@@ -87,6 +87,21 @@ export class EditorStore {
       return { ok: true, ids: [c.id], warnings: [], label: "renameClip" };
     });
   }
+  duplicateSequence(seqId: string, name?: string): Receipt {
+    return this.exec("duplicateSequence", (p) => {
+      const s = p.sequences.find((x) => x.id === seqId); if (!s) throw new Error("sequence not found");
+      const nm = (((name ?? s.name + " copy") + "").trim().slice(0, 120));
+      if (!nm) throw new Error("sequence name required");
+      const nj = JSON.parse(JSON.stringify(s));
+      const tmap = new Map();
+      nj.tracks.forEach((t: Track) => { const nid = uid(); tmap.set(t.id, nid); t.id = nid; });
+      nj.clips.forEach((c: Clip) => { c.id = uid(); c.trackId = tmap.get(c.trackId) ?? c.trackId; });
+      (nj.markers ?? []).forEach((m: TimelineMarker) => { m.id = uid(); });
+      nj.id = uid(); nj.name = nm;
+      p.sequences.push(nj); p.activeSequenceId = nj.id;
+      return { ok: true, ids: [nj.id], warnings: [], label: "duplicateSequence" };
+    });
+  }
   removeSequence(seqId: string): Receipt {
     return this.exec("removeSequence", (p) => {
       const i = p.sequences.findIndex((x) => x.id === seqId);

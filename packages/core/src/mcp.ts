@@ -57,6 +57,7 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'renameClip': return store.renameClip(seqId as string, q['clipId'] as string, q['name'] as string);
     case 'renameSequence': return store.renameSequence(seqId as string, q['name'] as string);
     case 'removeSequence': return store.removeSequence(seqId as string);
+    case 'duplicateSequence': return store.duplicateSequence(seqId as string, q['name'] as string | undefined);
     case 'overwritePlace': return store.overwritePlace(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
