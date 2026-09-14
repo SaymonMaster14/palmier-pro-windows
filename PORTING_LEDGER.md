@@ -532,3 +532,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged tool-modes tree: portable exe fresh 85300921b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 80 evidence (resizable workspace + presets)
+
+- Palmier split-view parity: drag splitters between media/stage, stage/inspector and above the timeline (5px handles, near-zero geometry delta), sizes persisted to localStorage with clamps, double-click resets; Ctrl/Cmd+1/2/3 switch Default/Media/Vertical presets (300/344/284, 460/300/240, 260/320/420). Defaults equal prior geometry.
+- Proof: renderer JS vm-parse OK, splitter ids present, unit suite 49/49, live LAYOUT-PROBE drag=true saved=true media=true back=true clean=true errs=0 (profile left clean), full smoke110 BOOT-OK DONE-0 at prior shape; temp probe hook reverted.
