@@ -1,4 +1,4 @@
-﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, FONT_FAMILIES, TEXT_ANIMS, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
+﻿import { PROJECT_VERSION, activeSequence, BLEND_MODES, FONT_FAMILIES, TEXT_ANIMS, computeOverwrite, computeRippleShifts, noCrop, upsertKeyframe, validateCrop, markerDefaultColor, validateMarker, rangeOverlaps, trackClips, uid, defaultTransform, addTrack as mkTrack, createSequence, type Clip, type MediaAsset, type Project, type Sequence, type BlendMode, type ClipKind, type TimelineMarker, type Track } from './model.js';
 import type { RationalFps } from './time.js';
 
 export interface Receipt { ok: boolean; ids: string[]; ranges?: Array<{ startFrame: number; durationFrames: number }>; warnings: string[]; noop?: boolean; error?: string; label: string }
@@ -45,6 +45,35 @@ export class EditorStore {
       if (!name.trim()) throw new Error("track name required");
       const tr = mkTrack(s, kind, name);
       return { ok: true, ids: [tr.id], warnings: [], label: "addTrack" };
+    });
+  }
+  addSequence(name?: string): Receipt {
+    return this.exec("addSequence", (p) => {
+      const nm = ((name ?? "Sequence " + (p.sequences.length + 1)) + "").trim().slice(0, 120);
+      if (!nm) throw new Error("sequence name required");
+      const base = p.sequences.find((x) => x.id === p.activeSequenceId) ?? p.sequences[0];
+      const seq = createSequence(p, nm, base ? base.fps : { num: 30, den: 1 }, base ? base.width : 1280, base ? base.height : 720);
+      mkTrack(seq, "video", "V1"); mkTrack(seq, "audio", "A1");
+      p.activeSequenceId = seq.id;
+      return { ok: true, ids: [seq.id], warnings: [], label: "addSequence" };
+    });
+  }
+  setActiveSequence(seqId: string): Receipt {
+    return this.exec("setActiveSequence", (p) => {
+      const q = p.sequences.find((x) => x.id === seqId); if (!q) throw new Error("sequence not found");
+      if (p.activeSequenceId === seqId) return { noop: true };
+      p.activeSequenceId = seqId;
+      return { ok: true, ids: [seqId], warnings: [], label: "setActiveSequence" };
+    });
+  }
+  renameSequence(seqId: string, name: string): Receipt {
+    return this.exec("renameSequence", (p) => {
+      const q = p.sequences.find((x) => x.id === seqId); if (!q) throw new Error("sequence not found");
+      const nm = ((name ?? "") + "").trim().slice(0, 120);
+      if (!nm) throw new Error("sequence name required");
+      if (q.name === nm) return { noop: true };
+      q.name = nm;
+      return { ok: true, ids: [q.id], warnings: [], label: "renameSequence" };
     });
   }
   placeClip(seqId: string, trackId: string, o: { kind: Clip['kind']; assetId?: string; startFrame: number; durationFrames: number; sourceInFrame?: number; name: string; text?: string }): Receipt {

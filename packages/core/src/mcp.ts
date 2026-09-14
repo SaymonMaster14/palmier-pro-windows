@@ -51,6 +51,9 @@ async function dispatch(store: EditorStore, method: string, q: Record<string, un
 case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'import': return importAndPlace(store, q['paths'] as string[]);
     case 'addTrack': return store.addTrack(seqId as string, q['kind'] as 'video' | 'audio', q['name'] as string);
+    case 'addSequence': return store.addSequence(q['name'] as string | undefined);
+    case 'setActiveSequence': return store.setActiveSequence(seqId as string);
+    case 'renameSequence': return store.renameSequence(seqId as string, q['name'] as string);
     case 'overwritePlace': return store.overwritePlace(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'placeClip': return store.placeClip(seqId as string, q['trackId'] as string, q['clip'] as never);
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
