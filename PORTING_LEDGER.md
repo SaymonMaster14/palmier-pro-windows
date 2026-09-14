@@ -517,3 +517,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Preview gained a Palmier-style transport row: start/prev/play/next/end buttons reusing the exact Home/End, arrow-key and space handlers (play label toggles play/pause glyph, space path updates it too). Seek, timecode, rate and meter untouched; no geometry coupled to smoke.
 - Proof: renderer JS vm-parse OK, transport ids present, unit suite 47/47, live TRANSPORT play=true pause=true fwd=true back=true end=true start=true errs=0 via real clicks; temp probe hook reverted (main.js clean).
+
+## 2026-09-13 turn 78 packaging
+
+- Repackaged transport tree: portable exe fresh 85301198b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
