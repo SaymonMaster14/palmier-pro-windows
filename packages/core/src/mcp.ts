@@ -56,6 +56,7 @@ case 'importSubs': return importSubtitles(store, q['path'] as string);
     case 'moveClip': return store.moveClip(seqId as string, q['clipId'] as string, q['toTrackId'] as string, q['toStart'] as number);
     case 'trimEnd': return store.trimEnd(seqId as string, q['clipId'] as string, q['durationFrames'] as number);
     case 'trimStart': return store.trimStart(seqId as string, q['clipId'] as string, q['deltaFrames'] as number);
+    case 'slipClip': return store.slipClip(seqId as string, q['clipId'] as string, q['deltaFrames'] as number);
     case 'deleteClips': return store.deleteClips(seqId as string, q['clipIds'] as string[]);
     case 'moveClips': return store.moveClips(seqId as string, q['moves'] as never);
     case 'splitClip': return store.splitClip(seqId as string, q['clipId'] as string, q['atFrame'] as number);

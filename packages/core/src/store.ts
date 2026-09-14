@@ -111,6 +111,18 @@ export class EditorStore {
       return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'trimStart' };
     });
   }
+  slipClip(seqId: string, clipId: string, deltaFrames: number): Receipt {
+    return this.exec('slipClip', (p) => {
+      const c = req_clip(req_seq(p, seqId), clipId);
+      if (!Number.isInteger(deltaFrames) || deltaFrames === 0) return { noop: true };
+      const m = p.media.find(x => x.id === c.assetId);
+      if (!m || !Number.isFinite(m.durationFrames)) return { noop: true };
+      const next = Math.min(Math.max(c.sourceInFrame + deltaFrames, 0), Math.max(m.durationFrames - c.durationFrames, 0));
+      if (next === c.sourceInFrame) return { noop: true };
+      c.sourceInFrame = next;
+      return { ok: true, ids: [c.id], ranges: [{ startFrame: c.startFrame, durationFrames: c.durationFrames }], warnings: [], label: 'slipClip' };
+    });
+  }
   splitClip(seqId: string, clipId: string, atFrame: number): Receipt {
     return this.exec('splitClip', (p) => {
       const s = req_seq(p, seqId); const c = req_clip(s, clipId);
