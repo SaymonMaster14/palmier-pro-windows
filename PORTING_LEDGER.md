@@ -527,3 +527,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Palmier ToolMode parity: Tools group (pointer/razor/trim) with active state, V/C/T shortcuts, per-mode clip cursors. Razor click splits at click frame; trim body-drag slips source window via new undoable slipClip core op (clamped to media bounds, noop without asset), threaded through OPS allowlist, MCP and renderer; pointer path byte-identical.
 - Proof: new slip.test.ts 2/2, unit suite 49/49, live TOOLS-PROBE razorKey=razor split=true trimKey=trim slip=0>7 pointerKey=pointer errs=0 via real clicks/drags/keys, full smoke108 BOOT-OK DONE-0 (pointer regression clean); temp probe hook reverted.
+
+## 2026-09-13 turn 79 packaging
+
+- Repackaged tool-modes tree: portable exe fresh 85300921b, postpackage cleanup done.
+- Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
