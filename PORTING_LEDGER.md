@@ -542,3 +542,8 @@ ode apps/editor/scripts/run-mcp-e2e.js\ -> MCP-E2E-PASS, RUN-MCP-E2E-PASS). UI-l
 
 - Repackaged resizable-workspace tree: portable exe fresh 85301578b, postpackage cleanup done.
 - Packaged verification: FINAL-E2E-PASS bytes=97402 dur=3.000 streams=audio,video clips=4.
+
+## 2026-09-13 turn 81 evidence (scrubbable inspector numbers)
+
+- Palmier-style ScrubbableNumberField: dragging any numeric inspector label scrubs its value (per-field steps, opacity 0..1 and volume 0..4 clamped to core validation bounds), inputs still edit by click, Apply pipeline unchanged. Cursor affordance via :has rule; delegation survives inspector re-renders.
+- Proof: renderer JS vm-parse OK, unit suite 49/49, live SCRUB-PROBE up=1>1 (clamped) down=1>0 applied=true errs=0 via real drag + Apply; first probe caught an over-range expectation and the clamp fix was re-proven; full smoke112 BOOT-OK DONE-0; temp probe hook reverted.

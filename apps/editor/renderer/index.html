@@ -90,6 +90,7 @@ footer#tlband{background:var(--bg1);border-top:1px solid var(--line);display:gri
 #expq{font-size:11.5px;color:var(--fg2)}
 #expq span{color:var(--fg3)}
 #insp{padding:0 12px}
+#insp .fgrid label:has(input[type=text]){cursor:ew-resize}
 .fsec{margin:10px 0 4px;border:1px solid var(--line);border-radius:var(--r);padding:8px 10px 10px;background:var(--bg2);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .fsec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--fg3);margin-bottom:6px}
 .frow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:2px 0}
@@ -561,6 +562,20 @@ function setPreset(pr) { if (!LAYPRE[pr]) return; LAY = { preset: pr, mw: LAYPRE
 function bindSplit(id, fn) { const el = document.querySelector(id); if (!el) return; el.addEventListener("mousedown", (e) => { e.preventDefault(); const x0 = e.clientX, y0 = e.clientY; const mv = (ev) => { fn(ev.clientX - x0, ev.clientY - y0); applyLayout(); }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); LAY.preset = "custom"; saveLayout(); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); el.addEventListener("dblclick", () => { setPreset("default"); }); }
 function initLayout() { applyLayout(); bindSplit("#spL", (dx) => { LAY.mw = clampN(LAY.mw + dx, 220, 640, 300); }); bindSplit("#spR", (dx) => { LAY.iw = clampN(LAY.iw - dx, 260, 560, 344); }); bindSplit("#tlsplit", (dx, dy) => { LAY.tl = clampN(LAY.tl - dy, 160, 640, 284); }); }
 initLayout();
+const SCRUBNUM = { iX: 1, iY: 1, iS: 0.05, iR: 1, iO: 0.05, iV: 0.1, iSp: 0.1, iFi: 0.1, iFo: 0.1, iTr: 0.1, iFs: 1 };
+const SCRUBMIN = { iO: 0, iV: 0 }; const SCRUBMAX = { iO: 1, iV: 4 };
+document.querySelector("#insp").addEventListener("mousedown", (e) => {
+  const lb = e.target.closest ? e.target.closest("label") : null;
+  if (!lb || !document.querySelector("#insp").contains(lb)) return;
+  const inp = lb.querySelector("input");
+  if (!inp || inp.type === "checkbox" || !(inp.id in SCRUBNUM) || e.target === inp) return;
+  e.preventDefault();
+  const x0 = e.clientX, base = Number(inp.value), step = SCRUBNUM[inp.id];
+  const mv = (ev) => { let v = Math.round((base + (ev.clientX - x0) / 4 * step) * 100) / 100; if (inp.id in SCRUBMIN) v = Math.max(SCRUBMIN[inp.id], v); if (inp.id in SCRUBMAX) v = Math.min(SCRUBMAX[inp.id], v); inp.value = v; };
+  const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); };
+  document.addEventListener("mousemove", mv);
+  document.addEventListener("mouseup", up);
+});
 window.palmier.onExportProgress((j) => { const box = document.querySelector("#expq"); let row = document.querySelector("#eq-" + j.id); if (!row) { row = document.createElement("div"); row.id = "eq-" + j.id; const cx = document.createElement("button"); cx.textContent = "cancel"; cx.addEventListener("click", () => window.palmier.exportCancel(j.id)); row.appendChild(cx); box.appendChild(row); } row.firstChild.nextSibling ? null : null; row.childNodes[1] ? row.childNodes[1].remove() : null; const sp = document.createElement("span"); sp.textContent = " " + j.id + " " + j.status + " " + Math.round(j.progress * 100) + "%"; });
 document.querySelector("#rate").addEventListener("change", (e) => { document.querySelector("#pv").playbackRate = Number(e.target.value); });
 document.querySelector("#ag").addEventListener("keydown", async (e) => { if (e.key !== "Enter") return; const q = e.target.value; e.target.value = ""; const r = await window.palmier.agentRun(q, { sequenceId: SEQ.id, playheadFrame: FRAME, selectedClipId: sel0() }); const al = document.querySelector("#aglog"); al.textContent = "> " + q + "\\n" + r + "\\n" + al.textContent.slice(0, 1500); await refresh(); });
